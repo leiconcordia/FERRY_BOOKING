@@ -1,0 +1,148 @@
+﻿-- =========================================
+-- 1️⃣ FERRY COMPANY
+-- =========================================
+CREATE TABLE FerryCompany (
+    CompanyID INT PRIMARY KEY IDENTITY(1,1),
+    CompanyName NVARCHAR(100) NOT NULL,
+    ContactNumber NVARCHAR(20),
+    Email NVARCHAR(100),
+    Address NVARCHAR(255)
+);
+
+-- =========================================
+-- 2️⃣ USERS (Owner, Staff, Admin)
+-- =========================================
+CREATE TABLE Users (
+    UserID INT PRIMARY KEY IDENTITY(1,1),
+    FullName NVARCHAR(100) NOT NULL,
+    Username NVARCHAR(50) UNIQUE NOT NULL,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    Role NVARCHAR(20) CHECK (Role IN ('Admin', 'Owner', 'Staff')) NOT NULL,
+    CompanyID INT NULL,                    -- Null if Admin
+    Status NVARCHAR(20) DEFAULT 'Active',
+    DateCreated DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (CompanyID) REFERENCES FerryCompany (CompanyID)
+);
+
+-- =========================================
+-- 3️⃣ STAFF ASSIGNMENT (for Owners to assign staff)
+-- =========================================
+CREATE TABLE StaffAssignment (
+    StaffID INT PRIMARY KEY IDENTITY(1,1),
+    UserID INT NOT NULL,
+    CompanyID INT NOT NULL,
+    Position NVARCHAR(50),
+    DateAssigned DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (UserID) REFERENCES Users (UserID),
+    FOREIGN KEY (CompanyID) REFERENCES FerryCompany (CompanyID)
+);
+
+-- =========================================
+-- 4️⃣ FERRY MASTER TABLE
+-- =========================================
+CREATE TABLE Ferry (
+    FerryID INT PRIMARY KEY IDENTITY(1,1),
+    CompanyID INT NOT NULL,
+    FerryName NVARCHAR(100) NOT NULL,
+    FerryType NVARCHAR(50) NOT NULL,           -- e.g., Catamaran, Roro, etc.
+    TotalCapacity INT NOT NULL,
+    TotalFloors INT NOT NULL,
+    Status NVARCHAR(20) DEFAULT 'Active',      -- Active / Maintenance / Retired
+    FOREIGN KEY (CompanyID) REFERENCES FerryCompany (CompanyID)
+);
+
+-- =========================================
+-- 5️⃣ FERRY FLOOR (for multi-floor ferries)
+-- =========================================
+CREATE TABLE FerryFloor (
+    FloorID INT PRIMARY KEY IDENTITY(1,1),
+    FerryID INT NOT NULL,
+    FloorNumber INT NOT NULL,                  -- e.g., 1, 2, 3
+    Rows INT NOT NULL,
+    Columns INT NOT NULL,
+    FloorSize AS CAST(Rows AS NVARCHAR(10)) + 'x' + CAST(Columns AS NVARCHAR(10)),  -- Computed Column
+    FOREIGN KEY (FerryID) REFERENCES Ferry (FerryID)
+);
+
+-- =========================================
+-- 6️⃣ SEAT CLASSES (Economy, Business, Open-Air)
+-- =========================================
+CREATE TABLE SeatClass (
+    ClassID INT PRIMARY KEY IDENTITY(1,1),
+    ClassName NVARCHAR(50) NOT NULL,           -- Economy / Business / Open-Air
+    BasePrice DECIMAL(10,2) NOT NULL
+);
+
+-- =========================================
+-- 7️⃣ SEATS (linked to floor and class)
+-- =========================================
+CREATE TABLE Seat (
+    SeatID INT PRIMARY KEY IDENTITY(1,1),
+    FloorID INT NOT NULL,
+    ClassID INT NOT NULL,
+    SeatRow INT NOT NULL,
+    SeatColumn INT NOT NULL,
+    SeatLabel NVARCHAR(10) NOT NULL,           -- e.g., A1, B2
+    Status NVARCHAR(20) DEFAULT 'Available',   -- Available / Booked / Maintenance
+    FOREIGN KEY (FloorID) REFERENCES FerryFloor (FloorID),
+    FOREIGN KEY (ClassID) REFERENCES SeatClass (ClassID)
+);
+
+-- =========================================
+-- 8️⃣ ROUTES
+-- =========================================
+CREATE TABLE Route (
+    RouteID INT PRIMARY KEY IDENTITY(1,1),
+    Origin NVARCHAR(100) NOT NULL,
+    Destination NVARCHAR(100) NOT NULL,
+    DistanceKM FLOAT,
+    DurationHours FLOAT
+);
+
+-- =========================================
+-- 9️⃣ SCHEDULES
+-- =========================================
+CREATE TABLE Schedule (
+    ScheduleID INT PRIMARY KEY IDENTITY(1,1),
+    FerryID INT NOT NULL,
+    RouteID INT NOT NULL,
+    DepartureTime DATETIME NOT NULL,
+    ArrivalTime DATETIME NOT NULL,
+    Status NVARCHAR(20) DEFAULT 'On-Time',     -- On-Time / Delayed / Cancelled
+    FOREIGN KEY (FerryID) REFERENCES Ferry (FerryID),
+    FOREIGN KEY (RouteID) REFERENCES Route (RouteID)
+);
+
+-- =========================================
+-- 🔟 PASSENGER (for passenger history)
+-- =========================================
+CREATE TABLE Passenger (
+    PassengerID INT PRIMARY KEY IDENTITY(1,1),
+    FullName NVARCHAR(100) NOT NULL,
+    Age INT,
+    Gender NVARCHAR(10),
+    ContactNumber NVARCHAR(20),
+    Email NVARCHAR(100),
+    DiscountType NVARCHAR(20) DEFAULT 'None',  -- Senior / Student / PWD / None
+    LastTravelDate DATETIME,
+    TotalTrips INT DEFAULT 0
+);
+
+-- =========================================
+-- 11️⃣ BOOKINGS (linked to passenger, seat, schedule, and staff)
+-- =========================================
+CREATE TABLE Booking (
+    BookingID INT PRIMARY KEY IDENTITY(1,1),
+    PassengerID INT NOT NULL,
+    ScheduleID INT NOT NULL,
+    SeatID INT NOT NULL,
+    BookedBy INT NOT NULL,                     -- UserID of staff
+    FinalPrice DECIMAL(10,2),
+    BookingDate DATETIME DEFAULT GETDATE(),
+    Status NVARCHAR(20) DEFAULT 'Booked',      -- Booked / Cancelled / Completed
+    QRCodeData NVARCHAR(MAX),                  -- Offline QR Code data
+    FOREIGN KEY (PassengerID) REFERENCES Passenger (PassengerID),
+    FOREIGN KEY (ScheduleID) REFERENCES Schedule (ScheduleID),
+    FOREIGN KEY (SeatID) REFERENCES Seat (SeatID),
+    FOREIGN KEY (BookedBy) REFERENCES Users (UserID)
+);
