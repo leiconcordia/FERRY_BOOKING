@@ -89,5 +89,32 @@ namespace FERRY_BOOKING.DATABASE
             }
         }
 
+        // Add this method to DatabaseHelper.cs for retrieving DataTables
+        public DataTable ExecuteDataTable(string query, SqlParameter[] parameters)
+        {
+            try
+            {
+                using (SqlConnection conn = GetConnection())
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        if (parameters != null)
+                            cmd.Parameters.AddRange(parameters);
+
+                        DataTable dt = new DataTable();
+                        dt.Load(cmd.ExecuteReader());
+                        return dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Database Error: " + ex.Message,
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return null;
+            }
+        }
+
     }
 }

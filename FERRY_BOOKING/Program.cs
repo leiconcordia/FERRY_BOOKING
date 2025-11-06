@@ -13,7 +13,7 @@ namespace FERRY_BOOKING
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new StaffLoginForm());
+            Application.Run(new FerryOwnerLoginForm());
         }
     }
 }

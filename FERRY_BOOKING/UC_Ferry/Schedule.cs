@@ -8,11 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace FERRY_BOOKING.Forms
+namespace FERRY_BOOKING.UC_Ferry
 {
-    public partial class FerryOwnerForm : Form
+    public partial class Schedule : UserControl
     {
-        public FerryOwnerForm()
+        public Schedule()
         {
             InitializeComponent();
         }
