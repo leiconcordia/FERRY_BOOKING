@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Data.SqlClient;
-using System.Text;
 using System.Security.Cryptography;
+using System.Text;
+using static FERRY_BOOKING.Dialogs.FerryRegistrationForm;
 
 namespace FERRY_BOOKING.DATABASE
 {
@@ -99,7 +100,7 @@ namespace FERRY_BOOKING.DATABASE
             {
                 string query = "SELECT FirstName, LastName, CompanyName FROM Users WHERE Email = @Email AND Role = 'FerryOwner'";
 
-                using (SqlConnection conn = new SqlConnection(@"Server=BORK\SQLEXPRESS;Database=DB_FERRY_BOOKING;Trusted_Connection=True;"))
+                using (SqlConnection conn = db.GetConnection())
                 {
                     conn.Open();
                     using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -126,5 +127,144 @@ namespace FERRY_BOOKING.DATABASE
                 throw new Exception("Error retrieving user details: " + ex.Message);
             }
         }
+
+
+
+        public bool RegisterFerry(
+              
+            string ferryName, 
+            string ferryCode, 
+            int totalFloors, 
+            int totalCapacity,
+            List<FloorLayout> floors,
+            List<TripSchedule> trips,
+            byte[] coFileBytes,
+            byte[] vrFileBytes,
+            byte[] scFileBytes,
+            byte[] idFileBytes,
+            byte[] poFileBytes,
+            byte[] fpFileBytes,
+            int ownerID
+
+            )
+        {
+            using (SqlConnection conn = db.GetConnection()) // << use your existing helper
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+
+                try
+                {
+                    // Insert Ferry
+                    int ferryID;
+                    using (SqlCommand cmd = new SqlCommand(@"
+                INSERT INTO Ferry (FerryCode, FerryName, TotalFloors, TotalCapacity, OwnerID)
+                OUTPUT INSERTED.FerryID
+                VALUES (@code, @name, @floors, @capacity, @owner)", conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@code", ferryCode);
+                        cmd.Parameters.AddWithValue("@name", ferryName);
+                        cmd.Parameters.AddWithValue("@floors", totalFloors);
+                        cmd.Parameters.AddWithValue("@capacity", totalCapacity);
+                        cmd.Parameters.AddWithValue("@owner", ownerID);
+
+
+                        ferryID = (int)cmd.ExecuteScalar();
+                    }
+
+                    // Insert Floor Layouts
+                    foreach (var f in floors)
+                    {
+                        using (SqlCommand cmd = new SqlCommand(@"
+                    INSERT INTO FerryFloor (FerryID, FloorNumber, Rows, Columns, Price)
+                    VALUES (@fid, @num, @rows, @cols, @price)", conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@fid", ferryID);
+                            cmd.Parameters.AddWithValue("@num", f.FloorNumber);
+                            cmd.Parameters.AddWithValue("@rows", f.Rows);
+                            cmd.Parameters.AddWithValue("@cols", f.Columns);
+                            cmd.Parameters.AddWithValue("@price", f.Price);
+
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    // Insert Route + Trips
+                    foreach (var t in trips)
+                    {
+                        int routeID;
+                        using (SqlCommand cmd = new SqlCommand(@"
+                    IF NOT EXISTS (SELECT 1 FROM Route WHERE Origin=@o AND Destination=@d)
+                        INSERT INTO Route (Origin, Destination) VALUES (@o, @d)
+                    SELECT RouteID FROM Route WHERE Origin=@o AND Destination=@d", conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@o", t.Origin);
+                            cmd.Parameters.AddWithValue("@d", t.Destination);
+
+                            routeID = (int)cmd.ExecuteScalar();
+                        }
+
+                        using (SqlCommand cmd = new SqlCommand(@"
+                    INSERT INTO Trip (FerryID, RouteID, DepartureTime, ArrivalTime)
+                    VALUES (@fid, @rid, @dep, @arr)", conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@fid", ferryID);
+                            cmd.Parameters.AddWithValue("@rid", routeID);
+                            cmd.Parameters.AddWithValue("@dep", t.DepartureTime);
+                            cmd.Parameters.AddWithValue("@arr", t.ArrivalTime);
+
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    // Insert Documents
+                    using (SqlCommand cmd = new SqlCommand(@"
+                INSERT INTO FerryDocuments (FerryID, COFile, VRFile, SCFile, IDFile, POFile, FPFile)
+                VALUES (@fid, @co, @vr, @sc, @id, @po, @fp)", conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@fid", ferryID);
+                        cmd.Parameters.AddWithValue("@co", coFileBytes);
+                        cmd.Parameters.AddWithValue("@vr", vrFileBytes);
+                        cmd.Parameters.AddWithValue("@sc", scFileBytes);
+                        cmd.Parameters.AddWithValue("@id", idFileBytes);
+                        cmd.Parameters.AddWithValue("@po", poFileBytes);
+                        cmd.Parameters.AddWithValue("@fp", fpFileBytes);
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // ✅ COMMIT
+                    transaction.Commit();
+                    return true;
+                }
+                catch
+                {
+                    // ❌ ROLLBACK IF ERROR
+                    transaction.Rollback();
+                    return false;
+                }
+            }
+
+        }
+
+        public int GetUserIDByEmail(string email)
+        {
+            string query = "SELECT UserID FROM Users WHERE Email = @Email";
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Email", email);
+
+                    object result = cmd.ExecuteScalar();
+                    return result != null ? Convert.ToInt32(result) : 0;
+                }
+            }
+        }
+
+
+
     }
 }

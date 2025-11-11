@@ -47,9 +47,9 @@
             // StaffPanel
             // 
             StaffPanel.BackColor = SystemColors.ButtonFace;
-            StaffPanel.Location = new Point(12, 147);
+            StaffPanel.Location = new Point(209, 139);
             StaffPanel.Name = "StaffPanel";
-            StaffPanel.Size = new Size(1761, 551);
+            StaffPanel.Size = new Size(1462, 551);
             StaffPanel.TabIndex = 4;
             // 
             // panel1
@@ -100,6 +100,7 @@
             btnLogout.TabIndex = 5;
             btnLogout.Text = "Logout";
             btnLogout.UseVisualStyleBackColor = false;
+            btnLogout.Click += btnLogout_Click;
             // 
             // label1
             // 

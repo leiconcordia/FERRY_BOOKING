@@ -74,5 +74,12 @@ namespace FERRY_BOOKING.Forms
             ActivateButton(navPassengerHistory);
             LoadUserControl(new UC_Staff.PassengerHistory());
         }
+
+        private void btnLogout_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            Forms.StaffLoginForm slf = new Forms.StaffLoginForm();
+            slf.Show();
+        }
     }
 }

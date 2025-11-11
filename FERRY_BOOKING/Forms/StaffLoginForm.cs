@@ -43,35 +43,19 @@ namespace FERRY_BOOKING.Forms
         }
 
         private void btnSignIn_Click(object sender, EventArgs e)
-        {
-            StaffHelper helper = new StaffHelper();
-
+        { 
             string username = txtUsername.Text.Trim();
             string password = txtPassword.Text.Trim();
 
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            if (username.Equals("staff") && password.Equals("123"))
             {
-                MessageBox.Show("Please enter both Username and Password.", "Missing Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string role = helper.ValidateLogin(username, password);
-
-            if (role == "admin")
-            {
-                MessageBox.Show("not welcome", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else if (role == "staff")
-            {
-                MessageBox.Show("Welcome Staff!", "Login Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                StaffForm staffForm = new StaffForm();
-                staffForm.FormClosed += (s, args) => this.Close();
-                staffForm.Show();
                 this.Hide();
+                Forms.StaffForm sf = new Forms.StaffForm();
+                sf.Show();
             }
             else
             {
-                MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Invalid username or password.");
             }
         }
 

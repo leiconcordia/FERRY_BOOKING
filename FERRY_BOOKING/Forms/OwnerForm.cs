@@ -13,12 +13,23 @@ namespace FERRY_BOOKING.Forms
     public partial class OwnerForm : Form
     {
         public string UserEmail { get; set; }
+        public string CompanyName { get; set; }
+        public string firstName { get; set; }
+        public string lastName { get; set; }
+
         public OwnerForm(string email, string firstName, string lastName, string companyName)
         {
             InitializeComponent();
+
             lblOwnerName.Text = $"{firstName} {lastName}";
             this.UserEmail = email;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.CompanyName = companyName;
+
         }
+
+
         private Button activeButton = null;
 
         private void LoadUserControl(UserControl uc)
@@ -73,7 +84,7 @@ namespace FERRY_BOOKING.Forms
         private void navFerries_Click(object sender, EventArgs e)
         {
             ActivateButton(navFerries);
-            LoadUserControl(new UC_Ferry.MyFerries());
+            LoadUserControl(new UC_Ferry.MyFerries(UserEmail, CompanyName));
         }
 
         private void navSchedule_Click(object sender, EventArgs e)

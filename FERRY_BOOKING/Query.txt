@@ -9,3 +9,129 @@
     DateCreated DATETIME NOT NULL DEFAULT GETDATE(),
     IsActive BIT NOT NULL DEFAULT 1
 );
+
+CREATE TABLE Ferry (
+    FerryID INT IDENTITY(1,1) PRIMARY KEY,
+    FerryCode VARCHAR(50) NOT NULL UNIQUE,
+    FerryName VARCHAR(100) NOT NULL,
+    TotalFloors INT NOT NULL,
+    TotalCapacity INT NOT NULL DEFAULT 0,
+    Status VARCHAR(20) NOT NULL DEFAULT 'Active',
+    DateRegistered DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE FerryFloor (
+    FloorID INT IDENTITY(1,1) PRIMARY KEY,
+    FerryID INT NOT NULL,
+    FloorNumber INT NOT NULL,
+    Rows INT NOT NULL,
+    Columns INT NOT NULL,
+    Capacity AS (Rows * Columns) PERSISTED,
+    Price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID)
+);
+
+CREATE TABLE Route (
+    RouteID INT IDENTITY(1,1) PRIMARY KEY,
+    Origin VARCHAR(100) NOT NULL,
+    Destination VARCHAR(100) NOT NULL,
+    CONSTRAINT UQ_Route UNIQUE(Origin, Destination)
+);
+
+CREATE TABLE Trip (
+    TripID INT IDENTITY(1,1) PRIMARY KEY,
+    FerryID INT NOT NULL,
+    RouteID INT NOT NULL,
+    DepartureTime DATETIME NOT NULL,
+    ArrivalTime DATETIME NULL,
+    FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID),
+    FOREIGN KEY (RouteID) REFERENCES Route(RouteID)
+);
+
+CREATE TABLE FerryDocuments (
+    DocumentID INT IDENTITY(1,1) PRIMARY KEY,
+    FerryID INT NOT NULL FOREIGN KEY REFERENCES Ferry(FerryID),
+    COFile VARBINARY(MAX) NULL,
+    VRFile VARBINARY(MAX) NULL,
+    SCFile VARBINARY(MAX) NULL,
+    IDFile VARBINARY(MAX) NULL,
+    POFile VARBINARY(MAX) NULL,
+    FPFile VARBINARY(MAX) NULL
+);
+
+CREATE TABLE BookedSeats
+(
+    BookedSeatID INT IDENTITY(1,1) PRIMARY KEY,
+    TripID INT NOT NULL,
+    FloorID INT NOT NULL,
+    SeatNumber VARCHAR(10) NULL,   -- optional, if you track exact seat
+    BookingDate DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (TripID) REFERENCES Trip(TripID),
+    FOREIGN KEY (FloorID) REFERENCES FerryFloor(FloorID)
+);
+
+
+
+
+
+//My ferries table
+
+CREATE OR ALTER VIEW vw_FerryDisplay AS
+SELECT 
+    f.FerryID,
+    f.FerryCode,
+    f.FerryName,
+    f.TotalCapacity AS Capacity,
+    f.Status,      
+    f.OwnerID,  -- optional: handy if you need to filter by owner
+    -- SEAT INFO PER FLOOR (one line per floor)
+    STUFF((
+        SELECT CHAR(10) + 'Floor ' + CAST(ff.FloorNumber AS VARCHAR(5)) + 
+               ' ' + CAST(ff.Rows AS VARCHAR(5)) + 'x' + CAST(ff.Columns AS VARCHAR(5)) +
+               ' - Price: P' + CAST(ff.Price AS VARCHAR(20))
+        FROM FerryFloor ff
+        WHERE ff.FerryID = f.FerryID
+        ORDER BY ff.FloorNumber
+        FOR XML PATH(''), TYPE
+    ).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS Seats,
+
+    -- ONLY ONE ROUTE (first route) with --> arrow
+    (SELECT TOP 1 r.Origin + ' <--> ' + r.Destination
+     FROM Trip t
+     INNER JOIN Route r ON r.RouteID = t.RouteID
+     WHERE t.FerryID = f.FerryID
+     ORDER BY t.TripID ASC) AS Route
+
+
+     //Search Ferry view
+
+CREATE OR ALTER VIEW vw_FerrySearch AS
+SELECT
+    f.FerryID,
+    u.CompanyName AS Company,
+    f.FerryName AS Ferry,
+    r.Origin + ' --> ' + r.Destination AS Route,
+    FORMAT(t.DepartureTime,'hh:mm tt') + ' - ' + FORMAT(t.ArrivalTime,'hh:mm tt') AS Time,
+    f.Status,
+    -- Seats & Price per floor (multi-line)
+    STUFF((
+        SELECT CHAR(13) + CHAR(10) +
+               'Floor ' + CAST(ff.FloorNumber AS VARCHAR(5)) +
+               ' - ' + 
+               CAST(ff.Capacity - ISNULL(bs.BookedCount,0) AS VARCHAR(5)) + '/' + CAST(ff.Capacity AS VARCHAR(5)) +
+               ' - Price: P' + CAST(ff.Price AS VARCHAR(10))
+        FROM FerryFloor ff
+        LEFT JOIN (
+            SELECT FloorID, TripID, COUNT(*) AS BookedCount
+            FROM BookedSeats
+            GROUP BY FloorID, TripID
+        ) bs ON bs.FloorID = ff.FloorID AND bs.TripID = t.TripID
+        WHERE ff.FerryID = f.FerryID
+        ORDER BY ff.FloorNumber
+        FOR XML PATH(''), TYPE
+    ).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS SeatsAndPrice
+FROM Ferry f
+INNER JOIN Users u ON u.UserID = f.OwnerID
+INNER JOIN Trip t ON t.FerryID = f.FerryID
+INNER JOIN Route r ON r.RouteID = t.RouteID;
+  

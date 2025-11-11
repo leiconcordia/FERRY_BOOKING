@@ -10,10 +10,12 @@ namespace FERRY_BOOKING.DATABASE
         private readonly string connectionString =
             @"Server=BORK\SQLEXPRESS;Database=DB_FERRY_BOOKING;Trusted_Connection=True;";
 
-        private SqlConnection GetConnection()
+        public SqlConnection GetConnection()
         {
             return new SqlConnection(connectionString);
         }
+
+  
 
         public bool ExecuteQuery(string query, SqlParameter[] parameters)
         {
@@ -90,7 +92,7 @@ namespace FERRY_BOOKING.DATABASE
         }
 
         // Add this method to DatabaseHelper.cs for retrieving DataTables
-        public DataTable ExecuteDataTable(string query, SqlParameter[] parameters)
+        public DataTable ExecuteDataTable(string query, params SqlParameter[] parameters)
         {
             try
             {
@@ -99,7 +101,7 @@ namespace FERRY_BOOKING.DATABASE
                     conn.Open();
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        if (parameters != null)
+                        if (parameters != null && parameters.Length > 0)
                             cmd.Parameters.AddRange(parameters);
 
                         DataTable dt = new DataTable();
