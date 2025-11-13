@@ -61,7 +61,7 @@ namespace FERRY_BOOKING.Dialogs
             label4 = new Label();
             label3 = new Label();
             label2 = new Label();
-            textBox1 = new TextBox();
+            tbCompanyName = new TextBox();
             label1 = new Label();
             flowFloors = new FlowLayoutPanel();
             flowTrips = new FlowLayoutPanel();
@@ -106,7 +106,7 @@ namespace FERRY_BOOKING.Dialogs
             RegistrationFormPanel.Controls.Add(label4);
             RegistrationFormPanel.Controls.Add(label3);
             RegistrationFormPanel.Controls.Add(label2);
-            RegistrationFormPanel.Controls.Add(textBox1);
+            RegistrationFormPanel.Controls.Add(tbCompanyName);
             RegistrationFormPanel.Controls.Add(label1);
             RegistrationFormPanel.Controls.Add(flowFloors);
             RegistrationFormPanel.Controls.Add(flowTrips);
@@ -427,12 +427,12 @@ namespace FERRY_BOOKING.Dialogs
             label2.TabIndex = 25;
             label2.Text = "Ferry Details";
             // 
-            // textBox1
+            // tbCompanyName
             // 
-            textBox1.Location = new Point(3, 76);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(125, 27);
-            textBox1.TabIndex = 24;
+            tbCompanyName.Location = new Point(3, 76);
+            tbCompanyName.Name = "tbCompanyName";
+            tbCompanyName.Size = new Size(125, 27);
+            tbCompanyName.TabIndex = 24;
             // 
             // label1
             // 
@@ -453,7 +453,6 @@ namespace FERRY_BOOKING.Dialogs
             flowFloors.Size = new Size(480, 100);
             flowFloors.TabIndex = 41;
             flowFloors.WrapContents = false;
-
             // 
             // flowTrips
             // 
@@ -528,7 +527,7 @@ namespace FERRY_BOOKING.Dialogs
         private Label label4;
         private Label label3;
         private Label label2;
-        private TextBox textBox1;
+        private TextBox tbCompanyName;
         private Label label1;
         private Label label12;
         private Button btnSave;

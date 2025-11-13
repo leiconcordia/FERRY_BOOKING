@@ -149,13 +149,12 @@
             // 
             lblSeat.AutoSize = true;
             lblSeat.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblSeat.ForeColor = Color.FromArgb(11, 94, 235);
+            lblSeat.ForeColor = Color.FromArgb(255, 193, 7);
             lblSeat.Location = new Point(26, 18);
             lblSeat.Name = "lblSeat";
             lblSeat.Size = new Size(50, 23);
             lblSeat.TabIndex = 12;
             lblSeat.Text = "Seat:";
-          
             // 
             // PassengerInfoControl
             // 

@@ -13,6 +13,7 @@
 CREATE TABLE Ferry (
     FerryID INT IDENTITY(1,1) PRIMARY KEY,
     FerryCode VARCHAR(50) NOT NULL UNIQUE,
+    OwnerID INT NOT NULL,
     FerryName VARCHAR(100) NOT NULL,
     TotalFloors INT NOT NULL,
     TotalCapacity INT NOT NULL DEFAULT 0,
@@ -35,18 +36,35 @@ CREATE TABLE Route (
     RouteID INT IDENTITY(1,1) PRIMARY KEY,
     Origin VARCHAR(100) NOT NULL,
     Destination VARCHAR(100) NOT NULL,
+    Distance DECIMAL(10,2) NULL,      -- in kilometers (e.g. 70.50)
+    Duration TIME NULL,               -- estimated travel duration (e.g. 02:30:00)
+    FerryID INT;
+    FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID);
     CONSTRAINT UQ_Route UNIQUE(Origin, Destination)
 );
+
+ALTER TABLE Route
+ADD FerryID INT;
+
+ALTER TABLE Route
+ADD CONSTRAINT FK_Route_Ferry FOREIGN KEY (FerryID)
+REFERENCES Ferry(FerryID);
+
 
 CREATE TABLE Trip (
     TripID INT IDENTITY(1,1) PRIMARY KEY,
     FerryID INT NOT NULL,
     RouteID INT NOT NULL,
-    DepartureTime DATETIME NOT NULL,
-    ArrivalTime DATETIME NULL,
+    DepartureTime TIME NOT NULL,
+    ArrivalTime TIME NOT NULL,
+    StartDate DATE NOT NULL,
+    EndDate DATE NOT NULL,
+    DaysOfWeek VARCHAR(50) NOT NULL,  -- e.g., 'Mon,Wed,Fri'
+
     FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID),
     FOREIGN KEY (RouteID) REFERENCES Route(RouteID)
 );
+
 
 CREATE TABLE FerryDocuments (
     DocumentID INT IDENTITY(1,1) PRIMARY KEY,
@@ -70,6 +88,16 @@ CREATE TABLE BookedSeats
     FOREIGN KEY (FloorID) REFERENCES FerryFloor(FloorID)
 );
 
+CREATE TABLE FerryRoute (
+    FerryRouteID INT IDENTITY(1,1) PRIMARY KEY,
+    FerryID INT NOT NULL,
+    RouteID INT NOT NULL,
+    FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID),
+    FOREIGN KEY (RouteID) REFERENCES Route(RouteID),
+    CONSTRAINT UQ_FerryRoute UNIQUE(FerryID, RouteID)
+);
+
+
 
 
 
@@ -83,7 +111,7 @@ SELECT
     f.FerryName,
     f.TotalCapacity AS Capacity,
     f.Status,      
-    f.OwnerID,  -- optional: handy if you need to filter by owner
+    f.OwnerID,  -- included to filter per owner
     -- SEAT INFO PER FLOOR (one line per floor)
     STUFF((
         SELECT CHAR(10) + 'Floor ' + CAST(ff.FloorNumber AS VARCHAR(5)) + 
@@ -101,7 +129,10 @@ SELECT
      INNER JOIN Route r ON r.RouteID = t.RouteID
      WHERE t.FerryID = f.FerryID
      ORDER BY t.TripID ASC) AS Route
+FROM Ferry f;
 
+        
+     
 
      //Search Ferry view
 
@@ -134,4 +165,33 @@ FROM Ferry f
 INNER JOIN Users u ON u.UserID = f.OwnerID
 INNER JOIN Trip t ON t.FerryID = f.FerryID
 INNER JOIN Route r ON r.RouteID = t.RouteID;
+
+//Route Table
+CREATE OR ALTER VIEW vw_RouteDisplay AS
+SELECT 
+    fr.FerryRouteID AS RouteID,  -- unique per ferry-route assignment
+    f.FerryName AS Ferry,
+    r.Origin + ' → ' + r.Destination AS Route,
+    r.Distance,
+    r.Duration
+FROM FerryRoute fr
+INNER JOIN Ferry f ON fr.FerryID = f.FerryID
+INNER JOIN Route r ON fr.RouteID = r.RouteID;
+
+//Trip Display
+CREATE OR ALTER VIEW vw_TripDisplay AS
+SELECT 
+    t.TripID,
+    f.FerryName AS Ferry,
+    (r.Origin + ' → ' + r.Destination) AS Route,
+    FORMAT(t.DepartureTime, 'hh:mm tt') AS Departure,
+    FORMAT(t.ArrivalTime, 'hh:mm tt') AS Arrival,
+    t.StartDate,
+    t.EndDate,
+    t.DaysOfWeek
+FROM Trip t
+INNER JOIN Ferry f ON f.FerryID = t.FerryID
+INNER JOIN Route r ON r.RouteID = t.RouteID;
+
+
   

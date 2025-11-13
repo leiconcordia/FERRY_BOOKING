@@ -23,10 +23,6 @@ namespace FERRY_BOOKING.UC_Staff
 
         }
 
- 
-      
-
-
         private void PopulateComboBoxes()
         {
             DATABASE.StaffHelper db = new DATABASE.StaffHelper();

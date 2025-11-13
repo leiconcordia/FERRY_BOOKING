@@ -40,5 +40,11 @@
         }
 
         #endregion
+
+        private Panel panel1;
+        private DataGridView dgvMyFerries;
+        private Label label1;
+        private Label lblCompanyNameFleet;
+        private Button btnRegisterFerry;
     }
 }

@@ -115,7 +115,7 @@ namespace FERRY_BOOKING.Forms
             {
                 var userDetails = helper.GetUserDetailsByEmail(username);
                 MessageBox.Show($"Welcome {userDetails.FirstName}!", "Login Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                OwnerForm of = new OwnerForm(username, userDetails.FirstName, userDetails.LastName, userDetails.CompanyName);
+                OwnerForm of = new OwnerForm(userDetails.UserID, username, userDetails.FirstName, userDetails.LastName, userDetails.CompanyName);
                 of.FormClosed += (s, args) => this.Close();
                 of.Show();
                 this.Hide();

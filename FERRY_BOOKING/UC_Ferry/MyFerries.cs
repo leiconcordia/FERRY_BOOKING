@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -21,18 +22,21 @@ namespace FERRY_BOOKING.UC_Ferry
         public string UserEmail { get; set; }
         public string CompanyName { get; set; }
         public int OwnerID { get; set; }
-        public MyFerries(string Email, string CompanyName)
+        public MyFerries(int OwnerID, string Email, string CompanyName)
         {
-            DATABASE.FerryOwnerHelper od = new DATABASE.FerryOwnerHelper();
+          
 
             InitializeComponent();
-            LoadMyFerries();
+            LoadMyFerries(OwnerID);
             lblCompanyNameFleet.Text = $"{CompanyName} - Ferry Fleet";
 
             this.UserEmail = Email;
             this.CompanyName = CompanyName;
-            OwnerID = od.GetUserIDByEmail(UserEmail);
-            
+            this.OwnerID = OwnerID;
+
+
+          
+
 
         }
 
@@ -44,28 +48,33 @@ namespace FERRY_BOOKING.UC_Ferry
             FerryRegistrationForm popup = new FerryRegistrationForm(OwnerID, CompanyName);
             popup.StartPosition = FormStartPosition.CenterParent;
             popup.ShowDialog();
+
+           
         }
 
-        public void LoadMyFerries()
+        public void LoadMyFerries(int ownerID)
         {
-            DATABASE.DatabaseHelper db = new DATABASE.DatabaseHelper();         
-            string query = "SELECT FerryID, FerryCode, FerryName, Status, Capacity, Seats, Status, Route FROM vw_FerryDisplay";
+            DATABASE.DatabaseHelper db = new DATABASE.DatabaseHelper();
 
-            DataTable dt = db.ExecuteDataTable(query);
+            string query = "SELECT FerryID, FerryCode, FerryName, Status, Capacity, Seats, Route " +
+                           "FROM vw_FerryDisplay WHERE OwnerID = @OwnerID";
+
+            SqlParameter[] parameters =
+            {
+        new SqlParameter("@OwnerID", ownerID)
+    };
+
+            DataTable dt = db.ExecuteDataTable(query, parameters);
+            
+
             dgvMyFerries.DataSource = dt;
-
-            // Hide FerryID
             dgvMyFerries.Columns["FerryID"].Visible = false;
-
-            // Seats column wrap text
             dgvMyFerries.Columns["Seats"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-
             dgvMyFerries.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-
-
         }
 
-       
+
+
 
 
 

@@ -20,6 +20,10 @@ namespace FERRY_BOOKING.Dialogs
             this.CompanyName = CompanyName;
             this.OwnerID = OwnerID;
 
+       
+            tbCompanyName.Text = CompanyName;
+            tbCompanyName.ReadOnly = true;
+
             RegistrationFormPanel.Controls.Add(flowFloors);
             RegistrationFormPanel.Controls.Add(flowTrips);
 

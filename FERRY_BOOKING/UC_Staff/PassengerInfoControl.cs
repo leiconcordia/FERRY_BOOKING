@@ -12,13 +12,14 @@ namespace FERRY_BOOKING.UC_Staff
 {
     public partial class PassengerInfoControl : UserControl
     {
-        public string SeatCode { get; private set; }
+        public string SeatCode { get; set; }
 
         public PassengerInfoControl(string seatCode)
         {
             InitializeComponent();
             SeatCode = seatCode;
             lblSeat.Text = $"Seat: {seatCode}";
+            
 
             cmbGender.Items.AddRange(new string[] { "Male", "Female", "Other" });
             cmbDiscount.Items.AddRange(new string[] { "None", "Senior", "Student", "PWD" });

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
@@ -94,11 +95,11 @@ namespace FERRY_BOOKING.DATABASE
 
 
         // In FerryOwnerHelper.cs - add this method
-        public (string FirstName, string LastName, string CompanyName) GetUserDetailsByEmail(string email)
+        public (int UserID, string FirstName, string LastName, string CompanyName) GetUserDetailsByEmail(string email)
         {
             try
             {
-                string query = "SELECT FirstName, LastName, CompanyName FROM Users WHERE Email = @Email AND Role = 'FerryOwner'";
+                string query = "SELECT UserID, FirstName, LastName, CompanyName FROM Users WHERE Email = @Email AND Role = 'FerryOwner'";
 
                 using (SqlConnection conn = db.GetConnection())
                 {
@@ -112,6 +113,7 @@ namespace FERRY_BOOKING.DATABASE
                             if (reader.Read())
                             {
                                 return (
+                                    Convert.ToInt32(reader["UserID"]),
                                     reader["FirstName"].ToString(),
                                     reader["LastName"].ToString(),
                                     reader["CompanyName"].ToString()
@@ -120,13 +122,16 @@ namespace FERRY_BOOKING.DATABASE
                         }
                     }
                 }
-                return ("", "", "");
+
+                // Return defaults if no user found
+                return (0, "", "", "");
             }
             catch (Exception ex)
             {
                 throw new Exception("Error retrieving user details: " + ex.Message);
             }
         }
+
 
 
 
@@ -263,6 +268,37 @@ namespace FERRY_BOOKING.DATABASE
                 }
             }
         }
+
+        public DataTable LoadFerriesForOwner(int OwnerID)
+        {
+            DataTable dt = new DataTable();
+
+            try
+            {
+                using (SqlConnection conn = db.GetConnection())
+                {
+                    conn.Open();
+
+                    string query = "SELECT FerryID, FerryName FROM Ferry WHERE OwnerID = @OwnerID";
+
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@OwnerID", OwnerID);
+
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        da.Fill(dt);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error loading ferries: " + ex.Message);
+            }
+
+            return dt;
+        }
+
+
 
 
 
