@@ -25,7 +25,6 @@ namespace FERRY_BOOKING.Dialogs
             tbCompanyName.ReadOnly = true;
 
             RegistrationFormPanel.Controls.Add(flowFloors);
-            RegistrationFormPanel.Controls.Add(flowTrips);
 
         }
 
@@ -34,10 +33,7 @@ namespace FERRY_BOOKING.Dialogs
             GenerateFloorInputs((int)nudFloorNumbers.Value);
         }
 
-        private void nudTrips_ValueChanged(object sender, EventArgs e)
-        {
-            GenerateTripsInputs((int)nudTrips.Value);
-        }
+
         private void UpdateFloorAndTotalCapacity()
         {
             int total = 0;
@@ -101,20 +97,6 @@ namespace FERRY_BOOKING.Dialogs
                 nudColumn.Width = 60;
                 nudColumn.Location = new Point(210, 25);
 
-                // ✅ Price Label
-                Label lblPrice = new Label();
-                lblPrice.Text = "Price:";
-                lblPrice.AutoSize = true;
-                lblPrice.Location = new Point(10, 60);
-
-                // ✅ Price Input
-                NumericUpDown nudPrice = new NumericUpDown();
-                nudPrice.Name = $"nudPrice_{i}";
-                nudPrice.Minimum = 0;
-                nudPrice.Maximum = 10000;
-                nudPrice.DecimalPlaces = 2;
-                nudPrice.Width = 80;
-                nudPrice.Location = new Point(60, 55);
 
                 // ✅ Floor Capacity Label
                 Label lblCapacity = new Label();
@@ -131,8 +113,6 @@ namespace FERRY_BOOKING.Dialogs
                 group.Controls.Add(nudRow);
                 group.Controls.Add(lblColumn);
                 group.Controls.Add(nudColumn);
-                group.Controls.Add(lblPrice);
-                group.Controls.Add(nudPrice);
                 group.Controls.Add(lblCapacity);
 
                 flowFloors.Controls.Add(group);
@@ -145,71 +125,7 @@ namespace FERRY_BOOKING.Dialogs
 
 
 
-        private void GenerateTripsInputs(int numberOfTrips)
-        {
-            flowTrips.Controls.Clear();
-
-            string origin = tbOriginPort.Text.Trim();
-            string destination = tbDestinationPort.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(origin) || string.IsNullOrWhiteSpace(destination))
-            {
-                MessageBox.Show("Please set the Origin and Destination ports first.",
-                    "Missing Route", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            for (int i = 1; i <= numberOfTrips; i++)
-            {
-                GroupBox group = new GroupBox();
-                group.Text = $"Trip {i}";
-                group.Width = flowTrips.Width - 25;
-                group.Height = 110;
-                group.Padding = new Padding(10);
-
-                // 🔄 AUTO ALTERNATE ROUTE
-                string tripOrigin = (i % 2 == 1) ? origin : destination;
-                string tripDestination = (i % 2 == 1) ? destination : origin;
-
-                Label lblRoute = new Label();
-                lblRoute.Text = $"{tripOrigin} → {tripDestination}";
-                lblRoute.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-                lblRoute.AutoSize = true;
-                lblRoute.Location = new Point(10, 25);
-
-                Label lblDT = new Label();
-                lblDT.Text = "Departure:";
-                lblDT.AutoSize = true;
-                lblDT.Location = new Point(10, 55);
-
-                DateTimePicker dtDeparture = new DateTimePicker();
-                dtDeparture.Name = $"dtDeparture_{i}";
-                dtDeparture.Format = DateTimePickerFormat.Time;
-                dtDeparture.ShowUpDown = true;
-                dtDeparture.Location = new Point(80, 50);
-                dtDeparture.Width = 100;
-
-                Label lblAT = new Label();
-                lblAT.Text = "Arrival:";
-                lblAT.AutoSize = true;
-                lblAT.Location = new Point(200, 55);
-
-                DateTimePicker dtArrival = new DateTimePicker();
-                dtArrival.Name = $"dtArrival_{i}";
-                dtArrival.Format = DateTimePickerFormat.Time;
-                dtArrival.ShowUpDown = true;
-                dtArrival.Location = new Point(255, 50);
-                dtArrival.Width = 100;
-
-                group.Controls.Add(lblRoute);
-                group.Controls.Add(lblDT);
-                group.Controls.Add(dtDeparture);
-                group.Controls.Add(lblAT);
-                group.Controls.Add(dtArrival);
-
-                flowTrips.Controls.Add(group);
-            }
-        }
+        
 
        
         byte[] coFileBytes;   // Certificate of Ownership
@@ -285,23 +201,15 @@ namespace FERRY_BOOKING.Dialogs
                 fpFileBytes = File.ReadAllBytes(openFile.FileName);
             }
         }
-
         public class FloorLayout
         {
             public int FloorNumber { get; set; }
             public int Rows { get; set; }
             public int Columns { get; set; }
-            public decimal Price { get; set; }
         }
 
-        public class TripSchedule
-        {
-            public int TripNumber { get; set; }
-            public string Origin { get; set; }        // NEW
-            public string Destination { get; set; }   // NEW
-            public DateTime DepartureTime { get; set; }
-            public DateTime ArrivalTime { get; set; }
-        }
+
+     
 
 
 
@@ -314,7 +222,7 @@ namespace FERRY_BOOKING.Dialogs
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            // --- VALIDATION ---
+            // --- BASIC VALIDATION ---
             if (string.IsNullOrWhiteSpace(tbFerryName.Text) ||
                 string.IsNullOrWhiteSpace(tbFerryCode.Text))
             {
@@ -328,7 +236,7 @@ namespace FERRY_BOOKING.Dialogs
                 return;
             }
 
-            // --- GET FLOOR DATA ---
+            // --- GET FLOOR DATA (NO PRICE) ---
             List<FloorLayout> floors = new List<FloorLayout>();
             int totalCapacity = 0;
 
@@ -336,51 +244,32 @@ namespace FERRY_BOOKING.Dialogs
             {
                 var row = flowFloors.Controls.Find($"nudRow_{i}", true).FirstOrDefault() as NumericUpDown;
                 var col = flowFloors.Controls.Find($"nudColumn_{i}", true).FirstOrDefault() as NumericUpDown;
-                var price = flowFloors.Controls.Find($"nudPrice_{i}", true).FirstOrDefault() as NumericUpDown;
 
-                if (row == null || col == null || price == null)
+                if (row == null || col == null)
                     continue;
 
-                totalCapacity += (int)row.Value * (int)col.Value;
+                int r = (int)row.Value;
+                int c = (int)col.Value;
+
+                totalCapacity += r * c;
 
                 floors.Add(new FloorLayout
                 {
                     FloorNumber = i,
-                    Rows = (int)row.Value,
-                    Columns = (int)col.Value,
-                    Price = price.Value
+                    Rows = r,
+                    Columns = c
                 });
-            }
-
-            // --- GET TRIP DATA ---
-            List<TripSchedule> trips = new List<TripSchedule>();
-            string origin = tbOriginPort.Text.Trim();
-            string destination = tbDestinationPort.Text.Trim();
-
-            for (int i = 1; i <= nudTrips.Value; i++)
-            {
-                var dep = flowTrips.Controls.Find($"dtDeparture_{i}", true).FirstOrDefault() as DateTimePicker;
-                var arr = flowTrips.Controls.Find($"dtArrival_{i}", true).FirstOrDefault() as DateTimePicker;
-
-                if (dep == null || arr == null) continue;
-
-                string o = (i % 2 == 1) ? origin : destination;
-                string d = (i % 2 == 1) ? destination : origin;
-
-                trips.Add(new TripSchedule { TripNumber = i, Origin = o, Destination = d, DepartureTime = dep.Value, ArrivalTime = arr.Value });
             }
 
             DATABASE.FerryOwnerHelper FerryHelper = new DATABASE.FerryOwnerHelper();
 
-            // --- INSERT INTO DB ---
-            // Pass this.OwnerID as the first parameter to RegisterFerry
+            // --- INSERT INTO DATABASE ---
             bool success = FerryHelper.RegisterFerry(
                 tbFerryName.Text.Trim(),
                 tbFerryCode.Text.Trim(),
                 floors.Count,
                 totalCapacity,
                 floors,
-                trips,
                 coFileBytes,
                 vrFileBytes,
                 scFileBytes,
@@ -388,21 +277,17 @@ namespace FERRY_BOOKING.Dialogs
                 poFileBytes,
                 fpFileBytes,
                 this.OwnerID
-
-               
             );
 
             if (success)
             {
-                this.Close();
                 MessageBox.Show("Ferry registered successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Close();
             }
             else
             {
                 MessageBox.Show("Error occurred while saving ferry.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-
         }
 
     }

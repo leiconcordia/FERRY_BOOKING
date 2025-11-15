@@ -17,7 +17,7 @@ CREATE TABLE Ferry (
     FerryName VARCHAR(100) NOT NULL,
     TotalFloors INT NOT NULL,
     TotalCapacity INT NOT NULL DEFAULT 0,
-    Status VARCHAR(20) NOT NULL DEFAULT 'Active',
+    Status VARCHAR(20) NOT NULL DEFAULT 'Inactive',
     DateRegistered DATETIME DEFAULT GETDATE()
 );
 
@@ -28,7 +28,6 @@ CREATE TABLE FerryFloor (
     Rows INT NOT NULL,
     Columns INT NOT NULL,
     Capacity AS (Rows * Columns) PERSISTED,
-    Price DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID)
 );
 
@@ -97,6 +96,18 @@ CREATE TABLE FerryRoute (
     CONSTRAINT UQ_FerryRoute UNIQUE(FerryID, RouteID)
 );
 
+CREATE TABLE TripFloorPrice (
+    TripFloorPriceID INT IDENTITY(1,1) PRIMARY KEY,
+    TripID INT NOT NULL,
+    FerryID INT NOT NULL,
+    FloorNumber INT NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+
+    FOREIGN KEY (TripID) REFERENCES Trip(TripID),
+    FOREIGN KEY (FerryID, FloorNumber) REFERENCES FerryFloor(FerryID, FloorNumber)
+);
+
+
 
 
 
@@ -110,26 +121,31 @@ SELECT
     f.FerryCode,
     f.FerryName,
     f.TotalCapacity AS Capacity,
-    f.Status,      
-    f.OwnerID,  -- included to filter per owner
-    -- SEAT INFO PER FLOOR (one line per floor)
+    f.Status,
+    f.OwnerID,
+
+    -- SEAT INFO PER FLOOR (without Price)
     STUFF((
         SELECT CHAR(10) + 'Floor ' + CAST(ff.FloorNumber AS VARCHAR(5)) + 
-               ' ' + CAST(ff.Rows AS VARCHAR(5)) + 'x' + CAST(ff.Columns AS VARCHAR(5)) +
-               ' - Price: P' + CAST(ff.Price AS VARCHAR(20))
+               ' ' + CAST(ff.Rows AS VARCHAR(5)) + 'x' + CAST(ff.Columns AS VARCHAR(5))
         FROM FerryFloor ff
         WHERE ff.FerryID = f.FerryID
         ORDER BY ff.FloorNumber
         FOR XML PATH(''), TYPE
     ).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS Seats,
 
-    -- ONLY ONE ROUTE (first route) with --> arrow
-    (SELECT TOP 1 r.Origin + ' <--> ' + r.Destination
-     FROM Trip t
-     INNER JOIN Route r ON r.RouteID = t.RouteID
-     WHERE t.FerryID = f.FerryID
-     ORDER BY t.TripID ASC) AS Route
+    -- ROUTE ASSIGNED FROM FerryRoute TABLE
+    ISNULL((
+        SELECT TOP 1 
+            r.Origin + ' <--> ' + r.Destination
+        FROM FerryRoute fr
+        INNER JOIN Route r ON r.RouteID = fr.RouteID
+        WHERE fr.FerryID = f.FerryID
+        ORDER BY fr.FerryRouteID ASC
+    ), 'No trips / No route') AS Route
+
 FROM Ferry f;
+
 
         
      
@@ -171,7 +187,7 @@ CREATE OR ALTER VIEW vw_RouteDisplay AS
 SELECT 
     fr.FerryRouteID AS RouteID,  -- unique per ferry-route assignment
     f.FerryName AS Ferry,
-    r.Origin + ' → ' + r.Destination AS Route,
+    r.Origin + ' -> ' + r.Destination AS Route,
     r.Distance,
     r.Duration
 FROM FerryRoute fr

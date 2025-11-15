@@ -135,14 +135,14 @@ namespace FERRY_BOOKING.DATABASE
 
 
 
+
+
         public bool RegisterFerry(
-              
-            string ferryName, 
-            string ferryCode, 
-            int totalFloors, 
+            string ferryName,
+            string ferryCode,
+            int totalFloors,
             int totalCapacity,
             List<FloorLayout> floors,
-            List<TripSchedule> trips,
             byte[] coFileBytes,
             byte[] vrFileBytes,
             byte[] scFileBytes,
@@ -150,10 +150,9 @@ namespace FERRY_BOOKING.DATABASE
             byte[] poFileBytes,
             byte[] fpFileBytes,
             int ownerID
-
-            )
+        )
         {
-            using (SqlConnection conn = db.GetConnection()) // << use your existing helper
+            using (SqlConnection conn = db.GetConnection())
             {
                 conn.Open();
                 SqlTransaction transaction = conn.BeginTransaction();
@@ -173,50 +172,20 @@ namespace FERRY_BOOKING.DATABASE
                         cmd.Parameters.AddWithValue("@capacity", totalCapacity);
                         cmd.Parameters.AddWithValue("@owner", ownerID);
 
-
                         ferryID = (int)cmd.ExecuteScalar();
                     }
 
-                    // Insert Floor Layouts
+                    // Insert Floor Layouts (NO PRICE)
                     foreach (var f in floors)
                     {
                         using (SqlCommand cmd = new SqlCommand(@"
-                    INSERT INTO FerryFloor (FerryID, FloorNumber, Rows, Columns, Price)
-                    VALUES (@fid, @num, @rows, @cols, @price)", conn, transaction))
+                    INSERT INTO FerryFloor (FerryID, FloorNumber, Rows, Columns)
+                    VALUES (@fid, @num, @rows, @cols)", conn, transaction))
                         {
                             cmd.Parameters.AddWithValue("@fid", ferryID);
                             cmd.Parameters.AddWithValue("@num", f.FloorNumber);
                             cmd.Parameters.AddWithValue("@rows", f.Rows);
                             cmd.Parameters.AddWithValue("@cols", f.Columns);
-                            cmd.Parameters.AddWithValue("@price", f.Price);
-
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-
-                    // Insert Route + Trips
-                    foreach (var t in trips)
-                    {
-                        int routeID;
-                        using (SqlCommand cmd = new SqlCommand(@"
-                    IF NOT EXISTS (SELECT 1 FROM Route WHERE Origin=@o AND Destination=@d)
-                        INSERT INTO Route (Origin, Destination) VALUES (@o, @d)
-                    SELECT RouteID FROM Route WHERE Origin=@o AND Destination=@d", conn, transaction))
-                        {
-                            cmd.Parameters.AddWithValue("@o", t.Origin);
-                            cmd.Parameters.AddWithValue("@d", t.Destination);
-
-                            routeID = (int)cmd.ExecuteScalar();
-                        }
-
-                        using (SqlCommand cmd = new SqlCommand(@"
-                    INSERT INTO Trip (FerryID, RouteID, DepartureTime, ArrivalTime)
-                    VALUES (@fid, @rid, @dep, @arr)", conn, transaction))
-                        {
-                            cmd.Parameters.AddWithValue("@fid", ferryID);
-                            cmd.Parameters.AddWithValue("@rid", routeID);
-                            cmd.Parameters.AddWithValue("@dep", t.DepartureTime);
-                            cmd.Parameters.AddWithValue("@arr", t.ArrivalTime);
 
                             cmd.ExecuteNonQuery();
                         }
@@ -238,19 +207,19 @@ namespace FERRY_BOOKING.DATABASE
                         cmd.ExecuteNonQuery();
                     }
 
-                    // ✅ COMMIT
+                    // COMMIT
                     transaction.Commit();
                     return true;
                 }
                 catch
                 {
-                    // ❌ ROLLBACK IF ERROR
                     transaction.Rollback();
                     return false;
                 }
             }
-
         }
+
+
 
         public int GetUserIDByEmail(string email)
         {
@@ -297,6 +266,63 @@ namespace FERRY_BOOKING.DATABASE
 
             return dt;
         }
+
+
+        public bool AddRouteToFerry(int ferryID, string origin, string destination, decimal distance, TimeSpan duration)
+        {
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+
+                try
+                {
+                    // Insert route if it doesn't exist
+                    int routeID;
+                    using (SqlCommand cmd = new SqlCommand(@"
+                IF NOT EXISTS (SELECT 1 FROM Route WHERE Origin=@origin AND Destination=@destination)
+                BEGIN
+                    INSERT INTO Route (Origin, Destination, Distance, Duration)
+                    VALUES (@origin, @destination, @distance, @duration)
+                END
+                SELECT RouteID FROM Route WHERE Origin=@origin AND Destination=@destination
+            ", conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@origin", origin);
+                        cmd.Parameters.AddWithValue("@destination", destination);
+                        cmd.Parameters.AddWithValue("@distance", distance);
+
+                        // Send the TimeSpan directly for TIME column
+                        cmd.Parameters.Add("@duration", SqlDbType.Time).Value = duration;
+
+                        routeID = (int)cmd.ExecuteScalar();
+                    }
+
+                    // Assign this route to the ferry
+                    using (SqlCommand cmd = new SqlCommand(@"
+                INSERT INTO FerryRoute (FerryID, RouteID)
+                VALUES (@ferryID, @routeID)
+            ", conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@ferryID", ferryID);
+                        cmd.Parameters.AddWithValue("@routeID", routeID);
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    transaction.Commit();
+                    return true;
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    return false;
+                }
+            }
+        }
+
+
+
 
 
 

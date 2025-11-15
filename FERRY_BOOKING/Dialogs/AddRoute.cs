@@ -78,7 +78,10 @@ namespace FERRY_BOOKING.Dialogs
             string originPort = tbOriginPort.Text.Trim();
             string destinationPort = tbDestinationPort.Text.Trim();
             decimal distance = nudDistance.Value;
-            TimeSpan duration = TimeSpan.FromHours((double)nudDuration.Value);
+            int hours = (int)nudHours.Value;
+            int minutes = (int)nudMin.Value;
+            TimeSpan duration = new TimeSpan(hours, minutes, 0);
+
 
             // Validate input
             if (string.IsNullOrEmpty(originPort) || string.IsNullOrEmpty(destinationPort))
@@ -100,21 +103,29 @@ namespace FERRY_BOOKING.Dialogs
             }
 
             // Now you have all values ready: selectedFerryID, originPort, destinationPort, distance, duration
-
-            // For now, just display them
             MessageBox.Show(
-                $"Ferry: {selectedFerryName} (ID: {selectedFerryID})\n" +
-                $"Origin: {originPort}\nDestination: {destinationPort}\n" +
-                $"Distance: {distance} km\nDuration: {duration}",
-                "Route Details",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
+                    $"Ferry: {selectedFerryName} (ID: {selectedFerryID})\n" +
+                    $"Origin: {originPort}\nDestination: {destinationPort}\n" +
+                    $"Distance: {distance} km\nDuration: {duration}",
+                    "Route Details",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
 
-            // Later, call your helper method to insert into database, e.g.:
-            // helper.AddRoute(selectedFerryID, originPort, destinationPort, distance, duration);
+            DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
+            bool success = helper.AddRouteToFerry(selectedFerryID, originPort, destinationPort, distance, duration);
+
+            if (success)
+                MessageBox.Show("Route successfully added to ferry!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            
+            else
+                MessageBox.Show("Failed to add route.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            this.Close();
         }
 
-
+        
     }
+
+
+
 }

@@ -61,7 +61,7 @@ namespace FERRY_BOOKING.UC_Ferry
 
             SqlParameter[] parameters =
             {
-        new SqlParameter("@OwnerID", ownerID)
+              new SqlParameter("@OwnerID", ownerID)
     };
 
             DataTable dt = db.ExecuteDataTable(query, parameters);

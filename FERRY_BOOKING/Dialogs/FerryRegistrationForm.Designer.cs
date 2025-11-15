@@ -46,36 +46,26 @@ namespace FERRY_BOOKING.Dialogs
             label13 = new Label();
             label12 = new Label();
             nudFloorNumbers = new NumericUpDown();
-            nudTrips = new NumericUpDown();
-            label11 = new Label();
-            label10 = new Label();
-            label9 = new Label();
-            tbDestinationPort = new TextBox();
-            tbOriginPort = new TextBox();
             label8 = new Label();
             tbFerryCode = new TextBox();
             label7 = new Label();
             tbFerryName = new TextBox();
             label6 = new Label();
             label5 = new Label();
-            label4 = new Label();
-            label3 = new Label();
             label2 = new Label();
             tbCompanyName = new TextBox();
             label1 = new Label();
             flowFloors = new FlowLayoutPanel();
-            flowTrips = new FlowLayoutPanel();
             btnSave = new Button();
             btnCancel = new Button();
             RegistrationFormPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudFloorNumbers).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)nudTrips).BeginInit();
             SuspendLayout();
             // 
             // RegistrationFormPanel
             // 
             RegistrationFormPanel.AutoScroll = true;
-            RegistrationFormPanel.AutoScrollMinSize = new Size(0, 1080);
+            RegistrationFormPanel.AutoScrollMinSize = new Size(0, 700);
             RegistrationFormPanel.Controls.Add(lblTotalCapacity);
             RegistrationFormPanel.Controls.Add(btnFP);
             RegistrationFormPanel.Controls.Add(btnPO);
@@ -91,25 +81,16 @@ namespace FERRY_BOOKING.Dialogs
             RegistrationFormPanel.Controls.Add(label13);
             RegistrationFormPanel.Controls.Add(label12);
             RegistrationFormPanel.Controls.Add(nudFloorNumbers);
-            RegistrationFormPanel.Controls.Add(nudTrips);
-            RegistrationFormPanel.Controls.Add(label11);
-            RegistrationFormPanel.Controls.Add(label10);
-            RegistrationFormPanel.Controls.Add(label9);
-            RegistrationFormPanel.Controls.Add(tbDestinationPort);
-            RegistrationFormPanel.Controls.Add(tbOriginPort);
             RegistrationFormPanel.Controls.Add(label8);
             RegistrationFormPanel.Controls.Add(tbFerryCode);
             RegistrationFormPanel.Controls.Add(label7);
             RegistrationFormPanel.Controls.Add(tbFerryName);
             RegistrationFormPanel.Controls.Add(label6);
             RegistrationFormPanel.Controls.Add(label5);
-            RegistrationFormPanel.Controls.Add(label4);
-            RegistrationFormPanel.Controls.Add(label3);
             RegistrationFormPanel.Controls.Add(label2);
             RegistrationFormPanel.Controls.Add(tbCompanyName);
             RegistrationFormPanel.Controls.Add(label1);
             RegistrationFormPanel.Controls.Add(flowFloors);
-            RegistrationFormPanel.Controls.Add(flowTrips);
             RegistrationFormPanel.Location = new Point(7, 3);
             RegistrationFormPanel.Name = "RegistrationFormPanel";
             RegistrationFormPanel.Size = new Size(500, 577);
@@ -118,9 +99,10 @@ namespace FERRY_BOOKING.Dialogs
             // lblTotalCapacity
             // 
             lblTotalCapacity.AutoSize = true;
-            lblTotalCapacity.Location = new Point(5, 288);
+            lblTotalCapacity.Font = new Font("Segoe UI", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblTotalCapacity.Location = new Point(3, 304);
             lblTotalCapacity.Name = "lblTotalCapacity";
-            lblTotalCapacity.Size = new Size(85, 20);
+            lblTotalCapacity.Size = new Size(131, 31);
             lblTotalCapacity.TabIndex = 56;
             lblTotalCapacity.Text = "Capacity : 0";
             // 
@@ -128,7 +110,7 @@ namespace FERRY_BOOKING.Dialogs
             // 
             btnFP.BackColor = Color.FromArgb(11, 94, 235);
             btnFP.ForeColor = Color.White;
-            btnFP.Location = new Point(308, 971);
+            btnFP.Location = new Point(306, 688);
             btnFP.Name = "btnFP";
             btnFP.Size = new Size(112, 40);
             btnFP.TabIndex = 55;
@@ -140,7 +122,7 @@ namespace FERRY_BOOKING.Dialogs
             // 
             btnPO.BackColor = Color.FromArgb(11, 94, 235);
             btnPO.ForeColor = Color.White;
-            btnPO.Location = new Point(308, 905);
+            btnPO.Location = new Point(306, 622);
             btnPO.Name = "btnPO";
             btnPO.Size = new Size(112, 40);
             btnPO.TabIndex = 54;
@@ -152,7 +134,7 @@ namespace FERRY_BOOKING.Dialogs
             // 
             btnID.BackColor = Color.FromArgb(11, 94, 235);
             btnID.ForeColor = Color.White;
-            btnID.Location = new Point(308, 848);
+            btnID.Location = new Point(306, 565);
             btnID.Name = "btnID";
             btnID.Size = new Size(112, 40);
             btnID.TabIndex = 53;
@@ -164,7 +146,7 @@ namespace FERRY_BOOKING.Dialogs
             // 
             btnSC.BackColor = Color.FromArgb(11, 94, 235);
             btnSC.ForeColor = Color.White;
-            btnSC.Location = new Point(308, 792);
+            btnSC.Location = new Point(306, 509);
             btnSC.Name = "btnSC";
             btnSC.Size = new Size(112, 40);
             btnSC.TabIndex = 52;
@@ -176,7 +158,7 @@ namespace FERRY_BOOKING.Dialogs
             // 
             btnVR.BackColor = Color.FromArgb(11, 94, 235);
             btnVR.ForeColor = Color.White;
-            btnVR.Location = new Point(308, 733);
+            btnVR.Location = new Point(306, 450);
             btnVR.Name = "btnVR";
             btnVR.Size = new Size(112, 40);
             btnVR.TabIndex = 51;
@@ -188,7 +170,7 @@ namespace FERRY_BOOKING.Dialogs
             // 
             btnCO.BackColor = Color.FromArgb(11, 94, 235);
             btnCO.ForeColor = Color.White;
-            btnCO.Location = new Point(308, 674);
+            btnCO.Location = new Point(306, 391);
             btnCO.Name = "btnCO";
             btnCO.Size = new Size(112, 40);
             btnCO.TabIndex = 50;
@@ -201,7 +183,7 @@ namespace FERRY_BOOKING.Dialogs
             labelfp.AutoSize = true;
             labelfp.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             labelfp.ForeColor = Color.FromArgb(11, 94, 235);
-            labelfp.Location = new Point(5, 971);
+            labelfp.Location = new Point(3, 688);
             labelfp.Name = "labelfp";
             labelfp.Size = new Size(84, 20);
             labelfp.TabIndex = 49;
@@ -212,7 +194,7 @@ namespace FERRY_BOOKING.Dialogs
             labelpo.AutoSize = true;
             labelpo.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             labelpo.ForeColor = Color.FromArgb(11, 94, 235);
-            labelpo.Location = new Point(5, 915);
+            labelpo.Location = new Point(3, 632);
             labelpo.Name = "labelpo";
             labelpo.Size = new Size(131, 20);
             labelpo.TabIndex = 48;
@@ -223,7 +205,7 @@ namespace FERRY_BOOKING.Dialogs
             label16.AutoSize = true;
             label16.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label16.ForeColor = Color.FromArgb(11, 94, 235);
-            label16.Location = new Point(0, 743);
+            label16.Location = new Point(-2, 460);
             label16.Name = "label16";
             label16.Size = new Size(253, 20);
             label16.TabIndex = 47;
@@ -234,7 +216,7 @@ namespace FERRY_BOOKING.Dialogs
             label15.AutoSize = true;
             label15.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label15.ForeColor = Color.FromArgb(11, 94, 235);
-            label15.Location = new Point(5, 802);
+            label15.Location = new Point(3, 519);
             label15.Name = "label15";
             label15.Size = new Size(122, 20);
             label15.TabIndex = 46;
@@ -245,7 +227,7 @@ namespace FERRY_BOOKING.Dialogs
             label14.AutoSize = true;
             label14.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label14.ForeColor = Color.FromArgb(11, 94, 235);
-            label14.Location = new Point(0, 858);
+            label14.Location = new Point(-2, 575);
             label14.Name = "label14";
             label14.Size = new Size(148, 20);
             label14.TabIndex = 45;
@@ -256,7 +238,7 @@ namespace FERRY_BOOKING.Dialogs
             label13.AutoSize = true;
             label13.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label13.ForeColor = Color.FromArgb(11, 94, 235);
-            label13.Location = new Point(5, 681);
+            label13.Location = new Point(3, 398);
             label13.Name = "label13";
             label13.Size = new Size(169, 20);
             label13.TabIndex = 44;
@@ -267,7 +249,7 @@ namespace FERRY_BOOKING.Dialogs
             label12.AutoSize = true;
             label12.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label12.ForeColor = Color.FromArgb(11, 94, 235);
-            label12.Location = new Point(5, 628);
+            label12.Location = new Point(3, 345);
             label12.Name = "label12";
             label12.Size = new Size(210, 28);
             label12.TabIndex = 43;
@@ -280,61 +262,6 @@ namespace FERRY_BOOKING.Dialogs
             nudFloorNumbers.Size = new Size(150, 27);
             nudFloorNumbers.TabIndex = 40;
             nudFloorNumbers.ValueChanged += nudFloorNumbers_ValueChanged;
-            // 
-            // nudTrips
-            // 
-            nudTrips.Location = new Point(0, 474);
-            nudTrips.Name = "nudTrips";
-            nudTrips.Size = new Size(150, 27);
-            nudTrips.TabIndex = 39;
-            nudTrips.ValueChanged += nudTrips_ValueChanged;
-            // 
-            // label11
-            // 
-            label11.AutoSize = true;
-            label11.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label11.ForeColor = Color.FromArgb(11, 94, 235);
-            label11.Location = new Point(-4, 442);
-            label11.Name = "label11";
-            label11.Size = new Size(168, 20);
-            label11.TabIndex = 38;
-            label11.Text = "Number of trips per day";
-            // 
-            // label10
-            // 
-            label10.AutoSize = true;
-            label10.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label10.ForeColor = Color.FromArgb(11, 94, 235);
-            label10.Location = new Point(173, 339);
-            label10.Name = "label10";
-            label10.Size = new Size(115, 20);
-            label10.TabIndex = 37;
-            label10.Text = "Destination Port";
-            // 
-            // label9
-            // 
-            label9.AutoSize = true;
-            label9.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label9.ForeColor = Color.FromArgb(11, 94, 235);
-            label9.Location = new Point(3, 339);
-            label9.Name = "label9";
-            label9.Size = new Size(80, 20);
-            label9.TabIndex = 36;
-            label9.Text = "Origin Port";
-            // 
-            // tbDestinationPort
-            // 
-            tbDestinationPort.Location = new Point(173, 362);
-            tbDestinationPort.Name = "tbDestinationPort";
-            tbDestinationPort.Size = new Size(125, 27);
-            tbDestinationPort.TabIndex = 35;
-            // 
-            // tbOriginPort
-            // 
-            tbOriginPort.Location = new Point(3, 362);
-            tbOriginPort.Name = "tbOriginPort";
-            tbOriginPort.Size = new Size(125, 27);
-            tbOriginPort.TabIndex = 34;
             // 
             // label8
             // 
@@ -394,28 +321,6 @@ namespace FERRY_BOOKING.Dialogs
             label5.TabIndex = 28;
             label5.Text = "Ferry Company";
             // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label4.ForeColor = Color.FromArgb(11, 94, 235);
-            label4.Location = new Point(-5, 414);
-            label4.Name = "label4";
-            label4.Size = new Size(169, 28);
-            label4.TabIndex = 27;
-            label4.Text = "Schedule Details";
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label3.ForeColor = Color.FromArgb(11, 94, 235);
-            label3.Location = new Point(0, 311);
-            label3.Name = "label3";
-            label3.Size = new Size(140, 28);
-            label3.TabIndex = 26;
-            label3.Text = "Route Details";
-            // 
             // label2
             // 
             label2.AutoSize = true;
@@ -450,19 +355,9 @@ namespace FERRY_BOOKING.Dialogs
             flowFloors.FlowDirection = FlowDirection.TopDown;
             flowFloors.Location = new Point(-2, 185);
             flowFloors.Name = "flowFloors";
-            flowFloors.Size = new Size(480, 100);
+            flowFloors.Size = new Size(480, 116);
             flowFloors.TabIndex = 41;
             flowFloors.WrapContents = false;
-            // 
-            // flowTrips
-            // 
-            flowTrips.AutoScroll = true;
-            flowTrips.FlowDirection = FlowDirection.TopDown;
-            flowTrips.Location = new Point(3, 507);
-            flowTrips.Name = "flowTrips";
-            flowTrips.Size = new Size(480, 118);
-            flowTrips.TabIndex = 42;
-            flowTrips.WrapContents = false;
             // 
             // btnSave
             // 
@@ -503,29 +398,19 @@ namespace FERRY_BOOKING.Dialogs
             RegistrationFormPanel.ResumeLayout(false);
             RegistrationFormPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudFloorNumbers).EndInit();
-            ((System.ComponentModel.ISupportInitialize)nudTrips).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
         private Panel RegistrationFormPanel;
-        private FlowLayoutPanel flowTrips;
         private NumericUpDown nudFloorNumbers;
         private FlowLayoutPanel flowFloors;
-        private NumericUpDown nudTrips;
-        private Label label11;
-        private Label label10;
-        private Label label9;
-        private TextBox tbDestinationPort;
-        private TextBox tbOriginPort;
         private Label label8;
         private TextBox tbFerryCode;
         private Label label7;
         private TextBox tbFerryName;
         private Label label6;
         private Label label5;
-        private Label label4;
-        private Label label3;
         private Label label2;
         private TextBox tbCompanyName;
         private Label label1;

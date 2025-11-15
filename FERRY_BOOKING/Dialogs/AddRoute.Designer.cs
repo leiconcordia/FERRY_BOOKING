@@ -30,7 +30,7 @@
         {
             btnAddRoute = new Button();
             btnCancel = new Button();
-            nudDuration = new NumericUpDown();
+            nudHours = new NumericUpDown();
             nudDistance = new NumericUpDown();
             label6 = new Label();
             label4 = new Label();
@@ -42,8 +42,12 @@
             label5 = new Label();
             label1 = new Label();
             lblCompanyNameFleet = new Label();
-            ((System.ComponentModel.ISupportInitialize)nudDuration).BeginInit();
+            nudMin = new NumericUpDown();
+            label7 = new Label();
+            label8 = new Label();
+            ((System.ComponentModel.ISupportInitialize)nudHours).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudDistance).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudMin).BeginInit();
             SuspendLayout();
             // 
             // btnAddRoute
@@ -69,12 +73,12 @@
             btnCancel.UseVisualStyleBackColor = true;
             btnCancel.Click += btnCancel_Click;
             // 
-            // nudDuration
+            // nudHours
             // 
-            nudDuration.Location = new Point(203, 260);
-            nudDuration.Name = "nudDuration";
-            nudDuration.Size = new Size(150, 27);
-            nudDuration.TabIndex = 54;
+            nudHours.Location = new Point(205, 285);
+            nudHours.Name = "nudHours";
+            nudHours.Size = new Size(50, 27);
+            nudHours.TabIndex = 54;
             // 
             // nudDistance
             // 
@@ -181,14 +185,46 @@
             lblCompanyNameFleet.TabIndex = 43;
             lblCompanyNameFleet.Text = "\r\nAdd New Route";
             // 
+            // nudMin
+            // 
+            nudMin.Location = new Point(285, 285);
+            nudMin.Name = "nudMin";
+            nudMin.Size = new Size(50, 27);
+            nudMin.TabIndex = 57;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label7.ForeColor = Color.FromArgb(11, 94, 235);
+            label7.Location = new Point(205, 262);
+            label7.Name = "label7";
+            label7.Size = new Size(48, 20);
+            label7.TabIndex = 58;
+            label7.Text = "Hours";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label8.ForeColor = Color.FromArgb(11, 94, 235);
+            label8.Location = new Point(285, 262);
+            label8.Name = "label8";
+            label8.Size = new Size(34, 20);
+            label8.TabIndex = 59;
+            label8.Text = "Min";
+            // 
             // AddRoute
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(402, 389);
+            Controls.Add(label8);
+            Controls.Add(label7);
+            Controls.Add(nudMin);
             Controls.Add(btnAddRoute);
             Controls.Add(btnCancel);
-            Controls.Add(nudDuration);
+            Controls.Add(nudHours);
             Controls.Add(nudDistance);
             Controls.Add(label6);
             Controls.Add(label4);
@@ -202,8 +238,9 @@
             Controls.Add(lblCompanyNameFleet);
             Name = "AddRoute";
             Text = "Route";
-            ((System.ComponentModel.ISupportInitialize)nudDuration).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudHours).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudDistance).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudMin).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -212,7 +249,7 @@
 
         private Button btnAddRoute;
         private Button btnCancel;
-        private NumericUpDown nudDuration;
+        private NumericUpDown nudHours;
         private NumericUpDown nudDistance;
         private Label label6;
         private Label label4;
@@ -224,5 +261,8 @@
         private Label label5;
         private Label label1;
         private Label lblCompanyNameFleet;
+        private NumericUpDown nudMin;
+        private Label label7;
+        private Label label8;
     }
 }
