@@ -39,55 +39,66 @@ namespace FERRY_BOOKING.UC_Staff
 
             // Routes
             var routes = db.GetAllRoutes();
+          
+
             cbRoute.DataSource = routes;
             cbRoute.DisplayMember = "RouteDisplay"; // shows Origin --> Destination
             cbRoute.ValueMember = "RouteID";
 
 
         }
-        private void LoadFerries()
+        private void LoadTripsForSearch()
         {
             try
             {
                 DatabaseHelper db = new DatabaseHelper();
-                string query = "SELECT FerryID, TripID, Company, Ferry, Route, Time, Status, SeatsAndPrice FROM vw_FerrySearch WHERE 1=1";
+
+                string query = @"
+                SELECT 
+                    TripID,
+                    FerryID,
+                    Company,
+                    Ferry,
+                    Route,
+                    TripDate,
+                    DepartureTime,
+                    ArrivalTime,
+                    AvailableSeats,
+                    FerryStatus
+                FROM vw_FerrySearch
+                WHERE 1 = 1
+        ";
+
                 List<SqlParameter> parameters = new List<SqlParameter>();
 
-                // Filter by company if not "All"
+                // Filter by company
                 if (cbFerryCompany.SelectedItem != null && cbFerryCompany.Text != "All")
                 {
                     query += " AND Company = @company";
                     parameters.Add(new SqlParameter("@company", cbFerryCompany.Text));
                 }
 
-                // Filter by route if not "All"
+                // Filter by route
                 if (cbRoute.SelectedItem != null && cbRoute.Text != "All")
                 {
                     query += " AND Route = @route";
                     parameters.Add(new SqlParameter("@route", cbRoute.Text));
                 }
 
+                // Filter by travel date
+                query += " AND TripDate = @date";
+                parameters.Add(new SqlParameter("@date", dtpTravelDate.Value.Date));
                 DataTable dt = db.ExecuteDataTable(query, parameters.ToArray());
                 dgvFerries.DataSource = dt;
 
-                // Hide ID columns but keep them in the DataGridView for reference
-                if (dgvFerries.Columns.Contains("FerryID"))
-                {
-                    dgvFerries.Columns["FerryID"].Visible = false;
-                    dgvFerries.Columns["FerryID"].ReadOnly = true;
-                }
-
+                // Hide IDs
                 if (dgvFerries.Columns.Contains("TripID"))
-                {
                     dgvFerries.Columns["TripID"].Visible = false;
-                    dgvFerries.Columns["TripID"].ReadOnly = true;
-                }
 
-                // Autosize for multi-line Seats
-                dgvFerries.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
-                dgvFerries.Columns["SeatsAndPrice"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+                if (dgvFerries.Columns.Contains("FerryID"))
+                    dgvFerries.Columns["FerryID"].Visible = false;
 
-                // Add Action button (if not exists)
+                // Add Book button
                 if (!dgvFerries.Columns.Contains("Action"))
                 {
                     DataGridViewButtonColumn btn = new DataGridViewButtonColumn();
@@ -98,28 +109,27 @@ namespace FERRY_BOOKING.UC_Staff
                     dgvFerries.Columns.Add(btn);
                 }
 
-                // Move Action to the rightmost column
                 dgvFerries.Columns["Action"].DisplayIndex = dgvFerries.Columns.Count - 1;
 
-                // Ensure event is attached
                 dgvFerries.CellContentClick -= dgvFerries_CellContentClick;
                 dgvFerries.CellContentClick += dgvFerries_CellContentClick;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading ferries: " + ex.Message);
+                MessageBox.Show("Error loading trips: " + ex.Message);
             }
         }
+
 
 
 
 
         private void btnSearchFerries_Click(object sender, EventArgs e)
         {
-            LoadFerries();
-        }
-     
-            private void dgvFerries_CellContentClick(object sender, DataGridViewCellEventArgs e)
+            LoadTripsForSearch();
+        }   
+
+        private void dgvFerries_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (dgvFerries.Columns[e.ColumnIndex].Name == "Action" && e.RowIndex >= 0)
             {

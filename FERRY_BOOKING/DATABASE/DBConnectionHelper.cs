@@ -14,8 +14,22 @@ namespace FERRY_BOOKING.DATABASE
         {
             return new SqlConnection(connectionString);
         }
+        public int ExecuteNonQuery(string sql, params SqlParameter[] parameters)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                if (parameters != null)
+                    cmd.Parameters.AddRange(parameters);
 
-  
+                conn.Open();
+                return cmd.ExecuteNonQuery(); // returns number of affected rows
+            }
+        }
+
+
+
+
 
         public bool ExecuteQuery(string query, SqlParameter[] parameters)
         {

@@ -81,10 +81,11 @@ CREATE TABLE BookedSeats
     BookedSeatID INT IDENTITY(1,1) PRIMARY KEY,
     TripID INT NOT NULL,
     FloorID INT NOT NULL,
+    FerryID INT NOT NULL,
     SeatNumber VARCHAR(10) NULL,   -- optional, if you track exact seat
     BookingDate DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (TripID) REFERENCES Trip(TripID),
-    FOREIGN KEY (FloorID) REFERENCES FerryFloor(FloorID)
+    FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID)
 );
 
 CREATE TABLE FerryRoute (
@@ -106,6 +107,20 @@ CREATE TABLE TripFloorPrice (
     FOREIGN KEY (TripID) REFERENCES Trip(TripID),
     FOREIGN KEY (FerryID, FloorNumber) REFERENCES FerryFloor(FerryID, FloorNumber)
 );
+CREATE TABLE Schedule (
+    ScheduleID INT IDENTITY(1,1) PRIMARY KEY,
+    FerryID INT NOT NULL,
+    RouteID INT NOT NULL,
+    DepartureTime TIME NOT NULL,
+    ArrivalTime TIME NOT NULL,
+    DaysOfWeek VARCHAR(100) NOT NULL,   -- e.g. 'Mon,Tue,Wed,Thu,Fri'
+    StartDate DATE NOT NULL DEFAULT GETDATE(),
+    EndDate DATE NULL,                 -- null = ongoing
+    IsActive BIT NOT NULL DEFAULT 1,
+    FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID),
+    FOREIGN KEY (RouteID) REFERENCES Route(RouteID)
+);
+
 
 
 
@@ -154,60 +169,41 @@ FROM Ferry f;
 
 CREATE OR ALTER VIEW vw_FerrySearch AS
 SELECT
+    t.TripID,
     f.FerryID,
     u.CompanyName AS Company,
     f.FerryName AS Ferry,
-    r.Origin + ' --> ' + r.Destination AS Route,
-    FORMAT(t.DepartureTime,'hh:mm tt') + ' - ' + FORMAT(t.ArrivalTime,'hh:mm tt') AS Time,
-    f.Status,
-    -- Seats & Price per floor (multi-line)
-    STUFF((
-        SELECT CHAR(13) + CHAR(10) +
-               'Floor ' + CAST(ff.FloorNumber AS VARCHAR(5)) +
-               ' - ' + 
-               CAST(ff.Capacity - ISNULL(bs.BookedCount,0) AS VARCHAR(5)) + '/' + CAST(ff.Capacity AS VARCHAR(5)) +
-               ' - Price: P' + CAST(ff.Price AS VARCHAR(10))
-        FROM FerryFloor ff
-        LEFT JOIN (
-            SELECT FloorID, TripID, COUNT(*) AS BookedCount
-            FROM BookedSeats
-            GROUP BY FloorID, TripID
-        ) bs ON bs.FloorID = ff.FloorID AND bs.TripID = t.TripID
-        WHERE ff.FerryID = f.FerryID
-        ORDER BY ff.FloorNumber
-        FOR XML PATH(''), TYPE
-    ).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS SeatsAndPrice
-FROM Ferry f
-INNER JOIN Users u ON u.UserID = f.OwnerID
-INNER JOIN Trip t ON t.FerryID = f.FerryID
-INNER JOIN Route r ON r.RouteID = t.RouteID;
+    CONCAT(r.Origin, ' -> ', r.Destination) AS Route,
+    CAST(t.TripDate AS date) AS TripDate, 
+    t.DepartureTime,
+    t.ArrivalTime,
+    f.Status AS FerryStatus,
 
-//Route Table
-CREATE OR ALTER VIEW vw_RouteDisplay AS
-SELECT 
-    fr.FerryRouteID AS RouteID,  -- unique per ferry-route assignment
-    f.FerryName AS Ferry,
-    r.Origin + ' -> ' + r.Destination AS Route,
-    r.Distance,
-    r.Duration
-FROM FerryRoute fr
-INNER JOIN Ferry f ON fr.FerryID = f.FerryID
-INNER JOIN Route r ON fr.RouteID = r.RouteID;
+    -- Total seats = SUM of all floor capacities
+    (SELECT SUM(capacity)
+     FROM FerryFloor ff
+     WHERE ff.FerryID = f.FerryID) AS TotalSeats,
 
-//Trip Display
-CREATE OR ALTER VIEW vw_TripDisplay AS
-SELECT 
-    t.TripID,
-    f.FerryName AS Ferry,
-    (r.Origin + ' → ' + r.Destination) AS Route,
-    FORMAT(t.DepartureTime, 'hh:mm tt') AS Departure,
-    FORMAT(t.ArrivalTime, 'hh:mm tt') AS Arrival,
-    t.StartDate,
-    t.EndDate,
-    t.DaysOfWeek
+    -- Booked seats for this specific trip
+    (SELECT COUNT(*)
+     FROM BookedSeats bs
+     WHERE bs.TripID = t.TripID) AS BookedSeats,
+
+    -- Available seats
+    (
+        (SELECT SUM(capacity)
+         FROM FerryFloor ff
+         WHERE ff.FerryID = f.FerryID)
+        -
+        (SELECT COUNT(*)
+         FROM BookedSeats bs
+         WHERE bs.TripID = t.TripID)
+    ) AS AvailableSeats
+
 FROM Trip t
-INNER JOIN Ferry f ON f.FerryID = t.FerryID
-INNER JOIN Route r ON r.RouteID = t.RouteID;
+JOIN Ferry f ON t.FerryID = f.FerryID
+JOIN Users u ON f.OwnerID = u.UserID
+JOIN Route r ON t.RouteID = r.RouteID;
 
 
   

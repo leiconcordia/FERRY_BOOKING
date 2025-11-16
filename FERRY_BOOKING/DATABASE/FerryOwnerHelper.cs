@@ -322,6 +322,117 @@ namespace FERRY_BOOKING.DATABASE
         }
 
 
+        public int InsertSchedule(
+            int ferryID,
+            int routeID,
+            TimeSpan departure,
+            TimeSpan arrival,
+            string daysOfWeek,
+            DateTime startDate,
+            DateTime endDate,
+            bool isActive
+                 )
+              {
+            string query = @"
+            INSERT INTO Schedule (
+                FerryID, RouteID, DepartureTime, ArrivalTime, 
+                DaysOfWeek, StartDate, EndDate, IsActive
+            )
+            VALUES (
+                @FerryID, @RouteID, @Departure, @Arrival,
+                @DaysOfWeek, @StartDate, @EndDate, @IsActive
+            );
+            SELECT SCOPE_IDENTITY();
+             ";
+
+            SqlParameter[] prms = {
+            new SqlParameter("@FerryID", ferryID),
+            new SqlParameter("@RouteID", routeID),
+            new SqlParameter("@Departure", departure),
+            new SqlParameter("@Arrival", arrival),
+            new SqlParameter("@DaysOfWeek", daysOfWeek),
+            new SqlParameter("@StartDate", startDate),
+            new SqlParameter("@EndDate", endDate),
+            new SqlParameter("@IsActive", isActive)
+            };
+
+            object result = db.ExecuteScalar(query, prms);
+            return Convert.ToInt32(result);
+        }
+
+
+        public List<int> GenerateTripsFromSchedule(
+        int scheduleID,
+        int ferryID,
+        int routeID,
+        string daysOfWeek,
+        DateTime startDate,
+        DateTime endDate,
+        TimeSpan departure,
+        TimeSpan arrival
+)
+        {
+            List<int> tripIDs = new List<int>();
+
+            // Convert "MON,TUE,FRI" → HashSet<DayOfWeek>
+            var allowed = new HashSet<DayOfWeek>(
+                daysOfWeek.Split(',')
+                    .Select(d => (DayOfWeek)Enum.Parse(typeof(DayOfWeek), d, true))
+            );
+
+            DateTime current = startDate;
+
+            while (current <= endDate)
+            {
+                if (allowed.Contains(current.DayOfWeek))
+                {
+                    // INSERT Trip
+                    string insertTrip = @"
+                INSERT INTO Trip (ScheduleID, FerryID, RouteID, TripDate, DepartureTime, ArrivalTime)
+                VALUES (@ScheduleID, @FerryID, @RouteID, @TripDate, @Departure, @Arrival);
+                SELECT SCOPE_IDENTITY();
+            ";
+
+                    SqlParameter[] prms = {
+                new SqlParameter("@ScheduleID", scheduleID),
+                new SqlParameter("@FerryID", ferryID),
+                new SqlParameter("@RouteID", routeID),
+                new SqlParameter("@TripDate", current.Date),
+                new SqlParameter("@Departure", departure),
+                new SqlParameter("@Arrival", arrival)
+            };
+
+                    int tripID = Convert.ToInt32(db.ExecuteScalar(insertTrip, prms));
+                    tripIDs.Add(tripID);
+                }
+
+                current = current.AddDays(1);
+            }
+
+            return tripIDs;
+        }
+
+        public void InsertTripFloorPrice(int tripID, int ferryID, int floorNumber, decimal price)
+        {
+            string query = @"
+        INSERT INTO TripFloorPrice (TripID, FerryID, FloorNumber, Price)
+        VALUES (@TripID, @FerryID, @FloorNumber, @Price);
+        ";
+
+                SqlParameter[] prms = {
+            new SqlParameter("@TripID", tripID),
+            new SqlParameter("@FerryID", ferryID),
+            new SqlParameter("@FloorNumber", floorNumber),
+            new SqlParameter("@Price", price)
+        };
+
+            db.ExecuteNonQuery(query, prms);
+        }
+
+
+
+
+
 
 
 

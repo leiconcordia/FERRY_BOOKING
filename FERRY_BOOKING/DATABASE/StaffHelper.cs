@@ -72,7 +72,7 @@ namespace FERRY_BOOKING.DATABASE
                         dt.Load(cmd.ExecuteReader());
 
                         // Add a new column for display purposes
-                        dt.Columns.Add("RouteDisplay", typeof(string), "Origin + ' --> ' + Destination");
+                        dt.Columns.Add("RouteDisplay", typeof(string), "Origin + ' -> ' + Destination");
 
                         return dt;
                     }
@@ -167,9 +167,13 @@ namespace FERRY_BOOKING.DATABASE
             using (SqlConnection conn = db.GetConnection())
             {
                 string query = @"
-            SELECT FloorID, FloorNumber, Rows, Columns 
-            FROM FerryFloor
-            WHERE FerryID = @FerryID
+            SELECT  FerryID,
+                    FloorNumber,
+                    Rows,
+                    Columns,
+                    Capacity
+            FROM    FerryFloor
+            WHERE   FerryID = @FerryID
             ORDER BY FloorNumber ASC";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
@@ -181,7 +185,6 @@ namespace FERRY_BOOKING.DATABASE
                 return dt;
             }
         }
-
 
         // Get ferry code for a given FerryID
         public string GetFerryCode(int ferryID)
@@ -197,18 +200,20 @@ namespace FERRY_BOOKING.DATABASE
             return result != null ? result.ToString() : "XXX";
         }
 
-        // Optional: Get booked seats for a floor if needed later
-        public List<string> GetBookedSeats(int floorID)
-        {
-            string query = "SELECT SeatCode FROM Bookings WHERE FloorID = @FloorID";
-            SqlParameter[] parameters = new SqlParameter[]
-            {
-        new SqlParameter("@FloorID", floorID)
-            };
 
-            DataTable dt = db.ExecuteDataTable(query, parameters);
-            List<string> bookedSeats = dt.AsEnumerable().Select(r => r["SeatCode"].ToString()).ToList();
-            return bookedSeats;
+
+        // Return every seat code that is already booked for a given trip
+        public List<string> GetBookedSeatsForTrip(int tripID)
+        {
+            string query =
+                "SELECT SeatNumber FROM BookedSeats WHERE TripID = @TripID";
+
+            SqlParameter[] p = { new SqlParameter("@TripID", tripID) };
+            DataTable dt = db.ExecuteDataTable(query, p);
+
+            return dt.AsEnumerable()
+                     .Select(r => r.Field<string>("SeatNumber"))
+                     .ToList();
         }
     }
 }

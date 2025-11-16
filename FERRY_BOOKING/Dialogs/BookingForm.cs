@@ -28,19 +28,22 @@ namespace FERRY_BOOKING.Dialogs
             this.TripID = tripID;
 
             LoadFerryTripDetails();
-
+            // 1. Get the list of seats already booked for THIS trip
+          
             // ✅ Only call once
             GenerateFloorButtons(this.FerryID);
             // ✅ Auto load first floor seatplan
             DataTable dt = db.GetFloors(this.FerryID);
             if (dt.Rows.Count > 0)
             {
-                int floorID = Convert.ToInt32(dt.Rows[0]["FloorID"]);
+              
                 int floorNumber = Convert.ToInt32(dt.Rows[0]["FloorNumber"]);
                 int rows = Convert.ToInt32(dt.Rows[0]["Rows"]);
                 int cols = Convert.ToInt32(dt.Rows[0]["Columns"]);
 
-                GenerateSeatPlan(floorID, floorNumber, rows, cols);
+                GenerateSeatPlan(floorNumber, rows, cols);
+                
+
 
                 // ✅ Highlight the first floor button
                 if (firstFloorButton != null)
@@ -82,27 +85,30 @@ namespace FERRY_BOOKING.Dialogs
             }
         }
 
-      
 
 
-        private void GenerateSeatPlan(int floorID, int floorNumber, int rows, int cols)
+
+        private void GenerateSeatPlan(int floorNumber, int rows, int cols)
         {
+            // Clear previous seats
             tlpSeats.Controls.Clear();
             tlpSeats.ColumnStyles.Clear();
             tlpSeats.RowStyles.Clear();
 
             tlpSeats.ColumnCount = cols;
             tlpSeats.RowCount = rows;
-
             tlpSeats.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
 
-            // Force equal space per column
+            // Equal column spacing
             for (int c = 0; c < cols; c++)
                 tlpSeats.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / cols));
 
-            // Force equal space per row
+            // Equal row spacing
             for (int r = 0; r < rows; r++)
                 tlpSeats.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / rows));
+
+            List<string> bookedSeats = db.GetBookedSeatsForTrip(this.TripID);
+            ;
 
             string ferryCode = db.GetFerryCode(this.FerryID);
             int seatCounter = 1;
@@ -111,54 +117,70 @@ namespace FERRY_BOOKING.Dialogs
             {
                 for (int c = 0; c < cols; c++)
                 {
-                    Button seat = new Button();
-                    seat.Dock = DockStyle.Fill;   // ✅ Makes seats fill the cell properly
-                    seat.Margin = new Padding(5); // ✅ Keeps space equal
+                    Button seat = new Button
+                    {
+                        Dock = DockStyle.Fill,
+                        Margin = new Padding(5)
+                    };
 
-                    string seatCode = $"{floorNumber}{ferryCode}-{seatCounter.ToString("D3")}";
+                    string seatCode = $"{floorNumber}{ferryCode}-{seatCounter:D3}";
                     seat.Text = seatCode;
                     seat.Tag = seatCode;
 
+                    // Store original color
+                    Color originalColor = SystemColors.Control;
+                    seat.BackColor = originalColor;
+
+                    // Mark booked seats
+                    if (bookedSeats.Contains(seatCode))
+                    {
+                        seat.BackColor = Color.DarkRed;
+                        seat.ForeColor = Color.White;
+                        seat.Enabled = false;
+                    }
+
+                    // Seat click event
                     seat.Click += (s, e) =>
                     {
                         Button clickedSeat = (Button)s;
-                        string seatCode = clickedSeat.Tag.ToString();
+                        string code = clickedSeat.Tag.ToString();
 
-                        // If seat is currently selected → UNSELECT it
+                        // Unselect seat
                         if (clickedSeat.BackColor == Color.LightGreen)
                         {
-                            clickedSeat.BackColor = SystemColors.Control;
+                            clickedSeat.BackColor = originalColor;
 
-                            // Remove passenger form
-                            foreach (Control control in flpPassengerInfo.Controls)
+                            var passengerControl = flpPassengerInfo.Controls
+                                .OfType<PassengerInfoControl>()
+                                .FirstOrDefault(p => p.SeatCode == code);
+
+                            if (passengerControl != null)
                             {
-                                if (control is PassengerInfoControl passenger && passenger.SeatCode == seatCode)
-                                {
-                                    flpPassengerInfo.Controls.Remove(control);
-                                    control.Dispose();
-                                    break;
-                                }
+                                flpPassengerInfo.Controls.Remove(passengerControl);
+                                passengerControl.Dispose();
                             }
+
                             return;
                         }
 
-                        // SELECT seat
+                        // Select seat
                         clickedSeat.BackColor = Color.LightGreen;
 
-                        PassengerInfoControl passengerForm = new PassengerInfoControl(seatCode);
-                        passengerForm.SeatCode = seatCode; // ✅ Needed for removal later
+                        PassengerInfoControl passengerForm = new PassengerInfoControl(code)
+                        {
+                            SeatCode = code
+                        };
                         flpPassengerInfo.Controls.Add(passengerForm);
 
                         PassengerPanel.Visible = true;
                     };
-
-
 
                     tlpSeats.Controls.Add(seat, c, r);
                     seatCounter++;
                 }
             }
         }
+
 
 
 
@@ -172,12 +194,12 @@ namespace FERRY_BOOKING.Dialogs
 
             foreach (DataRow floor in dtFloors.Rows)
             {
-                int floorID = Convert.ToInt32(floor["FloorID"]);
+               
                 int floorNumber = Convert.ToInt32(floor["FloorNumber"]);
                 int rows = Convert.ToInt32(floor["Rows"]);
                 int cols = Convert.ToInt32(floor["Columns"]);
 
-                int flrID = floorID;
+              
                 int flrNum = floorNumber;
                 int flrRows = rows;
                 int flrCols = cols;
@@ -199,7 +221,7 @@ namespace FERRY_BOOKING.Dialogs
                     btnFloor.BackColor = Color.Green;
                     btnFloor.ForeColor = Color.White;
 
-                    GenerateSeatPlan(flrID, flrNum, flrRows, flrCols);
+                    GenerateSeatPlan(flrNum, flrRows, flrCols);
                 };
 
                 flpFloors.Controls.Add(btnFloor);

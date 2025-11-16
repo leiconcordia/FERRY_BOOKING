@@ -52,6 +52,10 @@
             label7 = new Label();
             cbStatus = new ComboBox();
             flpFloorPrice = new FlowLayoutPanel();
+            label8 = new Label();
+            label9 = new Label();
+            dtpStartDate = new DateTimePicker();
+            dtpEndDate = new DateTimePicker();
             SuspendLayout();
             // 
             // cbFerry
@@ -62,7 +66,6 @@
             cbFerry.Size = new Size(242, 28);
             cbFerry.TabIndex = 47;
             cbFerry.SelectedIndexChanged += cbFerry_SelectedIndexChanged;
-
             // 
             // label1
             // 
@@ -139,7 +142,7 @@
             // 
             // dtpDepartureTime
             // 
-            dtpDepartureTime.CustomFormat = "hh:mm tt";
+            dtpDepartureTime.CustomFormat = "hh:mm ";
             dtpDepartureTime.DropDownAlign = LeftRightAlignment.Right;
             dtpDepartureTime.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             dtpDepartureTime.Format = DateTimePickerFormat.Time;
@@ -149,10 +152,10 @@
             dtpDepartureTime.Size = new Size(242, 34);
             dtpDepartureTime.TabIndex = 55;
             dtpDepartureTime.ValueChanged += dtpDepartureTime_ValueChanged;
-
             // 
             // dtpArrivalTime
             // 
+            dtpArrivalTime.CustomFormat = "hh";
             dtpArrivalTime.DropDownAlign = LeftRightAlignment.Right;
             dtpArrivalTime.Font = new Font("Segoe UI", 12F);
             dtpArrivalTime.Format = DateTimePickerFormat.Time;
@@ -272,7 +275,7 @@
             // 
             btnAddSchedule.BackColor = Color.FromArgb(11, 94, 235);
             btnAddSchedule.ForeColor = SystemColors.ButtonHighlight;
-            btnAddSchedule.Location = new Point(404, 442);
+            btnAddSchedule.Location = new Point(404, 516);
             btnAddSchedule.Name = "btnAddSchedule";
             btnAddSchedule.Size = new Size(113, 44);
             btnAddSchedule.TabIndex = 67;
@@ -283,7 +286,7 @@
             // btnCancel
             // 
             btnCancel.ForeColor = Color.FromArgb(11, 94, 235);
-            btnCancel.Location = new Point(320, 442);
+            btnCancel.Location = new Point(320, 516);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(77, 44);
             btnCancel.TabIndex = 66;
@@ -296,7 +299,7 @@
             label7.AutoSize = true;
             label7.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label7.ForeColor = Color.FromArgb(11, 94, 235);
-            label7.Location = new Point(12, 369);
+            label7.Location = new Point(12, 443);
             label7.Name = "label7";
             label7.Size = new Size(49, 20);
             label7.TabIndex = 68;
@@ -305,24 +308,78 @@
             // cbStatus
             // 
             cbStatus.FormattingEnabled = true;
-            cbStatus.Location = new Point(12, 392);
+            cbStatus.Items.AddRange(new object[] { "Active", "Inactive" });
+            cbStatus.Location = new Point(12, 466);
             cbStatus.Name = "cbStatus";
             cbStatus.Size = new Size(505, 28);
             cbStatus.TabIndex = 69;
             // 
             // flpFloorPrice
             // 
-            flpFloorPrice.Location = new Point(12, 274);
+            flpFloorPrice.Location = new Point(12, 348);
             flpFloorPrice.Name = "flpFloorPrice";
             flpFloorPrice.Size = new Size(505, 92);
             flpFloorPrice.TabIndex = 70;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label8.ForeColor = Color.FromArgb(11, 94, 235);
+            label8.Location = new Point(12, 273);
+            label8.Name = "label8";
+            label8.Size = new Size(74, 20);
+            label8.TabIndex = 71;
+            label8.Text = "Start date";
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label9.ForeColor = Color.FromArgb(11, 94, 235);
+            label9.Location = new Point(275, 273);
+            label9.Name = "label9";
+            label9.Size = new Size(68, 20);
+            label9.TabIndex = 72;
+            label9.Text = "End date";
+            // 
+            // dtpStartDate
+            // 
+            dtpStartDate.CustomFormat = "MMMM dd, yyyy";
+            dtpStartDate.DropDownAlign = LeftRightAlignment.Right;
+            dtpStartDate.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            dtpStartDate.Format = DateTimePickerFormat.Custom;
+            dtpStartDate.Location = new Point(12, 296);
+            dtpStartDate.MinDate = new DateTime(2025, 11, 16, 0, 0, 0, 0);
+            dtpStartDate.Name = "dtpStartDate";
+            dtpStartDate.ShowUpDown = false;
+            dtpStartDate.Size = new Size(242, 34);
+            dtpStartDate.TabIndex = 73;
+            dtpStartDate.Value = new DateTime(2025, 11, 16, 0, 0, 0, 0);
+            // 
+            // dtpEndDate
+            // 
+            dtpEndDate.CustomFormat = "MMMM dd, yyyy";
+            dtpEndDate.DropDownAlign = LeftRightAlignment.Right;
+            dtpEndDate.Font = new Font("Segoe UI", 12F);
+            dtpEndDate.Format = DateTimePickerFormat.Custom;
+            dtpEndDate.Location = new Point(275, 296);
+            dtpEndDate.MinDate = new DateTime(2025, 11, 16, 0, 0, 0, 0);
+            dtpEndDate.Name = "dtpEndDate";
+            dtpEndDate.Size = new Size(242, 34);
+            dtpEndDate.TabIndex = 74;
+            dtpEndDate.Value = new DateTime(2025, 11, 16, 0, 0, 0, 0);
             // 
             // AddSchedule
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ButtonFace;
-            ClientSize = new Size(533, 494);
+            ClientSize = new Size(533, 576);
+            Controls.Add(dtpEndDate);
+            Controls.Add(dtpStartDate);
+            Controls.Add(label9);
+            Controls.Add(label8);
             Controls.Add(flpFloorPrice);
             Controls.Add(cbStatus);
             Controls.Add(label7);
@@ -379,5 +436,9 @@
         private Label label7;
         private ComboBox cbStatus;
         private FlowLayoutPanel flpFloorPrice;
+        private Label label8;
+        private Label label9;
+        private DateTimePicker dtpStartDate;
+        private DateTimePicker dtpEndDate;
     }
 }

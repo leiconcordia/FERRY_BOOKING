@@ -119,6 +119,11 @@
             dtpTravelDate.Name = "dtpTravelDate";
             dtpTravelDate.Size = new Size(262, 27);
             dtpTravelDate.TabIndex = 9;
+            dtpTravelDate.Format = DateTimePickerFormat.Custom;
+            dtpTravelDate.ShowUpDown = false;
+            dtpTravelDate.CustomFormat = "MMMM dd, yyyy";
+            dtpTravelDate.MinDate = new DateTime(2025, 11, 16, 0, 0, 0, 0);
+
             // 
             // btnSearchFerries
             // 
