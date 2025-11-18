@@ -64,7 +64,8 @@ namespace FERRY_BOOKING.UC_Staff
                     DepartureTime,
                     ArrivalTime,
                     AvailableSeats,
-                    FerryStatus
+                    FerryStatus,
+                    FloorPrices
                 FROM vw_FerrySearch
                 WHERE 1 = 1
         ";

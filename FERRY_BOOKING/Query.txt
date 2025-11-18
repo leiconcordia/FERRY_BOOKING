@@ -121,6 +121,27 @@ CREATE TABLE Schedule (
     FOREIGN KEY (RouteID) REFERENCES Route(RouteID)
 );
 
+CREATE TABLE Booking
+(
+    BookingID     bigint         identity(1,1)  primary key,
+    BookingRef    varchar(20)    not null unique,
+    TripID        int            not null foreign key references Trip(TripID),
+    BookingDate   datetime       default getdate(),
+    TotalAmount   money          not null
+);
+
+CREATE TABLE BookingPassenger
+(
+    PassengerID   bigint         identity(1,1)  primary key,
+    BookingID     bigint         not null foreign key references Booking(BookingID),
+    SeatCode      varchar(20)    not null,
+    FullName      nvarchar(200)  not null,
+    Age           int            not null,
+    Gender        varchar(10)    not null,
+    Discount      varchar(20)    null,
+    Price         money          not null,
+    IDImage       varbinary(max) null
+);
 
 
 
@@ -167,43 +188,71 @@ FROM Ferry f;
 
      //Search Ferry view
 
-CREATE OR ALTER VIEW vw_FerrySearch AS
+CREATE OR ALTER VIEW vw_FerrySearch
+AS
 SELECT
     t.TripID,
     f.FerryID,
-    u.CompanyName AS Company,
-    f.FerryName AS Ferry,
-    CONCAT(r.Origin, ' -> ', r.Destination) AS Route,
-    CAST(t.TripDate AS date) AS TripDate, 
+    u.CompanyName      AS Company,
+    f.FerryName        AS Ferry,
+    CONCAT(r.Origin,' -> ',r.Destination) AS Route,
+    CAST(t.TripDate AS date) AS TripDate,
     t.DepartureTime,
     t.ArrivalTime,
-    f.Status AS FerryStatus,
+    f.Status           AS FerryStatus,
 
-    -- Total seats = SUM of all floor capacities
-    (SELECT SUM(capacity)
-     FROM FerryFloor ff
-     WHERE ff.FerryID = f.FerryID) AS TotalSeats,
+    /* existing seat counts */
+    ISNULL((SELECT SUM(capacity) FROM FerryFloor ff WHERE ff.FerryID = f.FerryID),0) AS TotalSeats,
+    ISNULL((SELECT COUNT(*)      FROM BookedSeats bs WHERE bs.TripID = t.TripID),0)   AS BookedSeats,
+    ISNULL((SELECT SUM(capacity) FROM FerryFloor ff WHERE ff.FerryID = f.FerryID),0)
+    - ISNULL((SELECT COUNT(*)    FROM BookedSeats bs WHERE bs.TripID = t.TripID),0)   AS AvailableSeats,
 
-    -- Booked seats for this specific trip
-    (SELECT COUNT(*)
-     FROM BookedSeats bs
-     WHERE bs.TripID = t.TripID) AS BookedSeats,
-
-    -- Available seats
-    (
-        (SELECT SUM(capacity)
-         FROM FerryFloor ff
-         WHERE ff.FerryID = f.FerryID)
-        -
-        (SELECT COUNT(*)
-         FROM BookedSeats bs
-         WHERE bs.TripID = t.TripID)
-    ) AS AvailableSeats
+STUFF((
+    SELECT CHAR(13)+CHAR(10) + CONCAT('Floor ', ff.FloorNumber,
+                                      ': ', booked.Booked,'/',ff.Capacity,
+                                      ' Price : ', FORMAT(tfp.Price,'N0'))
+    FROM FerryFloor ff
+    JOIN TripFloorPrice tfp
+         ON tfp.FerryID   = ff.FerryID
+        AND tfp.FloorNumber = ff.FloorNumber
+        AND tfp.TripID    = t.TripID
+    CROSS APPLY (
+        SELECT COUNT(*) AS Booked
+        FROM BookedSeats bs
+        WHERE bs.TripID  = t.TripID
+          AND bs.FerryID = ff.FerryID
+          AND LEFT(bs.SeatNumber,1) = CAST(ff.FloorNumber AS varchar(1))
+    ) booked
+    WHERE ff.FerryID = f.FerryID
+    ORDER BY ff.FloorNumber
+    FOR XML PATH(''), TYPE
+).value('.','nvarchar(max)'), 2, 0, '') AS FloorPrices
 
 FROM Trip t
-JOIN Ferry f ON t.FerryID = f.FerryID
-JOIN Users u ON f.OwnerID = u.UserID
-JOIN Route r ON t.RouteID = r.RouteID;
+JOIN Ferry  f ON f.FerryID = t.FerryID
+JOIN Users  u ON u.UserID  = f.OwnerID
+
+JOIN Route  r ON r.RouteID = t.RouteID;
+
+
+//Ferry Schedule
+CREATE OR ALTER VIEW vw_TripScheduleWithPrices AS
+SELECT
+    s.ScheduleID,
+    r.Origin + ' -> ' + r.Destination AS Route,
+    s.DepartureTime,
+    s.ArrivalTime,
+    s.DaysOfWeek,
+    s.StartDate,
+    s.EndDate,
+    (
+        SELECT STRING_AGG(CONCAT('Floor ', tfp.FloorNumber, ': ₱', tfp.Price), CHAR(13))
+        WITHIN GROUP (ORDER BY tfp.FloorNumber)
+        FROM TripFloorPrice tfp
+        WHERE tfp.TripID = s.ScheduleID
+    ) AS Price
+FROM Schedule s
+JOIN Route r ON s.RouteID = r.RouteID;
 
 
   

@@ -85,7 +85,7 @@ namespace FERRY_BOOKING.DATABASE
             }
         }
 
-        public (string Company, string FerryName, string Route, string DepartureTime) GetFerryTripDetails(int ferryID, int tripID)
+        public (string Company, string FerryName, string Route, string DepartureTime, string TripDate, string ArrivalTime, string Origin, string Destination) GetFerryTripDetails(int ferryID, int tripID)
         {
             try
             {
@@ -94,16 +94,21 @@ namespace FERRY_BOOKING.DATABASE
                     conn.Open();
 
                     string query = @"
-                SELECT 
-                    u.CompanyName,
-                    f.FerryName,
-                    r.Origin + ' --> ' + r.Destination AS Route,
-                    FORMAT(t.DepartureTime,'hh:mm tt') AS DepartureTime
-                FROM Ferry f
-                INNER JOIN Users u ON u.UserID = f.OwnerID
-                INNER JOIN Trip t ON t.FerryID = f.FerryID
-                INNER JOIN Route r ON r.RouteID = t.RouteID
-                WHERE f.FerryID = @ferryID AND t.TripID = @tripID
+                                   SELECT 
+                        u.CompanyName,
+                        f.FerryName,
+                        r.Origin,
+                        r.Destination,
+                        r.Origin + ' --> ' + r.Destination AS Route,
+                        FORMAT(t.DepartureTime,'hh:mm tt') AS DepartureTime,
+                        FORMAT(t.ArrivalTime,'hh:mm tt')   AS ArrivalTime,
+                        FORMAT(t.TripDate, 'dd MMM yyyy')  AS TripDate
+                            FROM Ferry f
+                            INNER JOIN Users u ON u.UserID = f.OwnerID
+                            INNER JOIN Trip t ON t.FerryID = f.FerryID
+                            INNER JOIN Route r ON r.RouteID = t.RouteID
+                            WHERE f.FerryID = @ferryID
+                              AND t.TripID  = @tripID;
             ";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -119,12 +124,19 @@ namespace FERRY_BOOKING.DATABASE
                                     reader["CompanyName"].ToString(),
                                     reader["FerryName"].ToString(),
                                     reader["Route"].ToString(),
-                                    reader["DepartureTime"].ToString()
+                                    reader["DepartureTime"].ToString(),
+                                    reader["TripDate"].ToString(),
+                                    reader["ArrivalTime"].ToString(),
+                                    reader["Origin"].ToString(),
+                                    reader["Destination"].ToString()
+
+
+
                                 );
                             }
                             else
-                            {
-                                return ("Not Found", "Not Found", "Not Found", "Not Found");
+                            { 
+                                return ("Not Found", "Not Found", "Not Found", "Not Found", "Not Found", "Not Found", "Not Found", "Not Found");
                             }
                         }
                     }
@@ -133,7 +145,7 @@ namespace FERRY_BOOKING.DATABASE
             catch (Exception ex)
             {
                 MessageBox.Show("Error fetching ferry trip details: " + ex.Message);
-                return ("Error", "Error", "Error", "Error");
+                return ("Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error");
             }
         }
 
@@ -200,6 +212,22 @@ namespace FERRY_BOOKING.DATABASE
             return result != null ? result.ToString() : "XXX";
         }
 
+        // Returns the price for a given trip + floor (natural key)
+        public decimal GetTripFloorPrice(int tripID, int floorNumber)
+        {
+            const string sql =
+                "SELECT Price FROM TripFloorPrice WHERE TripID = @t AND FloorNumber = @f";
+
+            SqlParameter[] p =
+            {
+        new SqlParameter("@t", tripID),
+        new SqlParameter("@f", floorNumber)
+    };
+
+            object result = db.ExecuteScalar(sql, p);
+            return result == null ? 0.00m : Convert.ToDecimal(result);
+        }
+
 
 
         // Return every seat code that is already booked for a given trip
@@ -215,5 +243,68 @@ namespace FERRY_BOOKING.DATABASE
                      .Select(r => r.Field<string>("SeatNumber"))
                      .ToList();
         }
+
+        public long SaveBookingHeader(string bookingRef, int tripID, decimal totalAmount)
+        {
+            const string sql =
+                "INSERT INTO Booking(BookingRef, TripID, TotalAmount, BookingDate) " +
+                "VALUES (@br, @t, @amt, GETDATE()); " +
+                "SELECT SCOPE_IDENTITY();";
+
+            SqlParameter[] p =
+            {
+                new SqlParameter("@br",  bookingRef),
+                new SqlParameter("@t",   tripID),
+                new SqlParameter("@amt", totalAmount)
+            };
+
+            object id = db.ExecuteScalar(sql, p);   // returns bigint
+            return Convert.ToInt64(id);
+        }
+
+        /* 2.  passenger --------------------------------------------------- */
+        public void SavePassenger(long bookingID, string seatCode, string fullName,
+                          int age, string gender, string discount,
+                          decimal price, byte[] idImage)
+        {
+            const string sql =
+                "INSERT INTO BookingPassenger(BookingID, SeatCode, FullName, Age, Gender, " +
+                "                             Discount, Price, IDImage) " +
+                "VALUES (@id, @seat, @name, @age, @g, @disc, @price, @img);";
+
+            SqlParameter[] p =
+            {
+        new SqlParameter("@id",    bookingID),
+        new SqlParameter("@seat",  seatCode),
+        new SqlParameter("@name",  fullName),
+        new SqlParameter("@age",   age),
+        new SqlParameter("@g",     gender),
+        new SqlParameter("@disc",  string.IsNullOrEmpty(discount) ? DBNull.Value : discount),
+        new SqlParameter("@price", price),
+        new SqlParameter("@img",   SqlDbType.VarBinary)   // <-- force binary
+        { Value = (object)idImage ?? DBNull.Value }
+    };
+
+            db.ExecuteNonQuery(sql, p);
+        }
+
+
+        /* 3.  seat lock ---------------------------------------------------- */
+        public void InsertBookedSeat(int tripID, int ferryID, string seatNumber)
+        {
+            const string sql =
+                "INSERT dbo.BookedSeats(TripID, FerryID, SeatNumber, BookingDate) " +
+                "VALUES (@t, @f, @seat, GETDATE())";
+
+            SqlParameter[] p =
+            {
+                new SqlParameter("@t",    tripID),
+                new SqlParameter("@f",    ferryID),
+                new SqlParameter("@seat", seatNumber)
+            };
+            db.ExecuteNonQuery(sql, p);
+        }
+    
+
     }
 }

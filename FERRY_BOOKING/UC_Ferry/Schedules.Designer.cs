@@ -31,6 +31,8 @@
             lblCompanyNameFleet = new Label();
             label1 = new Label();
             btnAddRoute = new Button();
+            dgvSchedule = new DataGridView();
+            ((System.ComponentModel.ISupportInitialize)dgvSchedule).BeginInit();
             SuspendLayout();
             // 
             // lblCompanyNameFleet
@@ -66,15 +68,26 @@
             btnAddRoute.UseVisualStyleBackColor = false;
             btnAddRoute.Click += btnAddRoute_Click;
             // 
+            // dgvSchedule
+            // 
+            dgvSchedule.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvSchedule.Location = new Point(16, 64);
+            dgvSchedule.Name = "dgvSchedule";
+            dgvSchedule.RowHeadersWidth = 51;
+            dgvSchedule.Size = new Size(1455, 353);
+            dgvSchedule.TabIndex = 45;
+            // 
             // Schedules
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(dgvSchedule);
             Controls.Add(btnAddRoute);
             Controls.Add(label1);
             Controls.Add(lblCompanyNameFleet);
             Name = "Schedules";
             Size = new Size(1496, 451);
+            ((System.ComponentModel.ISupportInitialize)dgvSchedule).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -84,5 +97,6 @@
         private Label lblCompanyNameFleet;
         private Label label1;
         private Button btnAddRoute;
+        private DataGridView dgvSchedule;
     }
 }

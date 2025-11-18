@@ -1,4 +1,6 @@
-﻿namespace FERRY_BOOKING.UC_Staff
+﻿using System.Windows.Forms;
+
+namespace FERRY_BOOKING.UC_Staff
 {
     partial class Booking
     {
@@ -172,6 +174,8 @@
             dgvFerries.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvFerries.Size = new Size(1416, 335);
             dgvFerries.TabIndex = 11;
+            dgvFerries.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+
             // 
             // Booking
             // 

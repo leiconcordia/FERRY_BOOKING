@@ -28,26 +28,29 @@
         /// </summary>
         private void InitializeComponent()
         {
-            txtFullName = new TextBox();
+            tbFullName = new TextBox();
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
             label4 = new Label();
-            txtAge = new TextBox();
-            txtPhone = new TextBox();
+            tbPhone = new TextBox();
             cmbGender = new ComboBox();
             cmbDiscount = new ComboBox();
             label5 = new Label();
             btnUploadID = new Button();
             lblSeat = new Label();
+            nudAge = new NumericUpDown();
+            lblPrice = new Label();
+            lblFileName = new Label();
+            ((System.ComponentModel.ISupportInitialize)nudAge).BeginInit();
             SuspendLayout();
             // 
-            // txtFullName
+            // tbFullName
             // 
-            txtFullName.Location = new Point(26, 84);
-            txtFullName.Name = "txtFullName";
-            txtFullName.Size = new Size(260, 27);
-            txtFullName.TabIndex = 1;
+            tbFullName.Location = new Point(26, 84);
+            tbFullName.Name = "tbFullName";
+            tbFullName.Size = new Size(260, 27);
+            tbFullName.TabIndex = 1;
             // 
             // label1
             // 
@@ -93,19 +96,12 @@
             label4.TabIndex = 5;
             label4.Text = "Contact Number: ";
             // 
-            // txtAge
+            // tbPhone
             // 
-            txtAge.Location = new Point(72, 127);
-            txtAge.Name = "txtAge";
-            txtAge.Size = new Size(96, 27);
-            txtAge.TabIndex = 6;
-            // 
-            // txtPhone
-            // 
-            txtPhone.Location = new Point(24, 225);
-            txtPhone.Name = "txtPhone";
-            txtPhone.Size = new Size(260, 27);
-            txtPhone.TabIndex = 7;
+            tbPhone.Location = new Point(24, 225);
+            tbPhone.Name = "tbPhone";
+            tbPhone.Size = new Size(260, 27);
+            tbPhone.TabIndex = 7;
             // 
             // cmbGender
             // 
@@ -144,6 +140,7 @@
             btnUploadID.TabIndex = 11;
             btnUploadID.Text = "Upload ID";
             btnUploadID.UseVisualStyleBackColor = false;
+            btnUploadID.Click += btnUploadID_Click;
             // 
             // lblSeat
             // 
@@ -156,41 +153,75 @@
             lblSeat.TabIndex = 12;
             lblSeat.Text = "Seat:";
             // 
+            // nudAge
+            // 
+            nudAge.Location = new Point(76, 133);
+            nudAge.Name = "nudAge";
+            nudAge.Size = new Size(83, 27);
+            nudAge.TabIndex = 13;
+            // 
+            // lblPrice
+            // 
+            lblPrice.AutoSize = true;
+            lblPrice.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblPrice.ForeColor = Color.FromArgb(255, 193, 7);
+            lblPrice.Location = new Point(312, 18);
+            lblPrice.Name = "lblPrice";
+            lblPrice.Size = new Size(50, 23);
+            lblPrice.TabIndex = 14;
+            lblPrice.Text = "Seat:";
+            // 
+            // lblFileName
+            // 
+            lblFileName.AutoSize = true;
+            lblFileName.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblFileName.ForeColor = Color.Black;
+            lblFileName.Location = new Point(31, 371);
+            lblFileName.Name = "lblFileName";
+            lblFileName.Size = new Size(95, 23);
+            lblFileName.TabIndex = 15;
+            lblFileName.Text = "File Name:";
+            // 
             // PassengerInfoControl
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(lblFileName);
+            Controls.Add(lblPrice);
+            Controls.Add(nudAge);
             Controls.Add(lblSeat);
             Controls.Add(btnUploadID);
             Controls.Add(label5);
             Controls.Add(cmbDiscount);
             Controls.Add(cmbGender);
-            Controls.Add(txtPhone);
-            Controls.Add(txtAge);
+            Controls.Add(tbPhone);
             Controls.Add(label4);
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(label1);
-            Controls.Add(txtFullName);
+            Controls.Add(tbFullName);
             Name = "PassengerInfoControl";
-            Size = new Size(493, 466);
+            Size = new Size(482, 445);
+            ((System.ComponentModel.ISupportInitialize)nudAge).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
-        private TextBox txtFullName;
+        private TextBox tbFullName;
         private Label label1;
         private Label label2;
         private Label label3;
         private Label label4;
         private TextBox txtAge;
-        private TextBox txtPhone;
+        private TextBox tbPhone;
         private ComboBox cmbGender;
         private ComboBox cmbDiscount;
         private Label label5;
         private Button btnUploadID;
         private Label lblSeat;
-
+        private NumericUpDown nudAge;
+        private Label lblPrice;
+        private Label lblFileName;
     }
 }

@@ -38,13 +38,19 @@
             label2 = new Label();
             label1 = new Label();
             SeatPanel = new Panel();
+            label = new Label();
             tlpSeats = new TableLayoutPanel();
             label6 = new Label();
             flpFloors = new FlowLayoutPanel();
             label5 = new Label();
             PassengerPanel = new Panel();
-            flpPassengerInfo = new FlowLayoutPanel();
+            lblTotalPrice = new Label();
+            label8 = new Label();
+            btnCancel = new Button();
+            btnGenerateTicket = new Button();
             label7 = new Label();
+            flpPassengerInfo = new FlowLayoutPanel();
+            lblPrice = new Label();
             panel1.SuspendLayout();
             SeatPanel.SuspendLayout();
             PassengerPanel.SuspendLayout();
@@ -157,6 +163,8 @@
             // SeatPanel
             // 
             SeatPanel.BackColor = SystemColors.ButtonHighlight;
+            SeatPanel.Controls.Add(lblPrice);
+            SeatPanel.Controls.Add(label);
             SeatPanel.Controls.Add(tlpSeats);
             SeatPanel.Controls.Add(label6);
             SeatPanel.Controls.Add(flpFloors);
@@ -165,6 +173,15 @@
             SeatPanel.Name = "SeatPanel";
             SeatPanel.Size = new Size(537, 583);
             SeatPanel.TabIndex = 1;
+            // 
+            // label
+            // 
+            label.AutoSize = true;
+            label.Location = new Point(19, 161);
+            label.Name = "label";
+            label.Size = new Size(48, 20);
+            label.TabIndex = 12;
+            label.Text = "Price: ";
             // 
             // tlpSeats
             // 
@@ -212,6 +229,10 @@
             // PassengerPanel
             // 
             PassengerPanel.BackColor = SystemColors.ButtonHighlight;
+            PassengerPanel.Controls.Add(lblTotalPrice);
+            PassengerPanel.Controls.Add(label8);
+            PassengerPanel.Controls.Add(btnCancel);
+            PassengerPanel.Controls.Add(btnGenerateTicket);
             PassengerPanel.Controls.Add(label7);
             PassengerPanel.Controls.Add(flpPassengerInfo);
             PassengerPanel.Location = new Point(578, 116);
@@ -219,15 +240,48 @@
             PassengerPanel.Size = new Size(537, 583);
             PassengerPanel.TabIndex = 2;
             // 
-            // flpPassengerInfo
+            // lblTotalPrice
             // 
-            flpPassengerInfo.AutoScroll = true;
-            flpPassengerInfo.FlowDirection = FlowDirection.TopDown;
-            flpPassengerInfo.Location = new Point(17, 38);
-            flpPassengerInfo.Name = "flpPassengerInfo";
-            flpPassengerInfo.Size = new Size(493, 466);
-            flpPassengerInfo.TabIndex = 10;
-            flpPassengerInfo.WrapContents = false;
+            lblTotalPrice.AutoSize = true;
+            lblTotalPrice.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblTotalPrice.Location = new Point(105, 533);
+            lblTotalPrice.Name = "lblTotalPrice";
+            lblTotalPrice.Size = new Size(20, 23);
+            lblTotalPrice.TabIndex = 15;
+            lblTotalPrice.Text = "0";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(18, 534);
+            label8.Name = "label8";
+            label8.Size = new Size(81, 20);
+            label8.TabIndex = 14;
+            label8.Text = "Total Price:";
+            // 
+            // btnCancel
+            // 
+            btnCancel.BackColor = Color.Red;
+            btnCancel.ForeColor = SystemColors.ButtonHighlight;
+            btnCancel.Location = new Point(266, 519);
+            btnCancel.Name = "btnCancel";
+            btnCancel.Size = new Size(90, 52);
+            btnCancel.TabIndex = 13;
+            btnCancel.Text = "Cancel";
+            btnCancel.UseVisualStyleBackColor = false;
+            btnCancel.Click += btnCancel_Click;
+            // 
+            // btnGenerateTicket
+            // 
+            btnGenerateTicket.BackColor = Color.FromArgb(30, 64, 175);
+            btnGenerateTicket.ForeColor = SystemColors.ButtonHighlight;
+            btnGenerateTicket.Location = new Point(362, 519);
+            btnGenerateTicket.Name = "btnGenerateTicket";
+            btnGenerateTicket.Size = new Size(148, 52);
+            btnGenerateTicket.TabIndex = 12;
+            btnGenerateTicket.Text = "Generate Ticket";
+            btnGenerateTicket.UseVisualStyleBackColor = false;
+            btnGenerateTicket.Click += btnGenerateTicket_Click;
             // 
             // label7
             // 
@@ -239,6 +293,25 @@
             label7.Size = new Size(185, 28);
             label7.TabIndex = 11;
             label7.Text = "Passenger Details ";
+            // 
+            // flpPassengerInfo
+            // 
+            flpPassengerInfo.AutoScroll = true;
+            flpPassengerInfo.FlowDirection = FlowDirection.TopDown;
+            flpPassengerInfo.Location = new Point(17, 38);
+            flpPassengerInfo.Name = "flpPassengerInfo";
+            flpPassengerInfo.Size = new Size(493, 466);
+            flpPassengerInfo.TabIndex = 10;
+            flpPassengerInfo.WrapContents = false;
+            // 
+            // lblPrice
+            // 
+            lblPrice.AutoSize = true;
+            lblPrice.Location = new Point(60, 161);
+            lblPrice.Name = "lblPrice";
+            lblPrice.Size = new Size(17, 20);
+            lblPrice.TabIndex = 13;
+            lblPrice.Text = "0";
             // 
             // BookingForm
             // 
@@ -278,5 +351,11 @@
         private TableLayoutPanel tlpSeats;
         private FlowLayoutPanel flpPassengerInfo;
         private Label label7;
+        private Button btnGenerateTicket;
+        private Button btnCancel;
+        private Label lblTotalPrice;
+        private Label label8;
+        private Label label;
+        private Label lblPrice;
     }
 }
