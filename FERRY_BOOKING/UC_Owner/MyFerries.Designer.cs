@@ -112,6 +112,15 @@
             dgvMyFerries.RowsDefaultCellStyle.BackColor = Color.White;
 
 
+            /* wire events once */
+
+            dgvMyFerries.CellPainting += dgvMyFerries_CellPainting;
+ 
+            dgvMyFerries.CellClick += dgvMyFerries_CellClick;
+
+            dgvMyFerries.CellMouseEnter += dgvMyFerries_CellMouseEnter;
+
+
 
 
             // 

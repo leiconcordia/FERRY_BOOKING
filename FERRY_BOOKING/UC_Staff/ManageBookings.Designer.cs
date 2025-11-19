@@ -28,10 +28,47 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            label1 = new Label();
+            lblCompanyNameFleet = new Label();
+            SuspendLayout();
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.ForeColor = SystemColors.ControlDarkDark;
+            label1.Location = new Point(20, 50);
+            label1.Name = "label1";
+            label1.Size = new Size(247, 20);
+            label1.TabIndex = 5;
+            label1.Text = "View and manage all ferry bookings";
+            // 
+            // lblCompanyNameFleet
+            // 
+            lblCompanyNameFleet.AutoSize = true;
+            lblCompanyNameFleet.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblCompanyNameFleet.ForeColor = Color.FromArgb(11, 94, 235);
+            lblCompanyNameFleet.Location = new Point(20, 13);
+            lblCompanyNameFleet.Name = "lblCompanyNameFleet";
+            lblCompanyNameFleet.Size = new Size(181, 28);
+            lblCompanyNameFleet.TabIndex = 4;
+            lblCompanyNameFleet.Text = "Manage Bookings";
+            // 
+            // ManageBookings
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = SystemColors.ButtonHighlight;
+            Controls.Add(label1);
+            Controls.Add(lblCompanyNameFleet);
+            Name = "ManageBookings";
+            Size = new Size(1462, 551);
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
+
+        private Label label1;
+        private Label lblCompanyNameFleet;
     }
 }

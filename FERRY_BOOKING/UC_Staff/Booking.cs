@@ -19,6 +19,7 @@ namespace FERRY_BOOKING.UC_Staff
         {
             InitializeComponent();
             PopulateComboBoxes();
+            LoadAllTrips(); 
 
 
         }
@@ -47,6 +48,47 @@ namespace FERRY_BOOKING.UC_Staff
 
 
         }
+        private void LoadAllTrips()
+        {
+            try
+            {
+                DatabaseHelper db = new DatabaseHelper();
+
+                string query = "SELECT * FROM vw_FerrySearch";
+
+                DataTable dt = db.ExecuteDataTable(query);
+                dgvFerries.DataSource = dt;
+
+                // Hide IDs if they exist
+                if (dgvFerries.Columns.Contains("TripID"))
+                    dgvFerries.Columns["TripID"].Visible = false;
+
+                if (dgvFerries.Columns.Contains("FerryID"))
+                    dgvFerries.Columns["FerryID"].Visible = false;
+
+                // Add Book Button
+                if (!dgvFerries.Columns.Contains("Action"))
+                {
+                    DataGridViewButtonColumn btn = new DataGridViewButtonColumn();
+                    btn.HeaderText = "Action";
+                    btn.Name = "Action";
+                    btn.Text = "Book";
+                    btn.UseColumnTextForButtonValue = true;
+                    dgvFerries.Columns.Add(btn);
+                }
+
+                dgvFerries.Columns["Action"].DisplayIndex = dgvFerries.Columns.Count - 1;
+
+                // Attach event handler
+                dgvFerries.CellContentClick -= dgvFerries_CellContentClick;
+                dgvFerries.CellContentClick += dgvFerries_CellContentClick;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading trips: " + ex.Message);
+            }
+        }
+
         private void LoadTripsForSearch()
         {
             try

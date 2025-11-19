@@ -521,6 +521,7 @@ namespace FERRY_BOOKING.Dialogs
                 }
 
                 MessageBox.Show($"Schedule created successfully!\nGenerated {tripIDs.Count} trips.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Close();
             }
             catch (Exception ex)
             {
