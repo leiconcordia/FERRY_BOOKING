@@ -1,4 +1,5 @@
-﻿using FERRY_BOOKING.Dialogs;
+﻿using FERRY_BOOKING.DATABASE;
+using FERRY_BOOKING.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -34,10 +35,6 @@ namespace FERRY_BOOKING.UC_Ferry
             this.CompanyName = CompanyName;
             this.OwnerID = OwnerID;
 
-
-          
-
-
         }
 
 
@@ -48,30 +45,15 @@ namespace FERRY_BOOKING.UC_Ferry
             FerryRegistrationForm popup = new FerryRegistrationForm(OwnerID, CompanyName);
             popup.StartPosition = FormStartPosition.CenterParent;
             popup.ShowDialog();
+            if (popup.ShowDialog() == DialogResult.OK)
+            {
+                LoadMyFerries(OwnerID);
+            }
 
-           
+
         }
 
-        //    public void LoadMyFerries(int ownerID)
-        //    {
-        //        DATABASE.DatabaseHelper db = new DATABASE.DatabaseHelper();
 
-        //        string query = "SELECT FerryID, FerryCode, FerryName, Status, Capacity, Seats, Route " +
-        //                       "FROM vw_FerryDisplay WHERE OwnerID = @OwnerID";
-
-        //        SqlParameter[] parameters =
-        //        {
-        //          new SqlParameter("@OwnerID", ownerID)
-        //};
-
-        //        DataTable dt = db.ExecuteDataTable(query, parameters);
-
-
-        //        dgvMyFerries.DataSource = dt;
-        //        dgvMyFerries.Columns["FerryID"].Visible = false;
-        //        dgvMyFerries.Columns["Seats"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-        //        dgvMyFerries.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        //    }
 
         public void LoadMyFerries(int ownerID)
         {
@@ -103,6 +85,20 @@ namespace FERRY_BOOKING.UC_Ferry
                 };
                 dgvMyFerries.Columns.Add(act);
             }
+            if (dt.Rows.Count == 0)
+            {
+                lblEmptyMessage.Visible = true;
+                lblEmptyMessage.Text = "No Ferries available";
+                dgvMyFerries.Visible = false;
+            }
+            else
+            {
+                lblEmptyMessage.Visible = false;
+                dgvMyFerries.Visible = true;
+                dgvMyFerries.DataSource = dt;
+            }
+
+
 
 
         }
@@ -111,38 +107,33 @@ namespace FERRY_BOOKING.UC_Ferry
         {
             if (e.ColumnIndex == dgvMyFerries.Columns["Actions"].Index && e.RowIndex >= 0)
             {
-                e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.ContentForeground);
+                e.PaintBackground(e.CellBounds, true);
 
-                /* ==========  FIXED BUTTON SIZE  ========== */
-                const int BTN_W = 60;   // px
-                const int BTN_H = 33;   // px
-                const int GAP = 4;    // small gap between buttons
+                // Load your icons (make sure you have them in Resources or as files)
+                Image viewIcon = Properties.Resources.research;    // Eye icon for View
+                Image editIcon = Properties.Resources.edit; // Pencil icon for Edit
+                Image deleteIcon = Properties.Resources.delete; // Trash icon for Delete
 
-                int left = e.CellBounds.X + (e.CellBounds.Width - (BTN_W * 3 + GAP * 2)) / 2; // centre group
-                int top = e.CellBounds.Y + (e.CellBounds.Height - BTN_H) / 2;                  // centre vertically
+                int iconSize = 35;
+                int padding = 10;
+                // total width of icons + gaps
+                int totalWidth = (iconSize * 3) + (padding * 2);
 
-                Rectangle viewR = new Rectangle(left, top, BTN_W, BTN_H);
-                Rectangle editR = new Rectangle(left + BTN_W + GAP, top, BTN_W, BTN_H);
-                Rectangle delR = new Rectangle(left + (BTN_W + GAP) * 2, top, BTN_W, BTN_H);
+                // calculate starting X to center the block
+                int startX = e.CellBounds.X + (e.CellBounds.Width - totalWidth) / 2;
 
-                Color grey = Color.FromArgb(112, 112, 112);
-                Color blue = Color.FromArgb(0, 123, 255);
-                Color red = Color.FromArgb(220, 53, 69);
+                // vertical center
+                int y = e.CellBounds.Y + (e.CellBounds.Height - iconSize) / 2;
 
-                using (SolidBrush brush = new SolidBrush(grey)) e.Graphics.FillRectangle(brush, viewR);
-                using (SolidBrush brush = new SolidBrush(blue)) e.Graphics.FillRectangle(brush, editR);
-                using (SolidBrush brush = new SolidBrush(red)) e.Graphics.FillRectangle(brush, delR);
-
-                TextRenderer.DrawText(e.Graphics, "View", e.CellStyle.Font, viewR, Color.White,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-                TextRenderer.DrawText(e.Graphics, "Edit", e.CellStyle.Font, editR, Color.White,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-                TextRenderer.DrawText(e.Graphics, "Delete", e.CellStyle.Font, delR, Color.White,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                // Draw icons spaced horizontally
+                e.Graphics.DrawImage(viewIcon, startX, y, iconSize, iconSize);
+                e.Graphics.DrawImage(editIcon, startX + iconSize + padding, y, iconSize, iconSize);
+                e.Graphics.DrawImage(deleteIcon, startX + (iconSize + padding) * 2, y, iconSize, iconSize);
 
                 e.Handled = true;
             }
         }
+
 
 
         private void dgvMyFerries_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -159,12 +150,32 @@ namespace FERRY_BOOKING.UC_Ferry
                 if (x < w)      // VIEW
                     MessageBox.Show($"VIEW ferry {ferryName} (ID {ferryID})", "View clicked");
                 else if (x < w * 2) // EDIT
-                    MessageBox.Show($"EDIT ferry {ferryName} (ID {ferryID})", "Edit clicked");
+                {
+                    var editForm = new FerryEditForm(ferryID, this.CompanyName);
+                    if (editForm.ShowDialog() == DialogResult.OK)
+                        LoadMyFerries(OwnerID);
+                }
                 else                // DELETE
                 {
                     if (MessageBox.Show($"Delete ferry {ferryName} ?", "Confirm",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                        MessageBox.Show($"DELETE ferry {ferryName} (ID {ferryID}) – wire real delete later.", "Delete clicked");
+                    {
+                        FerryOwnerHelper helper = new FerryOwnerHelper();
+                        string error;
+
+                        bool deleted = helper.DeleteFerry(ferryID, out error);
+
+                        if (deleted)
+                        {
+                            MessageBox.Show("Ferry deleted.");
+                            LoadMyFerries(OwnerID);
+                        }
+                        else
+                        {
+                            MessageBox.Show(error, "Delete blocked", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+
+                    }
                 }
             }
         }
@@ -176,7 +187,6 @@ namespace FERRY_BOOKING.UC_Ferry
             else
                 dgvMyFerries.Cursor = Cursors.Default;
         }
-
 
 
 

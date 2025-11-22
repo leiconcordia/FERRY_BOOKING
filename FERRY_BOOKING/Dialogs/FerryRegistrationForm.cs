@@ -283,6 +283,7 @@ namespace FERRY_BOOKING.Dialogs
             {
                 MessageBox.Show("Ferry registered successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
+                
             }
             else
             {

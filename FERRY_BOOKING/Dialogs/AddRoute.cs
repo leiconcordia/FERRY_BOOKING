@@ -1,4 +1,4 @@
-﻿using FERRY_BOOKING.DATABASE;
+﻿        using FERRY_BOOKING.DATABASE;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,14 +17,67 @@ namespace FERRY_BOOKING.Dialogs
 
         private int selectedFerryID = 0;
         private string selectedFerryName = "";
+        private int? RouteID;
         public int OwnerID { get; set; }
         public AddRoute(int OwnerID)
         {
             InitializeComponent();
             this.OwnerID = OwnerID;
+            RouteID = null;
+            cbFerry.SelectedIndexChanged += cbFerry_SelectedIndexChanged; // <-- ADD THIS
 
             LoadFerriesDropdown();
         }
+        public AddRoute(int routeID, int ferryID, int ownerID)
+        {
+            InitializeComponent();
+            this.OwnerID = ownerID;         // ✔ set owner
+            selectedFerryID = ferryID;
+            RouteID = routeID;
+            cbFerry.SelectedIndexChanged += cbFerry_SelectedIndexChanged; // <-- ADD THIS
+
+            LoadFerriesDropdown();
+            cbFerry.SelectedValue = selectedFerryID;
+
+            LoadRouteData(routeID);
+        }
+
+        private void cbFerry_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cbFerry.SelectedValue != null)
+            {
+                selectedFerryID = Convert.ToInt32(cbFerry.SelectedValue);
+            }
+        }
+
+
+
+
+        private void LoadRouteData(int routeID)
+        {
+            DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
+            DataRow row = helper.GetRouteById(routeID);
+
+            if (row != null)
+            {
+                tbOriginPort.Text = row["Origin"].ToString();
+                tbDestinationPort.Text = row["Destination"].ToString();
+
+                decimal distance = Convert.ToDecimal(row["Distance"]);
+                nudDistance.Minimum = 0;            // set minimum
+                nudDistance.Maximum = 10000;        // set maximum high enough
+                nudDistance.DecimalPlaces = 2;      // optional, if you want decimals
+                nudDistance.Increment = 0.5M;       // optional, for user increments
+                nudDistance.Value = distance;
+
+                // Duration field
+                TimeSpan duration = TimeSpan.Parse(row["Duration"].ToString());
+                nudHours.Value = duration.Hours;
+                nudMin.Value = duration.Minutes;
+            }
+        }
+
+
 
         private void LoadFerriesDropdown()
         {
@@ -32,16 +85,18 @@ namespace FERRY_BOOKING.Dialogs
             {
                 DataTable dt = helper.LoadFerriesForOwner(OwnerID);
 
-                cbFerry.DataSource = dt;
                 cbFerry.DisplayMember = "FerryName";
                 cbFerry.ValueMember = "FerryID";
-                cbFerry.SelectedIndex = -1; // no selection initially
+
+                cbFerry.DataSource = dt;      // ← After Display/ValueMember
+                cbFerry.SelectedIndex = -1;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading ferries: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error loading ferries: " + ex.Message);
             }
         }
+
 
 
         private void btnCancel_Click(object sender, EventArgs e)
@@ -51,81 +106,53 @@ namespace FERRY_BOOKING.Dialogs
 
         private void btnAddRoute_Click(object sender, EventArgs e)
         {
-            // Validate ferry selection
-            if (cbFerry.SelectedItem == null)
-            {
-                MessageBox.Show("Please select a ferry.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            // Get selected ferry
-            DataRowView row = cbFerry.SelectedItem as DataRowView;
-            int selectedFerryID = 0;
-            string selectedFerryName = "";
-
-            if (row != null)
-            {
-                selectedFerryID = Convert.ToInt32(row["FerryID"]);
-                selectedFerryName = row["FerryName"].ToString();
-            }
-            else
-            {
-                selectedFerryName = cbFerry.SelectedItem.ToString();
-                // If needed, you can map the name to an ID from a dictionary
-            }
-
-            // Get route details
-            string originPort = tbOriginPort.Text.Trim();
-            string destinationPort = tbDestinationPort.Text.Trim();
+            string origin = tbOriginPort.Text.Trim();
+            string destination = tbDestinationPort.Text.Trim();
             decimal distance = nudDistance.Value;
-            int hours = (int)nudHours.Value;
-            int minutes = (int)nudMin.Value;
-            TimeSpan duration = new TimeSpan(hours, minutes, 0);
+            TimeSpan duration = new TimeSpan((int)nudHours.Value, (int)nudMin.Value, 0);
 
-
-            // Validate input
-            if (string.IsNullOrEmpty(originPort) || string.IsNullOrEmpty(destinationPort))
+            if (string.IsNullOrEmpty(origin) || string.IsNullOrEmpty(destination))
             {
-                MessageBox.Show("Origin and destination ports cannot be empty.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Origin and destination cannot be empty.");
                 return;
             }
 
-            if (distance <= 0)
+            if (distance <= 0 || duration.TotalMinutes <= 0)
             {
-                MessageBox.Show("Distance must be greater than 0.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Distance and duration must be greater than 0.");
                 return;
             }
 
-            if (duration.TotalMinutes <= 0)
+            FerryOwnerHelper helper = new FerryOwnerHelper();
+            bool success;
+
+            if (RouteID.HasValue) // Edit mode
             {
-                MessageBox.Show("Duration must be greater than 0.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                // Update the existing route for the selected ferry
+                success = helper.UpdateRoute(RouteID.Value, selectedFerryID, origin, destination, distance, duration);
             }
-
-            // Now you have all values ready: selectedFerryID, originPort, destinationPort, distance, duration
-            MessageBox.Show(
-                    $"Ferry: {selectedFerryName} (ID: {selectedFerryID})\n" +
-                    $"Origin: {originPort}\nDestination: {destinationPort}\n" +
-                    $"Distance: {distance} km\nDuration: {duration}",
-                    "Route Details",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
-                );
-
-            DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
-            bool success = helper.AddRouteToFerry(selectedFerryID, originPort, destinationPort, distance, duration);
+            else // Add mode
+            {
+                // Add a new route to the selected ferry
+                success = helper.AddRouteToFerry(selectedFerryID, origin, destination, distance, duration);
+            }
 
             if (success)
-                MessageBox.Show("Route successfully added to ferry!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            
+            {
+                MessageBox.Show("Route saved successfully!");
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
             else
-                MessageBox.Show("Failed to add route.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            this.Close();
+            {
+                MessageBox.Show("Failed to save route.");
+            }
+
+
+
         }
 
-        
+
+
     }
-
-
-
 }

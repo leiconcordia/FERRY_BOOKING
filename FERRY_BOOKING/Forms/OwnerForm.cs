@@ -98,7 +98,7 @@ namespace FERRY_BOOKING.Forms
         private void navSummary_Click(object sender, EventArgs e)
         {
             ActivateButton(navSummary);
-            LoadUserControl(new UC_Ferry.Summary());
+            LoadUserControl(new UC_Ferry.Summary(this.OwnerID));
         }
 
         private void btnLogout_Click(object sender, EventArgs e)

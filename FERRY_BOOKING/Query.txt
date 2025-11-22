@@ -245,14 +245,63 @@ SELECT
     s.DaysOfWeek,
     s.StartDate,
     s.EndDate,
+    f.OwnerID,   -- IMPORTANT: expose ownerID to filter in app
     (
-        SELECT STRING_AGG(CONCAT('Floor ', tfp.FloorNumber, ': ₱', tfp.Price), CHAR(13))
+        SELECT STRING_AGG(CONCAT('Floor ', tfp.FloorNumber, ': P', tfp.Price), CHAR(13))
         WITHIN GROUP (ORDER BY tfp.FloorNumber)
         FROM TripFloorPrice tfp
         WHERE tfp.TripID = s.ScheduleID
     ) AS Price
 FROM Schedule s
-JOIN Route r ON s.RouteID = r.RouteID;
+JOIN Route r ON s.RouteID = r.RouteID
+JOIN FerryRoute fr ON fr.RouteID = r.RouteID
+JOIN Ferry f ON f.FerryID = fr.FerryID;
+
+
+CREATE OR ALTER VIEW vw_RouteDisplay AS
+SELECT 
+    r.RouteID AS RouteID,           -- real RouteID
+    fr.FerryRouteID AS FerryRouteID,  -- mapping ID (edit/delete)
+    f.FerryID,
+    f.FerryName AS Ferry,
+    r.Origin + ' -> ' + r.Destination AS Route,
+    r.Distance,
+    r.Duration,
+    f.OwnerID
+FROM FerryRoute fr
+INNER JOIN Ferry f ON fr.FerryID = f.FerryID
+INNER JOIN Route r ON fr.RouteID = r.RouteID;
+
+
+CREATE OR ALTER VIEW vw_BookingSummary AS
+SELECT 
+    f.FerryName,
+    f.OwnerID,
+    r.Origin + ' -> ' + r.Destination AS Routes,
+    t.TripDate,
+    FORMAT(t.DepartureTime, 'h:mm tt') + ' to ' + FORMAT(t.ArrivalTime, 'h:mm tt') AS Schedule,
+    ISNULL(BookedCount.Booked, 0) AS Booked,
+    (f.TotalCapacity - ISNULL(BookedCount.Booked, 0)) AS Available,
+    CASE 
+       WHEN f.TotalCapacity > 0 THEN 
+            LTRIM(STR(ROUND(ISNULL(BookedCount.Booked, 0) * 100.0 / f.TotalCapacity, 1), 6, 1)) + ' %'
+       ELSE '0 %'
+    END AS Occupancy,
+    ISNULL(Rev.TotalRevenue, 0) AS Revenue
+FROM Trip t
+JOIN Ferry f ON t.FerryID = f.FerryID
+JOIN Route r ON t.RouteID = r.RouteID
+LEFT JOIN (
+    SELECT bs.TripID, COUNT(*) AS Booked
+    FROM BookedSeats bs
+    GROUP BY bs.TripID
+) AS BookedCount ON BookedCount.TripID = t.TripID
+LEFT JOIN (
+    SELECT b.TripID, SUM(b.TotalAmount) AS TotalRevenue
+    FROM Booking b
+    GROUP BY b.TripID
+) AS Rev ON Rev.TripID = t.TripID
+WHERE t.ArrivalTime < GETDATE();
 
 
   

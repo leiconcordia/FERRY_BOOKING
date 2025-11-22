@@ -152,6 +152,8 @@
             cbFerry.Name = "cbFerry";
             cbFerry.Size = new Size(382, 28);
             cbFerry.TabIndex = 46;
+            cbFerry.SelectedIndexChanged += cbFerry_SelectedIndexChanged;
+
             // 
             // label5
             // 

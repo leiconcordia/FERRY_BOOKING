@@ -19,7 +19,7 @@ namespace FERRY_BOOKING.UC_Staff
         {
             InitializeComponent();
             PopulateComboBoxes();
-            LoadAllTrips(); 
+            LoadAllTrips();
 
 
         }
@@ -40,7 +40,7 @@ namespace FERRY_BOOKING.UC_Staff
 
             // Routes
             var routes = db.GetAllRoutes();
-          
+
 
             cbRoute.DataSource = routes;
             cbRoute.DisplayMember = "RouteDisplay"; // shows Origin --> Destination
@@ -170,15 +170,15 @@ namespace FERRY_BOOKING.UC_Staff
         private void btnSearchFerries_Click(object sender, EventArgs e)
         {
             LoadTripsForSearch();
-        }   
+        }
 
         private void dgvFerries_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (dgvFerries.Columns[e.ColumnIndex].Name == "Action" && e.RowIndex >= 0)
             {
                 int ferryID = Convert.ToInt32(dgvFerries.Rows[e.RowIndex].Cells["FerryID"].Value);
-                int tripID = Convert.ToInt32(dgvFerries.Rows[e.RowIndex].Cells["TripID"].Value); 
-             
+                int tripID = Convert.ToInt32(dgvFerries.Rows[e.RowIndex].Cells["TripID"].Value);
+
 
                 BookingForm bookingForm = new BookingForm(ferryID, tripID);
                 bookingForm.StartPosition = FormStartPosition.CenterParent;

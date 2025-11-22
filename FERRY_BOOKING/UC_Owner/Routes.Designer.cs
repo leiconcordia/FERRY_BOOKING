@@ -32,6 +32,7 @@
             label1 = new Label();
             btnAddRoute = new Button();
             dgvRoutes = new DataGridView();
+            lblEmptyMessage = new Label();
             ((System.ComponentModel.ISupportInitialize)dgvRoutes).BeginInit();
             SuspendLayout();
             // 
@@ -70,17 +71,52 @@
             // 
             // dgvRoutes
             // 
-            dgvRoutes.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            // make DataGridView look and behave like dgvMyFerries
+       
+
+            dgvRoutes.AllowUserToAddRows = false;
+            dgvRoutes.AllowUserToDeleteRows = false;
+            dgvRoutes.AllowUserToResizeRows = false;
+            dgvRoutes.MultiSelect = false;
+            dgvRoutes.ReadOnly = true;
+            dgvRoutes.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvRoutes.RowHeadersVisible = false;
+            dgvRoutes.RowTemplate.Height = 40;
+            dgvRoutes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dgvRoutes.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvRoutes.BackgroundColor = Color.White;
+            dgvRoutes.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            dgvRoutes.EnableHeadersVisualStyles = false;
+            dgvRoutes.GridColor = Color.LightGray;
+            dgvRoutes.BorderStyle = BorderStyle.None;
             dgvRoutes.Location = new Point(18, 70);
             dgvRoutes.Name = "dgvRoutes";
             dgvRoutes.RowHeadersWidth = 51;
             dgvRoutes.Size = new Size(1455, 353);
             dgvRoutes.TabIndex = 44;
+            // wire paint/click handlers (LoadRoutes will unsubscribe/resubscribe safely)
+            dgvRoutes.CellPainting += dgvRoutes_CellPainting;
+            dgvRoutes.CellClick += dgvRoutes_CellClick;
+            dgvRoutes.CellMouseEnter += dgvRoutes_CellMouseEnter;
+
+            // 
+            // lblEmptyMessage
+            // 
+            lblEmptyMessage.AutoSize = true;
+            lblEmptyMessage.BackColor = SystemColors.ButtonFace;
+            lblEmptyMessage.Font = new Font("Segoe UI", 19.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEmptyMessage.ForeColor = SystemColors.AppWorkspace;
+            lblEmptyMessage.Location = new Point(601, 208);
+            lblEmptyMessage.Name = "lblEmptyMessage";
+            lblEmptyMessage.Size = new Size(282, 46);
+            lblEmptyMessage.TabIndex = 47;
+            lblEmptyMessage.Text = "lblEmptyMessage";
             // 
             // Routes
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(lblEmptyMessage);
             Controls.Add(dgvRoutes);
             Controls.Add(btnAddRoute);
             Controls.Add(label1);
@@ -98,5 +134,6 @@
         private Label label1;
         private Button btnAddRoute;
         private DataGridView dgvRoutes;
+        private Label lblEmptyMessage;
     }
 }

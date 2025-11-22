@@ -28,11 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             panel1 = new Panel();
+            dgvMyFerries = new DataGridView();
             label1 = new Label();
             lblCompanyNameFleet = new Label();
             btnRegisterFerry = new Button();
-            dgvMyFerries = new DataGridView();
+            lblEmptyMessage = new Label();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvMyFerries).BeginInit();
             SuspendLayout();
@@ -40,6 +44,7 @@
             // panel1
             // 
             panel1.BackColor = SystemColors.ButtonHighlight;
+            panel1.Controls.Add(lblEmptyMessage);
             panel1.Controls.Add(dgvMyFerries);
             panel1.Controls.Add(label1);
             panel1.Controls.Add(lblCompanyNameFleet);
@@ -48,6 +53,43 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(1497, 470);
             panel1.TabIndex = 0;
+            // 
+            // dgvMyFerries
+            // 
+            dgvMyFerries.AllowUserToAddRows = false;
+            dgvMyFerries.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dgvMyFerries.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvMyFerries.BackgroundColor = Color.White;
+            dgvMyFerries.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.White;
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            dataGridViewCellStyle1.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dgvMyFerries.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dgvMyFerries.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = Color.White;
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 10F);
+            dataGridViewCellStyle2.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle2.SelectionBackColor = Color.LightGray;
+            dataGridViewCellStyle2.SelectionForeColor = Color.Black;
+            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
+            dgvMyFerries.DefaultCellStyle = dataGridViewCellStyle2;
+            dgvMyFerries.EnableHeadersVisualStyles = false;
+            dgvMyFerries.Location = new Point(28, 78);
+            dgvMyFerries.Name = "dgvMyFerries";
+            dgvMyFerries.RowHeadersVisible = false;
+            dgvMyFerries.RowHeadersWidth = 51;
+            dataGridViewCellStyle3.BackColor = Color.White;
+            dgvMyFerries.RowsDefaultCellStyle = dataGridViewCellStyle3;
+            dgvMyFerries.Size = new Size(1456, 365);
+            dgvMyFerries.TabIndex = 3;
+            dgvMyFerries.CellClick += dgvMyFerries_CellClick;
+            dgvMyFerries.CellMouseEnter += dgvMyFerries_CellMouseEnter;
+            dgvMyFerries.CellPainting += dgvMyFerries_CellPainting;
             // 
             // label1
             // 
@@ -81,48 +123,18 @@
             btnRegisterFerry.Text = "+   Register New Ferry";
             btnRegisterFerry.UseVisualStyleBackColor = false;
             btnRegisterFerry.Click += btnRegisterFerry_Click;
-
-            
             // 
-            // dgvMyFerries
+            // lblEmptyMessage
             // 
-            dgvMyFerries.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvMyFerries.Location = new Point(28, 78);
-            dgvMyFerries.Name = "dgvMyFerries";
-            dgvMyFerries.RowHeadersWidth = 51;
-            dgvMyFerries.Size = new Size(1456, 365);
-            dgvMyFerries.TabIndex = 3;
-            dgvMyFerries.RowHeadersVisible = false; // Remove left space
-            dgvMyFerries.DefaultCellStyle.ForeColor = Color.FromArgb(11, 94, 235);
-            dgvMyFerries.DefaultCellStyle.SelectionForeColor = Color.Black; // Optional
-            dgvMyFerries.DefaultCellStyle.SelectionBackColor = Color.LightGray; // Optional
-            dgvMyFerries.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
-            dgvMyFerries.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvMyFerries.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-            dgvMyFerries.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            dgvMyFerries.EnableHeadersVisualStyles = false; // allow custom header styling
-            dgvMyFerries.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(11, 94, 235);
-            dgvMyFerries.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
-            dgvMyFerries.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            dgvMyFerries.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-            dgvMyFerries.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
-            dgvMyFerries.AllowUserToAddRows = false; // prevents blank bottom row
-            dgvMyFerries.BackgroundColor = Color.White;
-            dgvMyFerries.DefaultCellStyle.BackColor = Color.White;
-            dgvMyFerries.RowsDefaultCellStyle.BackColor = Color.White;
-
-
-            /* wire events once */
-
-            dgvMyFerries.CellPainting += dgvMyFerries_CellPainting;
- 
-            dgvMyFerries.CellClick += dgvMyFerries_CellClick;
-
-            dgvMyFerries.CellMouseEnter += dgvMyFerries_CellMouseEnter;
-
-
-
-
+            lblEmptyMessage.AutoSize = true;
+            lblEmptyMessage.BackColor = SystemColors.ButtonFace;
+            lblEmptyMessage.Font = new Font("Segoe UI", 19.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEmptyMessage.ForeColor = SystemColors.AppWorkspace;
+            lblEmptyMessage.Location = new Point(538, 219);
+            lblEmptyMessage.Name = "lblEmptyMessage";
+            lblEmptyMessage.Size = new Size(282, 46);
+            lblEmptyMessage.TabIndex = 48;
+            lblEmptyMessage.Text = "lblEmptyMessage";
             // 
             // MyFerries
             // 
@@ -144,5 +156,6 @@
         private Label lblCompanyNameFleet;
         private Label label1;
         private DataGridView dgvMyFerries;
+        private Label lblEmptyMessage;
     }
 }

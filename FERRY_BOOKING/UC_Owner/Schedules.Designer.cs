@@ -32,6 +32,7 @@
             label1 = new Label();
             btnAddRoute = new Button();
             dgvSchedule = new DataGridView();
+            lblEmptyMessage = new Label();
             ((System.ComponentModel.ISupportInitialize)dgvSchedule).BeginInit();
             SuspendLayout();
             // 
@@ -70,17 +71,48 @@
             // 
             // dgvSchedule
             // 
+            // make DataGridView look and behave like dgvMyFerries
+            dgvSchedule.AllowUserToAddRows = false;
+            dgvSchedule.AllowUserToDeleteRows = false;
+            dgvSchedule.AllowUserToResizeRows = false;
+            dgvSchedule.MultiSelect = false;
+            dgvSchedule.ReadOnly = true;
+            dgvSchedule.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvSchedule.RowHeadersVisible = false;
+            dgvSchedule.RowTemplate.Height = 50;
+            dgvSchedule.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvSchedule.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvSchedule.BackgroundColor = Color.White;
+            dgvSchedule.BorderStyle = BorderStyle.None;
+            dgvSchedule.EnableHeadersVisualStyles = false;
+            dgvSchedule.GridColor = Color.LightGray;
             dgvSchedule.Location = new Point(16, 64);
             dgvSchedule.Name = "dgvSchedule";
             dgvSchedule.RowHeadersWidth = 51;
             dgvSchedule.Size = new Size(1455, 353);
             dgvSchedule.TabIndex = 45;
+            // wire paint/click handlers (LoadSchedule will unsubscribe/resubscribe safely)
+            dgvSchedule.CellPainting += dgvSchedule_CellPainting;
+            dgvSchedule.CellClick += dgvSchedule_CellClick;
+            dgvSchedule.CellMouseEnter += dgvSchedule_CellMouseEnter;
+            // 
+            // lblEmptyMessage
+            // 
+            lblEmptyMessage.AutoSize = true;
+            lblEmptyMessage.BackColor = SystemColors.ButtonFace;
+            lblEmptyMessage.Font = new Font("Segoe UI", 19.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEmptyMessage.ForeColor = SystemColors.AppWorkspace;
+            lblEmptyMessage.Location = new Point(498, 210);
+            lblEmptyMessage.Name = "lblEmptyMessage";
+            lblEmptyMessage.Size = new Size(282, 46);
+            lblEmptyMessage.TabIndex = 46;
+            lblEmptyMessage.Text = "lblEmptyMessage";
             // 
             // Schedules
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(lblEmptyMessage);
             Controls.Add(dgvSchedule);
             Controls.Add(btnAddRoute);
             Controls.Add(label1);
@@ -98,5 +130,6 @@
         private Label label1;
         private Button btnAddRoute;
         private DataGridView dgvSchedule;
+        private Label lblEmptyMessage;
     }
 }

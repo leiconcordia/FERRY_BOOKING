@@ -30,8 +30,8 @@ namespace FERRY_BOOKING.UC_Staff
         /// </summary>
         private void InitializeComponent()
         {
-            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             lblCompanyNameFleet = new Label();
             label1 = new Label();
             label2 = new Label();
@@ -55,6 +55,7 @@ namespace FERRY_BOOKING.UC_Staff
             lblCompanyNameFleet.Size = new Size(238, 28);
             lblCompanyNameFleet.TabIndex = 2;
             lblCompanyNameFleet.Text = "Search Available Ferries";
+
             // 
             // label1
             // 
@@ -117,15 +118,13 @@ namespace FERRY_BOOKING.UC_Staff
             // 
             // dtpTravelDate
             // 
+            dtpTravelDate.CustomFormat = "MMMM dd, yyyy";
+            dtpTravelDate.Format = DateTimePickerFormat.Custom;
             dtpTravelDate.Location = new Point(463, 129);
+            dtpTravelDate.MinDate = new DateTime(2025, 11, 16, 0, 0, 0, 0);
             dtpTravelDate.Name = "dtpTravelDate";
             dtpTravelDate.Size = new Size(262, 27);
             dtpTravelDate.TabIndex = 9;
-            dtpTravelDate.Format = DateTimePickerFormat.Custom;
-            dtpTravelDate.ShowUpDown = false;
-            dtpTravelDate.CustomFormat = "MMMM dd, yyyy";
-            dtpTravelDate.MinDate = new DateTime(2025, 11, 16, 0, 0, 0, 0);
-
             // 
             // btnSearchFerries
             // 
@@ -138,7 +137,6 @@ namespace FERRY_BOOKING.UC_Staff
             btnSearchFerries.Text = "Search Ferries";
             btnSearchFerries.UseVisualStyleBackColor = false;
             btnSearchFerries.Click += btnSearchFerries_Click;
-
             // 
             // dgvFerries
             // 
@@ -147,23 +145,23 @@ namespace FERRY_BOOKING.UC_Staff
             dgvFerries.AllowUserToResizeRows = false;
             dgvFerries.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvFerries.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
-            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = Color.LightGray;
-            dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            dataGridViewCellStyle3.ForeColor = SystemColors.WindowText;
-            dataGridViewCellStyle3.SelectionBackColor = SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = DataGridViewTriState.True;
-            dgvFerries.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.LightGray;
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            dataGridViewCellStyle1.ForeColor = SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dgvFerries.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgvFerries.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = SystemColors.Window;
-            dataGridViewCellStyle4.Font = new Font("Segoe UI", 9F);
-            dataGridViewCellStyle4.ForeColor = Color.FromArgb(11, 94, 235);
-            dataGridViewCellStyle4.SelectionBackColor = SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = DataGridViewTriState.False;
-            dgvFerries.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = SystemColors.Window;
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle2.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.True;
+            dgvFerries.DefaultCellStyle = dataGridViewCellStyle2;
             dgvFerries.EnableHeadersVisualStyles = false;
             dgvFerries.Location = new Point(22, 196);
             dgvFerries.MultiSelect = false;
@@ -174,8 +172,6 @@ namespace FERRY_BOOKING.UC_Staff
             dgvFerries.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvFerries.Size = new Size(1416, 335);
             dgvFerries.TabIndex = 11;
-            dgvFerries.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-
             // 
             // Booking
             // 

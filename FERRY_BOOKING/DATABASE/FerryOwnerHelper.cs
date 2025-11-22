@@ -280,12 +280,22 @@ namespace FERRY_BOOKING.DATABASE
                     // Insert route if it doesn't exist
                     int routeID;
                     using (SqlCommand cmd = new SqlCommand(@"
-                IF NOT EXISTS (SELECT 1 FROM Route WHERE Origin=@origin AND Destination=@destination)
-                BEGIN
-                    INSERT INTO Route (Origin, Destination, Distance, Duration)
-                    VALUES (@origin, @destination, @distance, @duration)
-                END
-                SELECT RouteID FROM Route WHERE Origin=@origin AND Destination=@destination
+                                  DECLARE @routeID INT;
+
+                    IF NOT EXISTS (SELECT 1 FROM Route WHERE Origin=@origin AND Destination=@destination)
+                    BEGIN
+                        INSERT INTO Route (Origin, Destination, Distance, Duration)
+                        VALUES (@origin, @destination, @distance, @duration);
+
+                        SET @routeID = SCOPE_IDENTITY();
+                    END
+                    ELSE
+                    BEGIN
+                        SELECT @routeID = RouteID FROM Route WHERE Origin=@origin AND Destination=@destination;
+                    END
+
+                    SELECT @routeID;
+
             ", conn, transaction))
                     {
                         cmd.Parameters.AddWithValue("@origin", origin);
@@ -313,13 +323,106 @@ namespace FERRY_BOOKING.DATABASE
                     transaction.Commit();
                     return true;
                 }
-                catch
+                catch (Exception ex)
                 {
                     transaction.Rollback();
+                    MessageBox.Show("Error adding route:\n" + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return false;
+                }
+
+            }
+        }
+
+        public bool UpdateRoute(int routeID, int ferryID, string origin, string destination, decimal distance, TimeSpan duration)
+        {
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // Update Route table
+                        string updateRouteQuery = @"
+                        UPDATE Route
+                        SET Origin = @origin,
+                            Destination = @destination,
+                            Distance = @distance,
+                            Duration = @duration
+                        WHERE RouteID = @routeID;
+                    ";
+
+                        using (SqlCommand cmd = new SqlCommand(updateRouteQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@origin", origin);
+                            cmd.Parameters.AddWithValue("@destination", destination);
+                            cmd.Parameters.AddWithValue("@distance", distance);
+                            cmd.Parameters.Add("@duration", SqlDbType.Time).Value = duration;
+                            cmd.Parameters.AddWithValue("@routeID", routeID);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // Ensure FerryRoute link exists
+                        string ferryRouteQuery = @"
+                        IF NOT EXISTS (SELECT 1 FROM FerryRoute WHERE FerryID=@ferryID AND RouteID=@routeID)
+                        BEGIN
+                            INSERT INTO FerryRoute (FerryID, RouteID)
+                            VALUES (@ferryID, @routeID)
+                        END
+                    ";
+
+                        using (SqlCommand cmd = new SqlCommand(ferryRouteQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@ferryID", ferryID);
+                            cmd.Parameters.AddWithValue("@routeID", routeID);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Error updating route:\n" + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return false;
+                    }
                 }
             }
         }
+        public bool DeleteRoute(int ferryRouteID)
+        {
+            try
+            {
+                string query = "DELETE FROM FerryRoute WHERE FerryRouteID = @ID";
+
+                SqlParameter[] parameters =
+                {
+            new SqlParameter("@ID", ferryRouteID)
+        };
+
+                DatabaseHelper db = new DatabaseHelper();
+                int affected = db.ExecuteNonQuery(query, parameters);
+
+                return affected > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
+
+        // Optional: Get route by ID for edit dialog
+        public DataRow GetRouteById(int routeID)
+        {
+            string query = "SELECT * FROM Route WHERE RouteID = @routeID";
+            SqlParameter[] p = { new SqlParameter("@routeID", routeID) };
+            DataTable dt = db.ExecuteDataTable(query, p);
+            return dt.Rows.Count == 1 ? dt.Rows[0] : null;
+        }
+
 
 
         public int InsertSchedule(
@@ -428,6 +531,300 @@ namespace FERRY_BOOKING.DATABASE
 
             db.ExecuteNonQuery(query, prms);
         }
+
+
+        public DataRow GetFerryById(int ferryId)
+        {
+            string query = "SELECT FerryID, FerryCode, FerryName, TotalFloors, TotalCapacity, Status, OwnerID FROM Ferry WHERE FerryID = @FerryID";
+            SqlParameter[] parameters = { new SqlParameter("@FerryID", ferryId) };
+            DataTable dt = db.ExecuteDataTable(query, parameters);
+            return dt != null && dt.Rows.Count > 0 ? dt.Rows[0] : null;
+        }
+
+        /// <summary>
+        /// Return FerryFloor rows for a ferry (FloorID, FloorNumber, Rows, Columns, Capacity).
+        /// </summary>
+        public DataTable GetFerryFloors(int ferryID)
+        {
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+                string query = @"
+                    SELECT FloorNumber, Rows, Columns, Capacity
+                    FROM FerryFloor
+                    WHERE FerryID = @FerryID
+                    ORDER BY FloorNumber ASC";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@FerryID", ferryID);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    return dt;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Update simple ferry details and replace floor layout (no documents).
+        /// Floors is expected to contain columns FloorNumber, Rows, Columns.
+        /// </summary>
+        public bool UpdateFerry(int ferryId, string ferryCode, string ferryName, DataTable floors, out string error)
+        {
+            error = "";
+
+            // 1. Validate if ferry can be edited
+            if (!CanEditFerry(ferryId, out error))
+                return false;
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+                using (SqlTransaction tran = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // 2. Compute totals
+                        int totalFloors = floors?.Rows.Count ?? 0;
+                        int totalCapacity = 0;
+
+                        if (floors != null)
+                        {
+                            foreach (DataRow r in floors.Rows)
+                            {
+                                totalCapacity += Convert.ToInt32(r["Rows"]) * Convert.ToInt32(r["Columns"]);
+                            }
+                        }
+
+                        // 3. Update Ferry
+                        using (SqlCommand cmd = new SqlCommand(@"
+                    UPDATE Ferry
+                    SET FerryCode = @code,
+                        FerryName = @name,
+                        TotalFloors = @floors,
+                        TotalCapacity = @cap
+                    WHERE FerryID = @id", conn, tran))
+                        {
+                            cmd.Parameters.AddWithValue("@code", ferryCode);
+                            cmd.Parameters.AddWithValue("@name", ferryName);
+                            cmd.Parameters.AddWithValue("@floors", totalFloors);
+                            cmd.Parameters.AddWithValue("@cap", totalCapacity);
+                            cmd.Parameters.AddWithValue("@id", ferryId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // 4. Remove floors (safe because editing was validated)
+                        using (SqlCommand cmd = new SqlCommand("DELETE FROM FerryFloor WHERE FerryID = @id", conn, tran))
+                        {
+                            cmd.Parameters.AddWithValue("@id", ferryId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // 5. Insert fresh floors
+                        if (floors != null)
+                        {
+                            foreach (DataRow row in floors.Rows)
+                            {
+                                using (SqlCommand cmd = new SqlCommand(
+                                    "INSERT INTO FerryFloor(FerryID, FloorNumber, Rows, Columns) VALUES (@fid, @num, @r, @c)",
+                                    conn, tran))
+                                {
+                                    cmd.Parameters.AddWithValue("@fid", ferryId);
+                                    cmd.Parameters.AddWithValue("@num", row["FloorNumber"]);
+                                    cmd.Parameters.AddWithValue("@r", row["Rows"]);
+                                    cmd.Parameters.AddWithValue("@c", row["Columns"]);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        tran.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        tran.Rollback();
+                        error = ex.Message;
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Delete a ferry if there are no dependent trips/bookings.
+        /// Returns true when deleted; returns false when deletion is blocked (dependent data).
+        /// </summary>
+        public bool DeleteFerry(int ferryId, out string error)
+        {
+            error = "";
+
+            // Validate delete
+            if (!CanDeleteFerry(ferryId, out error))
+                return false;
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                using (SqlTransaction tran = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        ExecuteDelete(tran, "DELETE FROM TripFloorPrice WHERE FerryID = @id", ferryId);
+                        ExecuteDelete(tran, "DELETE FROM BookedSeats WHERE FerryID = @id", ferryId);
+                        ExecuteDelete(tran, "DELETE FROM FerryRoute WHERE FerryID = @id", ferryId);
+                        ExecuteDelete(tran, "DELETE FROM Schedule WHERE FerryID = @id", ferryId);
+                        ExecuteDelete(tran, "DELETE FROM FerryDocuments WHERE FerryID = @id", ferryId);
+                        ExecuteDelete(tran, "DELETE FROM FerryFloor WHERE FerryID = @id", ferryId);
+
+                        // Finally delete ferry record
+                        ExecuteDelete(tran, "DELETE FROM Ferry WHERE FerryID = @id", ferryId);
+
+                        tran.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        tran.Rollback();
+                        error = ex.Message;
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+        private void ExecuteDelete(SqlTransaction tran, string sql, int id)
+        {
+            using (SqlCommand cmd = new SqlCommand(sql, tran.Connection, tran))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+
+        public bool CanEditFerry(int ferryId, out string reason)
+        {
+            reason = "";
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                // 1. Any Routes?
+                if (HasRecord(conn, "SELECT COUNT(*) FROM FerryRoute WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry is assigned to one or more Routes.";
+                    return false;
+                }
+
+                // 2. Any Schedules?
+                if (HasRecord(conn, "SELECT COUNT(*) FROM Schedule WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry has existing Schedules.";
+                    return false;
+                }
+
+                // 3. Any Trips?
+                if (HasRecord(conn, "SELECT COUNT(*) FROM Trip WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry has Trips. Editing is disabled.";
+                    return false;
+                }
+
+                // 4. Any Bookings?
+                if (HasRecord(conn,
+                    "SELECT COUNT(*) FROM Booking WHERE TripID IN (SELECT TripID FROM Trip WHERE FerryID = @id)", ferryId))
+                {
+                    reason = "Ferry has Bookings.";
+                    return false;
+                }
+
+                // 5. Any Booked Seats?
+                if (HasRecord(conn, "SELECT COUNT(*) FROM BookedSeats WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry has booked seats.";
+                    return false;
+                }
+
+                // 6. Any TripFloorPrice?
+                if (HasRecord(conn, "SELECT COUNT(*) FROM TripFloorPrice WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry has floor prices set for existing trips.";
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        private bool HasRecord(SqlConnection conn, string sql, int id)
+        {
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            }
+        }
+
+  
+
+        public bool CanDeleteFerry(int ferryId, out string reason)
+        {
+            reason = "";
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                // A ferry CANNOT be deleted if any dependent records exist.
+
+                if (HasRecord(conn, "SELECT COUNT(*) FROM FerryRoute WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry is assigned to a route.";
+                    return false;
+                }
+
+                if (HasRecord(conn, "SELECT COUNT(*) FROM Schedule WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry has schedules. Remove schedules first.";
+                    return false;
+                }
+
+                if (HasRecord(conn, "SELECT COUNT(*) FROM Trip WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry has trips. Cannot delete ferries used in trips.";
+                    return false;
+                }
+
+                if (HasRecord(conn,
+                    "SELECT COUNT(*) FROM Booking WHERE TripID IN (SELECT TripID FROM Trip WHERE FerryID = @id)", ferryId))
+                {
+                    reason = "Ferry has bookings. Cannot delete ferries with booking history.";
+                    return false;
+                }
+
+                if (HasRecord(conn, "SELECT COUNT(*) FROM BookedSeats WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry has booked seats. Cannot delete.";
+                    return false;
+                }
+
+                if (HasRecord(conn, "SELECT COUNT(*) FROM TripFloorPrice WHERE FerryID = @id", ferryId))
+                {
+                    reason = "Ferry has floor prices linked to trips. Cannot delete.";
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+
+
 
 
 
