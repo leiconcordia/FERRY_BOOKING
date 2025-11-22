@@ -30,355 +30,491 @@ namespace FERRY_BOOKING.Dialogs
         /// </summary>
         private void InitializeComponent()
         {
+            panel1 = new Panel();
+            lblSubtitle = new Label();
+            lblTitle = new Label();
             RegistrationFormPanel = new Panel();
-            lblTotalCapacity = new Label();
-            btnFP = new Button();
-            btnPO = new Button();
-            btnID = new Button();
-            btnSC = new Button();
-            btnVR = new Button();
-            btnCO = new Button();
+            panel4 = new Panel();
             labelfp = new Label();
+            btnFP = new Button();
             labelpo = new Label();
-            label16 = new Label();
-            label15 = new Label();
+            btnPO = new Button();
             label14 = new Label();
+            btnID = new Button();
+            label15 = new Label();
+            btnSC = new Button();
+            label16 = new Label();
+            btnVR = new Button();
             label13 = new Label();
+            btnCO = new Button();
             label12 = new Label();
+            panel3 = new Panel();
+            lblTotalCapacity = new Label();
+            flowFloors = new FlowLayoutPanel();
+            lblFloorLayout = new Label();
+            panel2 = new Panel();
             nudFloorNumbers = new NumericUpDown();
             label8 = new Label();
             tbFerryCode = new TextBox();
             label7 = new Label();
             tbFerryName = new TextBox();
             label6 = new Label();
+            tbCompanyName = new TextBox();
             label5 = new Label();
             label2 = new Label();
-            tbCompanyName = new TextBox();
-            label1 = new Label();
-            flowFloors = new FlowLayoutPanel();
+            panel5 = new Panel();
             btnSave = new Button();
             btnCancel = new Button();
+            panel1.SuspendLayout();
             RegistrationFormPanel.SuspendLayout();
+            panel4.SuspendLayout();
+            panel3.SuspendLayout();
+            panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudFloorNumbers).BeginInit();
+            panel5.SuspendLayout();
             SuspendLayout();
+            // 
+            // panel1
+            // 
+            panel1.BackColor = Color.FromArgb(11, 94, 235);
+            panel1.Controls.Add(lblSubtitle);
+            panel1.Controls.Add(lblTitle);
+            panel1.Dock = DockStyle.Top;
+            panel1.Location = new Point(0, 0);
+            panel1.Margin = new Padding(3, 4, 3, 4);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(700, 100);
+            panel1.TabIndex = 0;
+            // 
+            // lblSubtitle
+            // 
+            lblSubtitle.AutoSize = true;
+            lblSubtitle.Font = new Font("Segoe UI", 10F);
+            lblSubtitle.ForeColor = Color.White;
+            lblSubtitle.Location = new Point(20, 65);
+            lblSubtitle.Name = "lblSubtitle";
+            lblSubtitle.Size = new Size(396, 23);
+            lblSubtitle.TabIndex = 1;
+            lblSubtitle.Text = "Enter ferry details, layout, and required documents";
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
+            lblTitle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.White;
+            lblTitle.Location = new Point(20, 19);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(262, 37);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "Register New Ferry";
             // 
             // RegistrationFormPanel
             // 
             RegistrationFormPanel.AutoScroll = true;
-            RegistrationFormPanel.AutoScrollMinSize = new Size(0, 700);
-            RegistrationFormPanel.Controls.Add(lblTotalCapacity);
-            RegistrationFormPanel.Controls.Add(btnFP);
-            RegistrationFormPanel.Controls.Add(btnPO);
-            RegistrationFormPanel.Controls.Add(btnID);
-            RegistrationFormPanel.Controls.Add(btnSC);
-            RegistrationFormPanel.Controls.Add(btnVR);
-            RegistrationFormPanel.Controls.Add(btnCO);
-            RegistrationFormPanel.Controls.Add(labelfp);
-            RegistrationFormPanel.Controls.Add(labelpo);
-            RegistrationFormPanel.Controls.Add(label16);
-            RegistrationFormPanel.Controls.Add(label15);
-            RegistrationFormPanel.Controls.Add(label14);
-            RegistrationFormPanel.Controls.Add(label13);
-            RegistrationFormPanel.Controls.Add(label12);
-            RegistrationFormPanel.Controls.Add(nudFloorNumbers);
-            RegistrationFormPanel.Controls.Add(label8);
-            RegistrationFormPanel.Controls.Add(tbFerryCode);
-            RegistrationFormPanel.Controls.Add(label7);
-            RegistrationFormPanel.Controls.Add(tbFerryName);
-            RegistrationFormPanel.Controls.Add(label6);
-            RegistrationFormPanel.Controls.Add(label5);
-            RegistrationFormPanel.Controls.Add(label2);
-            RegistrationFormPanel.Controls.Add(tbCompanyName);
-            RegistrationFormPanel.Controls.Add(label1);
-            RegistrationFormPanel.Controls.Add(flowFloors);
-            RegistrationFormPanel.Location = new Point(7, 3);
+            RegistrationFormPanel.BackColor = Color.WhiteSmoke;
+            RegistrationFormPanel.Controls.Add(panel4);
+            RegistrationFormPanel.Controls.Add(panel3);
+            RegistrationFormPanel.Controls.Add(panel2);
+            RegistrationFormPanel.Dock = DockStyle.Fill;
+            RegistrationFormPanel.Location = new Point(0, 100);
+            RegistrationFormPanel.Margin = new Padding(3, 4, 3, 4);
             RegistrationFormPanel.Name = "RegistrationFormPanel";
-            RegistrationFormPanel.Size = new Size(500, 577);
-            RegistrationFormPanel.TabIndex = 23;
+            RegistrationFormPanel.Padding = new Padding(20, 25, 20, 112);
+            RegistrationFormPanel.Size = new Size(700, 900);
+            RegistrationFormPanel.TabIndex = 1;
             // 
-            // lblTotalCapacity
+            // panel4
             // 
-            lblTotalCapacity.AutoSize = true;
-            lblTotalCapacity.Font = new Font("Segoe UI", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblTotalCapacity.Location = new Point(3, 304);
-            lblTotalCapacity.Name = "lblTotalCapacity";
-            lblTotalCapacity.Size = new Size(131, 31);
-            lblTotalCapacity.TabIndex = 56;
-            lblTotalCapacity.Text = "Capacity : 0";
-            // 
-            // btnFP
-            // 
-            btnFP.BackColor = Color.FromArgb(11, 94, 235);
-            btnFP.ForeColor = Color.White;
-            btnFP.Location = new Point(306, 688);
-            btnFP.Name = "btnFP";
-            btnFP.Size = new Size(112, 40);
-            btnFP.TabIndex = 55;
-            btnFP.Text = "Upload Image";
-            btnFP.UseVisualStyleBackColor = false;
-            btnFP.Click += btnFP_Click;
-            // 
-            // btnPO
-            // 
-            btnPO.BackColor = Color.FromArgb(11, 94, 235);
-            btnPO.ForeColor = Color.White;
-            btnPO.Location = new Point(306, 622);
-            btnPO.Name = "btnPO";
-            btnPO.Size = new Size(112, 40);
-            btnPO.TabIndex = 54;
-            btnPO.Text = "Upload File";
-            btnPO.UseVisualStyleBackColor = false;
-            btnPO.Click += btnPO_Click;
-            // 
-            // btnID
-            // 
-            btnID.BackColor = Color.FromArgb(11, 94, 235);
-            btnID.ForeColor = Color.White;
-            btnID.Location = new Point(306, 565);
-            btnID.Name = "btnID";
-            btnID.Size = new Size(112, 40);
-            btnID.TabIndex = 53;
-            btnID.Text = "Upload File";
-            btnID.UseVisualStyleBackColor = false;
-            btnID.Click += btnID_Click;
-            // 
-            // btnSC
-            // 
-            btnSC.BackColor = Color.FromArgb(11, 94, 235);
-            btnSC.ForeColor = Color.White;
-            btnSC.Location = new Point(306, 509);
-            btnSC.Name = "btnSC";
-            btnSC.Size = new Size(112, 40);
-            btnSC.TabIndex = 52;
-            btnSC.Text = "Upload File";
-            btnSC.UseVisualStyleBackColor = false;
-            btnSC.Click += btnSC_Click;
-            // 
-            // btnVR
-            // 
-            btnVR.BackColor = Color.FromArgb(11, 94, 235);
-            btnVR.ForeColor = Color.White;
-            btnVR.Location = new Point(306, 450);
-            btnVR.Name = "btnVR";
-            btnVR.Size = new Size(112, 40);
-            btnVR.TabIndex = 51;
-            btnVR.Text = "Upload File";
-            btnVR.UseVisualStyleBackColor = false;
-            btnVR.Click += btnVR_Click;
-            // 
-            // btnCO
-            // 
-            btnCO.BackColor = Color.FromArgb(11, 94, 235);
-            btnCO.ForeColor = Color.White;
-            btnCO.Location = new Point(306, 391);
-            btnCO.Name = "btnCO";
-            btnCO.Size = new Size(112, 40);
-            btnCO.TabIndex = 50;
-            btnCO.Text = "Upload File";
-            btnCO.UseVisualStyleBackColor = false;
-            btnCO.Click += btnCO_Click;
+            panel4.BackColor = Color.White;
+            panel4.BorderStyle = BorderStyle.FixedSingle;
+            panel4.Controls.Add(labelfp);
+            panel4.Controls.Add(btnFP);
+            panel4.Controls.Add(labelpo);
+            panel4.Controls.Add(btnPO);
+            panel4.Controls.Add(label14);
+            panel4.Controls.Add(btnID);
+            panel4.Controls.Add(label15);
+            panel4.Controls.Add(btnSC);
+            panel4.Controls.Add(label16);
+            panel4.Controls.Add(btnVR);
+            panel4.Controls.Add(label13);
+            panel4.Controls.Add(btnCO);
+            panel4.Controls.Add(label12);
+            panel4.Location = new Point(20, 650);
+            panel4.Margin = new Padding(3, 4, 3, 4);
+            panel4.Name = "panel4";
+            panel4.Size = new Size(640, 512);
+            panel4.TabIndex = 2;
             // 
             // labelfp
             // 
             labelfp.AutoSize = true;
-            labelfp.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            labelfp.ForeColor = Color.FromArgb(11, 94, 235);
-            labelfp.Location = new Point(3, 688);
+            labelfp.Font = new Font("Segoe UI", 10F);
+            labelfp.ForeColor = Color.Black;
+            labelfp.Location = new Point(15, 419);
             labelfp.Name = "labelfp";
-            labelfp.Size = new Size(84, 20);
-            labelfp.TabIndex = 49;
+            labelfp.Size = new Size(98, 23);
+            labelfp.TabIndex = 11;
             labelfp.Text = "Ferry Photo";
+            // 
+            // btnFP
+            // 
+            btnFP.BackColor = Color.FromArgb(11, 94, 235);
+            btnFP.FlatStyle = FlatStyle.Flat;
+            btnFP.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnFP.ForeColor = Color.White;
+            btnFP.Location = new Point(480, 412);
+            btnFP.Margin = new Padding(3, 4, 3, 4);
+            btnFP.Name = "btnFP";
+            btnFP.Size = new Size(140, 44);
+            btnFP.TabIndex = 12;
+            btnFP.Text = "Upload Image";
+            btnFP.UseVisualStyleBackColor = false;
+            btnFP.Click += btnFP_Click;
             // 
             // labelpo
             // 
             labelpo.AutoSize = true;
-            labelpo.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            labelpo.ForeColor = Color.FromArgb(11, 94, 235);
-            labelpo.Location = new Point(3, 632);
+            labelpo.Font = new Font("Segoe UI", 10F);
+            labelpo.ForeColor = Color.Black;
+            labelpo.Location = new Point(15, 350);
             labelpo.Name = "labelpo";
-            labelpo.Size = new Size(131, 20);
-            labelpo.TabIndex = 48;
-            labelpo.Text = "Permit to Operate ";
+            labelpo.Size = new Size(147, 23);
+            labelpo.TabIndex = 9;
+            labelpo.Text = "Permit to Operate";
             // 
-            // label16
+            // btnPO
             // 
-            label16.AutoSize = true;
-            label16.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label16.ForeColor = Color.FromArgb(11, 94, 235);
-            label16.Location = new Point(-2, 460);
-            label16.Name = "label16";
-            label16.Size = new Size(253, 20);
-            label16.TabIndex = 47;
-            label16.Text = "Vessel Registry / MARINA Certificate ";
-            // 
-            // label15
-            // 
-            label15.AutoSize = true;
-            label15.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label15.ForeColor = Color.FromArgb(11, 94, 235);
-            label15.Location = new Point(3, 519);
-            label15.Name = "label15";
-            label15.Size = new Size(122, 20);
-            label15.TabIndex = 46;
-            label15.Text = "Safety Certificate";
+            btnPO.BackColor = Color.FromArgb(11, 94, 235);
+            btnPO.FlatStyle = FlatStyle.Flat;
+            btnPO.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnPO.ForeColor = Color.White;
+            btnPO.Location = new Point(480, 344);
+            btnPO.Margin = new Padding(3, 4, 3, 4);
+            btnPO.Name = "btnPO";
+            btnPO.Size = new Size(140, 44);
+            btnPO.TabIndex = 10;
+            btnPO.Text = "Upload PDF";
+            btnPO.UseVisualStyleBackColor = false;
+            btnPO.Click += btnPO_Click;
             // 
             // label14
             // 
             label14.AutoSize = true;
-            label14.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label14.ForeColor = Color.FromArgb(11, 94, 235);
-            label14.Location = new Point(-2, 575);
+            label14.Font = new Font("Segoe UI", 10F);
+            label14.ForeColor = Color.Black;
+            label14.Location = new Point(15, 281);
             label14.Name = "label14";
-            label14.Size = new Size(148, 20);
-            label14.TabIndex = 45;
-            label14.Text = " Insurance Document";
+            label14.Size = new Size(169, 23);
+            label14.TabIndex = 7;
+            label14.Text = "Insurance Document";
+            // 
+            // btnID
+            // 
+            btnID.BackColor = Color.FromArgb(11, 94, 235);
+            btnID.FlatStyle = FlatStyle.Flat;
+            btnID.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnID.ForeColor = Color.White;
+            btnID.Location = new Point(480, 275);
+            btnID.Margin = new Padding(3, 4, 3, 4);
+            btnID.Name = "btnID";
+            btnID.Size = new Size(140, 44);
+            btnID.TabIndex = 8;
+            btnID.Text = "Upload PDF";
+            btnID.UseVisualStyleBackColor = false;
+            btnID.Click += btnID_Click;
+            // 
+            // label15
+            // 
+            label15.AutoSize = true;
+            label15.Font = new Font("Segoe UI", 10F);
+            label15.ForeColor = Color.Black;
+            label15.Location = new Point(15, 212);
+            label15.Name = "label15";
+            label15.Size = new Size(138, 23);
+            label15.TabIndex = 5;
+            label15.Text = "Safety Certificate";
+            // 
+            // btnSC
+            // 
+            btnSC.BackColor = Color.FromArgb(11, 94, 235);
+            btnSC.FlatStyle = FlatStyle.Flat;
+            btnSC.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSC.ForeColor = Color.White;
+            btnSC.Location = new Point(480, 206);
+            btnSC.Margin = new Padding(3, 4, 3, 4);
+            btnSC.Name = "btnSC";
+            btnSC.Size = new Size(140, 44);
+            btnSC.TabIndex = 6;
+            btnSC.Text = "Upload PDF";
+            btnSC.UseVisualStyleBackColor = false;
+            btnSC.Click += btnSC_Click;
+            // 
+            // label16
+            // 
+            label16.AutoSize = true;
+            label16.Font = new Font("Segoe UI", 10F);
+            label16.ForeColor = Color.Black;
+            label16.Location = new Point(15, 144);
+            label16.Name = "label16";
+            label16.Size = new Size(285, 23);
+            label16.TabIndex = 3;
+            label16.Text = "Vessel Registry / MARINA Certificate";
+            // 
+            // btnVR
+            // 
+            btnVR.BackColor = Color.FromArgb(11, 94, 235);
+            btnVR.FlatStyle = FlatStyle.Flat;
+            btnVR.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnVR.ForeColor = Color.White;
+            btnVR.Location = new Point(480, 138);
+            btnVR.Margin = new Padding(3, 4, 3, 4);
+            btnVR.Name = "btnVR";
+            btnVR.Size = new Size(140, 44);
+            btnVR.TabIndex = 4;
+            btnVR.Text = "Upload PDF";
+            btnVR.UseVisualStyleBackColor = false;
+            btnVR.Click += btnVR_Click;
             // 
             // label13
             // 
             label13.AutoSize = true;
-            label13.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label13.ForeColor = Color.FromArgb(11, 94, 235);
-            label13.Location = new Point(3, 398);
+            label13.Font = new Font("Segoe UI", 10F);
+            label13.ForeColor = Color.Black;
+            label13.Location = new Point(15, 75);
             label13.Name = "label13";
-            label13.Size = new Size(169, 20);
-            label13.TabIndex = 44;
+            label13.Size = new Size(193, 23);
+            label13.TabIndex = 1;
             label13.Text = "Certificate of Ownership";
+            // 
+            // btnCO
+            // 
+            btnCO.BackColor = Color.FromArgb(11, 94, 235);
+            btnCO.FlatStyle = FlatStyle.Flat;
+            btnCO.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnCO.ForeColor = Color.White;
+            btnCO.Location = new Point(480, 69);
+            btnCO.Margin = new Padding(3, 4, 3, 4);
+            btnCO.Name = "btnCO";
+            btnCO.Size = new Size(140, 44);
+            btnCO.TabIndex = 2;
+            btnCO.Text = "Upload PDF";
+            btnCO.UseVisualStyleBackColor = false;
+            btnCO.Click += btnCO_Click;
             // 
             // label12
             // 
             label12.AutoSize = true;
-            label12.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label12.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             label12.ForeColor = Color.FromArgb(11, 94, 235);
-            label12.Location = new Point(3, 345);
+            label12.Location = new Point(15, 19);
             label12.Name = "label12";
-            label12.Size = new Size(210, 28);
-            label12.TabIndex = 43;
+            label12.Size = new Size(199, 25);
+            label12.TabIndex = 0;
             label12.Text = "Required Documents";
             // 
-            // nudFloorNumbers
+            // panel3
             // 
-            nudFloorNumbers.Location = new Point(198, 140);
-            nudFloorNumbers.Name = "nudFloorNumbers";
-            nudFloorNumbers.Size = new Size(150, 27);
-            nudFloorNumbers.TabIndex = 40;
-            nudFloorNumbers.ValueChanged += nudFloorNumbers_ValueChanged;
+            panel3.BackColor = Color.White;
+            panel3.BorderStyle = BorderStyle.FixedSingle;
+            panel3.Controls.Add(lblTotalCapacity);
+            panel3.Controls.Add(flowFloors);
+            panel3.Controls.Add(lblFloorLayout);
+            panel3.Location = new Point(20, 287);
+            panel3.Margin = new Padding(3, 4, 3, 4);
+            panel3.Name = "panel3";
+            panel3.Size = new Size(640, 338);
+            panel3.TabIndex = 1;
             // 
-            // label8
+            // lblTotalCapacity
             // 
-            label8.AutoSize = true;
-            label8.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label8.ForeColor = Color.FromArgb(11, 94, 235);
-            label8.Location = new Point(198, 115);
-            label8.Name = "label8";
-            label8.Size = new Size(125, 20);
-            label8.TabIndex = 33;
-            label8.Text = "Number of Floors";
-            // 
-            // tbFerryCode
-            // 
-            tbFerryCode.Location = new Point(3, 138);
-            tbFerryCode.Name = "tbFerryCode";
-            tbFerryCode.Size = new Size(125, 27);
-            tbFerryCode.TabIndex = 32;
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label7.ForeColor = Color.FromArgb(11, 94, 235);
-            label7.Location = new Point(3, 115);
-            label7.Name = "label7";
-            label7.Size = new Size(80, 20);
-            label7.TabIndex = 31;
-            label7.Text = "Ferry Code";
-            // 
-            // tbFerryName
-            // 
-            tbFerryName.Location = new Point(192, 76);
-            tbFerryName.Name = "tbFerryName";
-            tbFerryName.Size = new Size(212, 27);
-            tbFerryName.TabIndex = 30;
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label6.ForeColor = Color.FromArgb(11, 94, 235);
-            label6.Location = new Point(192, 41);
-            label6.Name = "label6";
-            label6.Size = new Size(85, 20);
-            label6.TabIndex = 29;
-            label6.Text = "Ferry Name";
-            // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label5.ForeColor = Color.FromArgb(11, 94, 235);
-            label5.Location = new Point(3, 41);
-            label5.Name = "label5";
-            label5.Size = new Size(108, 20);
-            label5.TabIndex = 28;
-            label5.Text = "Ferry Company";
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label2.ForeColor = Color.FromArgb(11, 94, 235);
-            label2.Location = new Point(3, 2);
-            label2.Name = "label2";
-            label2.Size = new Size(133, 28);
-            label2.TabIndex = 25;
-            label2.Text = "Ferry Details";
-            // 
-            // tbCompanyName
-            // 
-            tbCompanyName.Location = new Point(3, 76);
-            tbCompanyName.Name = "tbCompanyName";
-            tbCompanyName.Size = new Size(125, 27);
-            tbCompanyName.TabIndex = 24;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.ForeColor = Color.Gray;
-            label1.Location = new Point(3, -29);
-            label1.Name = "label1";
-            label1.Size = new Size(343, 20);
-            label1.TabIndex = 23;
-            label1.Text = "Enter ferry details, route, and schedule information";
+            lblTotalCapacity.AutoSize = true;
+            lblTotalCapacity.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            lblTotalCapacity.ForeColor = Color.FromArgb(11, 94, 235);
+            lblTotalCapacity.Location = new Point(15, 294);
+            lblTotalCapacity.Name = "lblTotalCapacity";
+            lblTotalCapacity.Size = new Size(169, 28);
+            lblTotalCapacity.TabIndex = 2;
+            lblTotalCapacity.Text = "Total Capacity: 0";
             // 
             // flowFloors
             // 
             flowFloors.AutoScroll = true;
             flowFloors.FlowDirection = FlowDirection.TopDown;
-            flowFloors.Location = new Point(-2, 185);
+            flowFloors.Location = new Point(15, 62);
+            flowFloors.Margin = new Padding(3, 4, 3, 4);
             flowFloors.Name = "flowFloors";
-            flowFloors.Size = new Size(480, 116);
-            flowFloors.TabIndex = 41;
+            flowFloors.Size = new Size(610, 212);
+            flowFloors.TabIndex = 1;
             flowFloors.WrapContents = false;
+            // 
+            // lblFloorLayout
+            // 
+            lblFloorLayout.AutoSize = true;
+            lblFloorLayout.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            lblFloorLayout.ForeColor = Color.FromArgb(11, 94, 235);
+            lblFloorLayout.Location = new Point(15, 19);
+            lblFloorLayout.Name = "lblFloorLayout";
+            lblFloorLayout.Size = new Size(125, 25);
+            lblFloorLayout.TabIndex = 0;
+            lblFloorLayout.Text = "Floor Layout";
+            // 
+            // panel2
+            // 
+            panel2.BackColor = Color.White;
+            panel2.BorderStyle = BorderStyle.FixedSingle;
+            panel2.Controls.Add(nudFloorNumbers);
+            panel2.Controls.Add(label8);
+            panel2.Controls.Add(tbFerryCode);
+            panel2.Controls.Add(label7);
+            panel2.Controls.Add(tbFerryName);
+            panel2.Controls.Add(label6);
+            panel2.Controls.Add(tbCompanyName);
+            panel2.Controls.Add(label5);
+            panel2.Controls.Add(label2);
+            panel2.Location = new Point(20, 25);
+            panel2.Margin = new Padding(3, 4, 3, 4);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(640, 224);
+            panel2.TabIndex = 0;
+            // 
+            // nudFloorNumbers
+            // 
+            nudFloorNumbers.Font = new Font("Segoe UI", 10F);
+            nudFloorNumbers.Location = new Point(290, 171);
+            nudFloorNumbers.Margin = new Padding(3, 4, 3, 4);
+            nudFloorNumbers.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            nudFloorNumbers.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            nudFloorNumbers.Name = "nudFloorNumbers";
+            nudFloorNumbers.Size = new Size(150, 30);
+            nudFloorNumbers.TabIndex = 8;
+            nudFloorNumbers.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            nudFloorNumbers.ValueChanged += nudFloorNumbers_ValueChanged;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            label8.ForeColor = Color.FromArgb(11, 94, 235);
+            label8.Location = new Point(290, 143);
+            label8.Name = "label8";
+            label8.Size = new Size(151, 23);
+            label8.TabIndex = 7;
+            label8.Text = "Number of Floors";
+            // 
+            // tbFerryCode
+            // 
+            tbFerryCode.Font = new Font("Segoe UI", 10F);
+            tbFerryCode.Location = new Point(11, 170);
+            tbFerryCode.Margin = new Padding(3, 4, 3, 4);
+            tbFerryCode.Name = "tbFerryCode";
+            tbFerryCode.PlaceholderText = "e.g., FRY-001";
+            tbFerryCode.Size = new Size(250, 30);
+            tbFerryCode.TabIndex = 6;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            label7.ForeColor = Color.FromArgb(11, 94, 235);
+            label7.Location = new Point(15, 143);
+            label7.Name = "label7";
+            label7.Size = new Size(98, 23);
+            label7.TabIndex = 5;
+            label7.Text = "Ferry Code";
+            // 
+            // tbFerryName
+            // 
+            tbFerryName.Font = new Font("Segoe UI", 10F);
+            tbFerryName.Location = new Point(290, 87);
+            tbFerryName.Margin = new Padding(3, 4, 3, 4);
+            tbFerryName.Name = "tbFerryName";
+            tbFerryName.PlaceholderText = "e.g., MV Ocean Queen";
+            tbFerryName.Size = new Size(330, 30);
+            tbFerryName.TabIndex = 4;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            label6.ForeColor = Color.FromArgb(11, 94, 235);
+            label6.Location = new Point(290, 56);
+            label6.Name = "label6";
+            label6.Size = new Size(104, 23);
+            label6.TabIndex = 3;
+            label6.Text = "Ferry Name";
+            // 
+            // tbCompanyName
+            // 
+            tbCompanyName.BackColor = Color.WhiteSmoke;
+            tbCompanyName.Font = new Font("Segoe UI", 10F);
+            tbCompanyName.Location = new Point(15, 87);
+            tbCompanyName.Margin = new Padding(3, 4, 3, 4);
+            tbCompanyName.Name = "tbCompanyName";
+            tbCompanyName.ReadOnly = true;
+            tbCompanyName.Size = new Size(250, 30);
+            tbCompanyName.TabIndex = 2;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            label5.ForeColor = Color.FromArgb(11, 94, 235);
+            label5.Location = new Point(15, 56);
+            label5.Name = "label5";
+            label5.Size = new Size(133, 23);
+            label5.TabIndex = 1;
+            label5.Text = "Ferry Company";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            label2.ForeColor = Color.FromArgb(11, 94, 235);
+            label2.Location = new Point(15, 19);
+            label2.Name = "label2";
+            label2.Size = new Size(172, 25);
+            label2.TabIndex = 0;
+            label2.Text = "Ferry Information";
+            // 
+            // panel5
+            // 
+            panel5.BackColor = Color.WhiteSmoke;
+            panel5.Controls.Add(btnSave);
+            panel5.Controls.Add(btnCancel);
+            panel5.Dock = DockStyle.Bottom;
+            panel5.Location = new Point(0, 867);
+            panel5.Margin = new Padding(3, 4, 3, 4);
+            panel5.Name = "panel5";
+            panel5.Size = new Size(700, 71);
+            panel5.TabIndex = 2;
             // 
             // btnSave
             // 
             btnSave.BackColor = Color.FromArgb(11, 94, 235);
+            btnSave.FlatStyle = FlatStyle.Flat;
+            btnSave.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(131, 597);
+            btnSave.Location = new Point(580, 19);
+            btnSave.Margin = new Padding(3, 4, 3, 4);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(116, 39);
-            btnSave.TabIndex = 24;
-            btnSave.Text = "Save";
+            btnSave.Size = new Size(120, 50);
+            btnSave.TabIndex = 1;
+            btnSave.Text = "Register";
             btnSave.UseVisualStyleBackColor = false;
             btnSave.Click += btnSave_Click;
             // 
             // btnCancel
             // 
-            btnCancel.BackColor = Color.Red;
-            btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(264, 597);
+            btnCancel.BackColor = Color.White;
+            btnCancel.FlatStyle = FlatStyle.Flat;
+            btnCancel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnCancel.ForeColor = Color.FromArgb(11, 94, 235);
+            btnCancel.Location = new Point(450, 19);
+            btnCancel.Margin = new Padding(3, 4, 3, 4);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(116, 39);
-            btnCancel.TabIndex = 25;
+            btnCancel.Size = new Size(120, 50);
+            btnCancel.TabIndex = 0;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = false;
             btnCancel.Click += btnCancel_Click;
@@ -387,48 +523,69 @@ namespace FERRY_BOOKING.Dialogs
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = SystemColors.ButtonFace;
-            ClientSize = new Size(506, 648);
-            Controls.Add(btnCancel);
-            Controls.Add(btnSave);
+            BackColor = Color.White;
+            ClientSize = new Size(700, 938);
+            Controls.Add(panel5);
             Controls.Add(RegistrationFormPanel);
-            ForeColor = Color.Gray;
+            Controls.Add(panel1);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            Margin = new Padding(3, 4, 3, 4);
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "FerryRegistrationForm";
-            Text = "Register New Ferry";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Ferry Registration";
+            panel1.ResumeLayout(false);
+            panel1.PerformLayout();
             RegistrationFormPanel.ResumeLayout(false);
-            RegistrationFormPanel.PerformLayout();
+            panel4.ResumeLayout(false);
+            panel4.PerformLayout();
+            panel3.ResumeLayout(false);
+            panel3.PerformLayout();
+            panel2.ResumeLayout(false);
+            panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudFloorNumbers).EndInit();
+            panel5.ResumeLayout(false);
             ResumeLayout(false);
+
         }
 
         #endregion
-        private Panel RegistrationFormPanel;
-        private NumericUpDown nudFloorNumbers;
-        private FlowLayoutPanel flowFloors;
-        private Label label8;
-        private TextBox tbFerryCode;
-        private Label label7;
-        private TextBox tbFerryName;
-        private Label label6;
-        private Label label5;
-        private Label label2;
-        private TextBox tbCompanyName;
-        private Label label1;
-        private Label label12;
-        private Button btnSave;
-        private Button btnCancel;
-        private Label labelpo;
-        private Label label16;
-        private Label label15;
-        private Label label14;
-        private Label label13;
-        private Button btnFP;
-        private Button btnPO;
-        private Button btnID;
-        private Button btnSC;
-        private Button btnVR;
-        private Button btnCO;
-        private Label labelfp;
-        private Label lblTotalCapacity;
+
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label lblSubtitle;
+        private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.Panel RegistrationFormPanel;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.NumericUpDown nudFloorNumbers;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.TextBox tbFerryCode;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TextBox tbFerryName;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox tbCompanyName;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Panel panel3;
+        private System.Windows.Forms.Label lblTotalCapacity;
+        private System.Windows.Forms.FlowLayoutPanel flowFloors;
+        private System.Windows.Forms.Label lblFloorLayout;
+        private System.Windows.Forms.Panel panel4;
+        private System.Windows.Forms.Button btnFP;
+        private System.Windows.Forms.Label labelfp;
+        private System.Windows.Forms.Button btnPO;
+        private System.Windows.Forms.Label labelpo;
+        private System.Windows.Forms.Button btnID;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Button btnSC;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Button btnVR;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.Button btnCO;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Panel panel5;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnCancel;
     }
 }

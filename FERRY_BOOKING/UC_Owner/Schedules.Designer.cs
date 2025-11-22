@@ -28,6 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             lblCompanyNameFleet = new Label();
             label1 = new Label();
             btnAddRoute = new Button();
@@ -71,30 +74,40 @@
             // 
             // dgvSchedule
             // 
-            // make DataGridView look and behave like dgvMyFerries
             dgvSchedule.AllowUserToAddRows = false;
-            dgvSchedule.AllowUserToDeleteRows = false;
-            dgvSchedule.AllowUserToResizeRows = false;
-            dgvSchedule.MultiSelect = false;
-            dgvSchedule.ReadOnly = true;
-            dgvSchedule.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvSchedule.RowHeadersVisible = false;
-            dgvSchedule.RowTemplate.Height = 50;
-            dgvSchedule.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvSchedule.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvSchedule.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dgvSchedule.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
             dgvSchedule.BackgroundColor = Color.White;
-            dgvSchedule.BorderStyle = BorderStyle.None;
+            dgvSchedule.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.White;
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            dataGridViewCellStyle1.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dgvSchedule.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dgvSchedule.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = Color.White;
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 10F);
+            dataGridViewCellStyle2.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle2.SelectionBackColor = Color.LightGray;
+            dataGridViewCellStyle2.SelectionForeColor = Color.Black;
+            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
+            dgvSchedule.DefaultCellStyle = dataGridViewCellStyle2;
             dgvSchedule.EnableHeadersVisualStyles = false;
-            dgvSchedule.GridColor = Color.LightGray;
             dgvSchedule.Location = new Point(16, 64);
             dgvSchedule.Name = "dgvSchedule";
+            dgvSchedule.RowHeadersVisible = false;
             dgvSchedule.RowHeadersWidth = 51;
+            dataGridViewCellStyle3.BackColor = Color.White;
+            dgvSchedule.RowsDefaultCellStyle = dataGridViewCellStyle3;
             dgvSchedule.Size = new Size(1455, 353);
             dgvSchedule.TabIndex = 45;
-            // wire paint/click handlers (LoadSchedule will unsubscribe/resubscribe safely)
-            dgvSchedule.CellPainting += dgvSchedule_CellPainting;
             dgvSchedule.CellClick += dgvSchedule_CellClick;
             dgvSchedule.CellMouseEnter += dgvSchedule_CellMouseEnter;
+            dgvSchedule.CellPainting += dgvSchedule_CellPainting;
             // 
             // lblEmptyMessage
             // 

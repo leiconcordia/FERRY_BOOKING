@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,25 +15,36 @@ namespace FERRY_BOOKING.Dialogs
     {
         public string CompanyName { get; set; }
         public int OwnerID { get; set; }
+        
+        // File upload tracking
+        private string coFileName = "";
+        private string vrFileName = "";
+        private string scFileName = "";
+        private string idFileName = "";
+        private string poFileName = "";
+        private string fpFileName = "";
+        
+        byte[] coFileBytes;   // Certificate of Ownership
+        byte[] vrFileBytes;   // Vessel Registration
+        byte[] scFileBytes;   // Safety Certificate
+        byte[] idFileBytes;   // ID Photo
+        byte[] poFileBytes;   // Purchase Order
+        byte[] fpFileBytes;   // Ferry Picture (Image only)
+
         public FerryRegistrationForm(int OwnerID, String CompanyName)
         {
             InitializeComponent();
             this.CompanyName = CompanyName;
             this.OwnerID = OwnerID;
 
-       
             tbCompanyName.Text = CompanyName;
             tbCompanyName.ReadOnly = true;
-
-            RegistrationFormPanel.Controls.Add(flowFloors);
-
         }
 
         private void nudFloorNumbers_ValueChanged(object sender, EventArgs e)
         {
             GenerateFloorInputs((int)nudFloorNumbers.Value);
         }
-
 
         private void UpdateFloorAndTotalCapacity()
         {
@@ -45,20 +57,12 @@ namespace FERRY_BOOKING.Dialogs
                 var lblCap = group.Controls.OfType<Label>().First(x => x.Name.Contains("lblCapacity"));
 
                 int floorCapacity = (int)nudRow.Value * (int)nudCol.Value;
-
-                // ✅ Update this floor's capacity label correctly
                 lblCap.Text = $"Capacity: {floorCapacity} seats";
-
                 total += floorCapacity;
             }
 
-            // ✅ Ensure you have a Label named lblTotalCapacity somewhere in your form
             lblTotalCapacity.Text = $"Total Capacity: {total} seats";
         }
-
-
-
-
 
         private void GenerateFloorInputs(int numberOfFloors)
         {
@@ -68,44 +72,51 @@ namespace FERRY_BOOKING.Dialogs
             {
                 GroupBox group = new GroupBox();
                 group.Text = $"Floor {i}";
-                group.Width = flowFloors.Width - 90;
-                group.Height = 110;
+                group.Width = 580;
+                group.Height = 90;
                 group.Padding = new Padding(10);
-
+                group.BackColor = Color.WhiteSmoke;
+                group.ForeColor = Color.FromArgb(11, 94, 235);
+                group.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 
                 Label lblRow = new Label();
                 lblRow.Text = "Rows:";
                 lblRow.AutoSize = true;
-                lblRow.Location = new Point(10, 30);
+                lblRow.Location = new Point(15, 35);
+                lblRow.Font = new Font("Segoe UI", 9F);
+                lblRow.ForeColor = Color.Black;
 
                 NumericUpDown nudRow = new NumericUpDown();
                 nudRow.Name = $"nudRow_{i}";
                 nudRow.Minimum = 1;
                 nudRow.Maximum = 50;
-                nudRow.Width = 60;
-                nudRow.Location = new Point(60, 25);
+                nudRow.Width = 70;
+                nudRow.Location = new Point(70, 32);
+                nudRow.Font = new Font("Segoe UI", 9F);
 
                 Label lblColumn = new Label();
                 lblColumn.Text = "Columns:";
                 lblColumn.AutoSize = true;
-                lblColumn.Location = new Point(140, 30);
+                lblColumn.Location = new Point(160, 35);
+                lblColumn.Font = new Font("Segoe UI", 9F);
+                lblColumn.ForeColor = Color.Black;
 
                 NumericUpDown nudColumn = new NumericUpDown();
                 nudColumn.Name = $"nudColumn_{i}";
                 nudColumn.Minimum = 1;
                 nudColumn.Maximum = 50;
-                nudColumn.Width = 60;
-                nudColumn.Location = new Point(210, 25);
+                nudColumn.Width = 70;
+                nudColumn.Location = new Point(235, 32);
+                nudColumn.Font = new Font("Segoe UI", 9F);
 
-
-                // ✅ Floor Capacity Label
                 Label lblCapacity = new Label();
                 lblCapacity.Name = $"lblCapacity_{i}";
                 lblCapacity.Text = "Capacity: 1 seat";
                 lblCapacity.AutoSize = true;
-                lblCapacity.Location = new Point(160, 60);
+                lblCapacity.Location = new Point(330, 35);
+                lblCapacity.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                lblCapacity.ForeColor = Color.FromArgb(11, 94, 235);
 
-                // Event handlers to update capacity instantly
                 nudRow.ValueChanged += (s, e) => UpdateFloorAndTotalCapacity();
                 nudColumn.ValueChanged += (s, e) => UpdateFloorAndTotalCapacity();
 
@@ -121,21 +132,6 @@ namespace FERRY_BOOKING.Dialogs
             UpdateFloorAndTotalCapacity();
         }
 
-
-
-
-
-        
-
-       
-        byte[] coFileBytes;   // Certificate of Ownership
-        byte[] vrFileBytes;   // Vessel Registration
-        byte[] scFileBytes;   // Safety Certificate
-        byte[] idFileBytes;   // ID Photo
-        byte[] poFileBytes;   // Purchase Order
-        byte[] fpFileBytes;   // Ferry Picture (Image only)
-
-
         private void btnCO_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFile = new OpenFileDialog();
@@ -144,6 +140,9 @@ namespace FERRY_BOOKING.Dialogs
             if (openFile.ShowDialog() == DialogResult.OK)
             {
                 coFileBytes = File.ReadAllBytes(openFile.FileName);
+                coFileName = Path.GetFileName(openFile.FileName);
+                btnCO.Text = "✓ " + TruncateFileName(coFileName);
+                btnCO.BackColor = Color.Green;
             }
         }
 
@@ -155,6 +154,9 @@ namespace FERRY_BOOKING.Dialogs
             if (openFile.ShowDialog() == DialogResult.OK)
             {
                 vrFileBytes = File.ReadAllBytes(openFile.FileName);
+                vrFileName = Path.GetFileName(openFile.FileName);
+                btnVR.Text = "✓ " + TruncateFileName(vrFileName);
+                btnVR.BackColor = Color.Green;
             }
         }
 
@@ -166,6 +168,9 @@ namespace FERRY_BOOKING.Dialogs
             if (openFile.ShowDialog() == DialogResult.OK)
             {
                 scFileBytes = File.ReadAllBytes(openFile.FileName);
+                scFileName = Path.GetFileName(openFile.FileName);
+                btnSC.Text = "✓ " + TruncateFileName(scFileName);
+                btnSC.BackColor = Color.Green;
             }
         }
 
@@ -177,6 +182,9 @@ namespace FERRY_BOOKING.Dialogs
             if (openFile.ShowDialog() == DialogResult.OK)
             {
                 idFileBytes = File.ReadAllBytes(openFile.FileName);
+                idFileName = Path.GetFileName(openFile.FileName);
+                btnID.Text = "✓ " + TruncateFileName(idFileName);
+                btnID.BackColor = Color.Green;
             }
         }   
 
@@ -188,32 +196,39 @@ namespace FERRY_BOOKING.Dialogs
             if (openFile.ShowDialog() == DialogResult.OK)
             {
                 poFileBytes = File.ReadAllBytes(openFile.FileName);
+                poFileName = Path.GetFileName(openFile.FileName);
+                btnPO.Text = "✓ " + TruncateFileName(poFileName);
+                btnPO.BackColor = Color.Green;
             }
         }
 
         private void btnFP_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFile = new OpenFileDialog();
-            openFile.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp"; // Picture only
+            openFile.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp";
 
             if (openFile.ShowDialog() == DialogResult.OK)
             {
                 fpFileBytes = File.ReadAllBytes(openFile.FileName);
+                fpFileName = Path.GetFileName(openFile.FileName);
+                btnFP.Text = "✓ " + TruncateFileName(fpFileName);
+                btnFP.BackColor = Color.Green;
             }
         }
+
+        private string TruncateFileName(string fileName)
+        {
+            if (fileName.Length > 15)
+                return fileName.Substring(0, 12) + "...";
+            return fileName;
+        }
+
         public class FloorLayout
         {
             public int FloorNumber { get; set; }
             public int Rows { get; set; }
             public int Columns { get; set; }
         }
-
-
-     
-
-
-
-
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
@@ -232,7 +247,7 @@ namespace FERRY_BOOKING.Dialogs
 
             if (coFileBytes == null || vrFileBytes == null || scFileBytes == null || idFileBytes == null)
             {
-                MessageBox.Show("Please upload all required documents.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please upload all required documents (CO, VR, SC, ID).", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -282,14 +297,13 @@ namespace FERRY_BOOKING.Dialogs
             if (success)
             {
                 MessageBox.Show("Ferry registered successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.DialogResult = DialogResult.OK;
                 this.Close();
-                
             }
             else
             {
                 MessageBox.Show("Error occurred while saving ferry.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
     }
 }

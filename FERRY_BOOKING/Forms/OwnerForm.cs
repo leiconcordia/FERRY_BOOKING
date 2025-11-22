@@ -66,7 +66,7 @@ namespace FERRY_BOOKING.Forms
             if (FerryOwnerPanel.Controls.Count == 0)
             {
                 // Create an instance of your UserControl
-                UC_Ferry.Dashboard dashboard = new UC_Ferry.Dashboard();
+                UC_Ferry.Dashboard dashboard = new UC_Ferry.Dashboard(OwnerID);
 
                 // Make sure it fills the panel
                 dashboard.Dock = DockStyle.Fill;
@@ -80,7 +80,7 @@ namespace FERRY_BOOKING.Forms
         private void navDashboard_Click(object sender, EventArgs e)
         {
             ActivateButton(navDashboard);
-            LoadUserControl(new UC_Ferry.Dashboard());
+            LoadUserControl(new UC_Ferry.Dashboard(OwnerID));
         }
 
         private void navFerries_Click(object sender, EventArgs e)
@@ -98,7 +98,7 @@ namespace FERRY_BOOKING.Forms
         private void navSummary_Click(object sender, EventArgs e)
         {
             ActivateButton(navSummary);
-            LoadUserControl(new UC_Ferry.Summary(this.OwnerID));
+            LoadUserControl(new UC_Ferry.Summary(OwnerID));
         }
 
         private void btnLogout_Click(object sender, EventArgs e)

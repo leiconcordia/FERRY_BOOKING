@@ -194,6 +194,7 @@
             dtpDate.TabIndex = 55;
             dtpDate.Format = DateTimePickerFormat.Custom;
             dtpDate.CustomFormat = "MM/dd/yyyy"; // or "dd/MM/yyyy"
+            dtpDate.ValueChanged += FilterChanged;
             DateTime selectedDate = dtpDate.Value.Date; // only the date part
 
 

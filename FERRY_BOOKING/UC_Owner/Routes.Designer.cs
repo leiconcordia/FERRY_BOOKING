@@ -28,6 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             lblCompanyNameFleet = new Label();
             label1 = new Label();
             btnAddRoute = new Button();
@@ -71,34 +74,40 @@
             // 
             // dgvRoutes
             // 
-            // make DataGridView look and behave like dgvMyFerries
-       
-
             dgvRoutes.AllowUserToAddRows = false;
-            dgvRoutes.AllowUserToDeleteRows = false;
-            dgvRoutes.AllowUserToResizeRows = false;
-            dgvRoutes.MultiSelect = false;
-            dgvRoutes.ReadOnly = true;
-            dgvRoutes.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvRoutes.RowHeadersVisible = false;
-            dgvRoutes.RowTemplate.Height = 40;
             dgvRoutes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
             dgvRoutes.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
             dgvRoutes.BackgroundColor = Color.White;
             dgvRoutes.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.White;
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            dataGridViewCellStyle1.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dgvRoutes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dgvRoutes.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = Color.White;
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 10F);
+            dataGridViewCellStyle2.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle2.SelectionBackColor = Color.LightGray;
+            dataGridViewCellStyle2.SelectionForeColor = Color.Black;
+            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
+            dgvRoutes.DefaultCellStyle = dataGridViewCellStyle2;
             dgvRoutes.EnableHeadersVisualStyles = false;
-            dgvRoutes.GridColor = Color.LightGray;
-            dgvRoutes.BorderStyle = BorderStyle.None;
             dgvRoutes.Location = new Point(18, 70);
             dgvRoutes.Name = "dgvRoutes";
+            dgvRoutes.RowHeadersVisible = false;
             dgvRoutes.RowHeadersWidth = 51;
+            dataGridViewCellStyle3.BackColor = Color.White;
+            dgvRoutes.RowsDefaultCellStyle = dataGridViewCellStyle3;
             dgvRoutes.Size = new Size(1455, 353);
             dgvRoutes.TabIndex = 44;
-            // wire paint/click handlers (LoadRoutes will unsubscribe/resubscribe safely)
-            dgvRoutes.CellPainting += dgvRoutes_CellPainting;
             dgvRoutes.CellClick += dgvRoutes_CellClick;
             dgvRoutes.CellMouseEnter += dgvRoutes_CellMouseEnter;
-
+            dgvRoutes.CellPainting += dgvRoutes_CellPainting;
             // 
             // lblEmptyMessage
             // 

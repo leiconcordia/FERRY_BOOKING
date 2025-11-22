@@ -304,4 +304,32 @@ LEFT JOIN (
 WHERE t.ArrivalTime < GETDATE();
 
 
-  
+CREATE OR ALTER VIEW vw_TodaysTripDashboard AS
+SELECT
+    t.TripID,
+    t.FerryID,
+    f.FerryName,
+    f.OwnerID,
+    r.Origin + ' to ' + r.Destination AS Route,
+    t.TripDate,
+    t.DepartureTime,
+    t.ArrivalTime,
+    -- Concatenate floor info: FloorNumber: Booked/Capacity
+    STUFF((
+        SELECT ', ' + 'Floor ' + CAST(ff.FloorNumber AS VARCHAR) + ': ' 
+               + CAST(ISNULL(bs.BookedCount, 0) AS VARCHAR) + '/' + CAST(ff.Capacity AS VARCHAR)
+        FROM FerryFloor ff
+        LEFT JOIN (
+            SELECT LEFT(SeatNumber,1) AS FloorNum, COUNT(*) AS BookedCount
+            FROM BookedSeats
+            WHERE TripID = t.TripID AND FerryID = t.FerryID
+            GROUP BY LEFT(SeatNumber,1)
+        ) bs ON CAST(ff.FloorNumber AS VARCHAR) = bs.FloorNum
+        WHERE ff.FerryID = t.FerryID
+        ORDER BY ff.FloorNumber
+        FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS FloorBreakdown
+FROM Trip t
+JOIN Ferry f ON t.FerryID = f.FerryID
+JOIN Route r ON t.RouteID = r.RouteID
+WHERE CAST(t.TripDate AS DATE) = CAST(GETDATE() AS DATE)
+  AND f.OwnerID = 1;  -- Replace 1 with desired OwnerID

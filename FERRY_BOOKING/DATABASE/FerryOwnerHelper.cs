@@ -822,6 +822,74 @@ namespace FERRY_BOOKING.DATABASE
                 return true;
             }
         }
+        public int GetTotalBookingsToday(int ownerID)
+        {
+            string query = @"
+            SELECT COUNT(*)
+            FROM Booking b
+            JOIN Trip t ON b.TripID = t.TripID
+            JOIN Ferry f ON t.FerryID = f.FerryID
+            WHERE f.OwnerID = @OwnerID
+            AND CAST(b.BookingDate AS DATE) = CAST(GETDATE() AS DATE)";
+            SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
+            return Convert.ToInt32(db.ExecuteScalar(query, parameters));
+        }
+
+        public decimal GetTotalRevenueToday(int ownerID)
+        {
+            string query = @"
+            SELECT ISNULL(SUM(b.TotalAmount), 0)
+            FROM Booking b
+            JOIN Trip t ON b.TripID = t.TripID
+            JOIN Ferry f ON t.FerryID = f.FerryID
+            WHERE f.OwnerID = @OwnerID
+            AND CAST(b.BookingDate AS DATE) = CAST(GETDATE() AS DATE)";
+            SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
+            return Convert.ToDecimal(db.ExecuteScalar(query, parameters));
+        }
+
+        public string GetMostBookedFerry(int ownerID)
+        {
+            string query = @"
+            SELECT TOP 1 f.FerryName,
+                CAST((CAST(COUNT(bs.BookedSeatID) AS FLOAT) / f.TotalCapacity) * 100 AS DECIMAL(5,2)) AS Occupancy
+            FROM Ferry f
+            JOIN Trip t ON f.FerryID = t.FerryID
+            LEFT JOIN BookedSeats bs ON t.TripID = bs.TripID
+            WHERE f.OwnerID = @OwnerID
+            GROUP BY f.FerryName, f.TotalCapacity
+            ORDER BY Occupancy DESC";
+            SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
+            DataTable dt = db.ExecuteDataTable(query, parameters);
+            if (dt.Rows.Count == 0) return "No data";
+            return $"{dt.Rows[0]["FerryName"]} ({dt.Rows[0]["Occupancy"]}% )";
+        }
+
+        public (int availableSeats, int tripsToday) GetAvailableSeatsAndTrips(int ownerID)
+        {
+            string query = @"
+            SELECT 
+                SUM(f.TotalCapacity - ISNULL(BS.BookedSeats, 0)) AS AvailableSeats,
+                COUNT(*) AS TripsToday
+            FROM Trip t
+            JOIN Ferry f ON t.FerryID = f.FerryID
+            LEFT JOIN (
+                SELECT TripID, COUNT(*) AS BookedSeats
+                FROM BookedSeats
+                GROUP BY TripID
+            ) BS ON BS.TripID = t.TripID
+            WHERE f.OwnerID = @OwnerID
+            AND CAST(t.TripDate AS DATE) = CAST(GETDATE() AS DATE)";
+            SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
+            DataTable dt = db.ExecuteDataTable(query, parameters);
+            int available = dt.Rows[0]["AvailableSeats"] != DBNull.Value ? Convert.ToInt32(dt.Rows[0]["AvailableSeats"]) : 0;
+            int trips = dt.Rows[0]["TripsToday"] != DBNull.Value ? Convert.ToInt32(dt.Rows[0]["TripsToday"]) : 0;
+            return (available, trips);
+        }
+
+
+
+
 
 
 

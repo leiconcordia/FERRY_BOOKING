@@ -28,243 +28,348 @@
         /// </summary>
         private void InitializeComponent()
         {
-            btnAddRoute = new Button();
-            btnCancel = new Button();
-            nudHours = new NumericUpDown();
-            nudDistance = new NumericUpDown();
-            label6 = new Label();
-            label4 = new Label();
-            tbDestinationPort = new TextBox();
-            tbOriginPort = new TextBox();
-            label3 = new Label();
-            label2 = new Label();
-            cbFerry = new ComboBox();
-            label5 = new Label();
-            label1 = new Label();
-            lblCompanyNameFleet = new Label();
-            nudMin = new NumericUpDown();
-            label7 = new Label();
-            label8 = new Label();
-            ((System.ComponentModel.ISupportInitialize)nudHours).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)nudDistance).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)nudMin).BeginInit();
-            SuspendLayout();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.lblTitle = new System.Windows.Forms.Label();
+            this.lblSubtitle = new System.Windows.Forms.Label();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.label5 = new System.Windows.Forms.Label();
+            this.cbFerry = new System.Windows.Forms.ComboBox();
+            this.panel3 = new System.Windows.Forms.Panel();
+            this.label2 = new System.Windows.Forms.Label();
+            this.tbOriginPort = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.tbDestinationPort = new System.Windows.Forms.TextBox();
+            this.panel4 = new System.Windows.Forms.Panel();
+            this.label4 = new System.Windows.Forms.Label();
+            this.nudDistance = new System.Windows.Forms.NumericUpDown();
+            this.label7 = new System.Windows.Forms.Label();
+            this.nudHours = new System.Windows.Forms.NumericUpDown();
+            this.label8 = new System.Windows.Forms.Label();
+            this.nudMin = new System.Windows.Forms.NumericUpDown();
+            this.panel5 = new System.Windows.Forms.Panel();
+            this.btnCancel = new System.Windows.Forms.Button();
+            this.btnAddRoute = new System.Windows.Forms.Button();
+            this.panel1.SuspendLayout();
+            this.panel2.SuspendLayout();
+            this.panel3.SuspendLayout();
+            this.panel4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudDistance)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudHours)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudMin)).BeginInit();
+            this.panel5.SuspendLayout();
+            this.SuspendLayout();
             // 
-            // btnAddRoute
+            // panel1
             // 
-            btnAddRoute.BackColor = Color.FromArgb(11, 94, 235);
-            btnAddRoute.ForeColor = SystemColors.ButtonHighlight;
-            btnAddRoute.Location = new Point(277, 323);
-            btnAddRoute.Name = "btnAddRoute";
-            btnAddRoute.Size = new Size(113, 44);
-            btnAddRoute.TabIndex = 56;
-            btnAddRoute.Text = "Add Route";
-            btnAddRoute.UseVisualStyleBackColor = false;
-            btnAddRoute.Click += btnAddRoute_Click;
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(94)))), ((int)(((byte)(235)))));
+            this.panel1.Controls.Add(this.lblSubtitle);
+            this.panel1.Controls.Add(this.lblTitle);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(600, 80);
+            this.panel1.TabIndex = 0;
             // 
-            // btnCancel
+            // lblTitle
             // 
-            btnCancel.ForeColor = Color.FromArgb(11, 94, 235);
-            btnCancel.Location = new Point(193, 323);
-            btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(77, 44);
-            btnCancel.TabIndex = 55;
-            btnCancel.Text = "Cancel";
-            btnCancel.UseVisualStyleBackColor = true;
-            btnCancel.Click += btnCancel_Click;
+            this.lblTitle.AutoSize = true;
+            this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+            this.lblTitle.ForeColor = System.Drawing.Color.White;
+            this.lblTitle.Location = new System.Drawing.Point(20, 15);
+            this.lblTitle.Name = "lblTitle";
+            this.lblTitle.Size = new System.Drawing.Size(238, 37);
+            this.lblTitle.TabIndex = 0;
+            this.lblTitle.Text = "Add Ferry Route";
             // 
-            // nudHours
+            // lblSubtitle
             // 
-            nudHours.Location = new Point(205, 285);
-            nudHours.Name = "nudHours";
-            nudHours.Size = new Size(50, 27);
-            nudHours.TabIndex = 54;
+            this.lblSubtitle.AutoSize = true;
+            this.lblSubtitle.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.lblSubtitle.ForeColor = System.Drawing.Color.White;
+            this.lblSubtitle.Location = new System.Drawing.Point(20, 52);
+            this.lblSubtitle.Name = "lblSubtitle";
+            this.lblSubtitle.Size = new System.Drawing.Size(316, 23);
+            this.lblSubtitle.TabIndex = 1;
+            this.lblSubtitle.Text = "Configure ferry routes and destinations";
             // 
-            // nudDistance
+            // panel2
             // 
-            nudDistance.Location = new Point(9, 260);
-            nudDistance.Name = "nudDistance";
-            nudDistance.Size = new Size(150, 27);
-            nudDistance.TabIndex = 53;
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label6.ForeColor = Color.FromArgb(11, 94, 235);
-            label6.Location = new Point(203, 236);
-            label6.Name = "label6";
-            label6.Size = new Size(132, 20);
-            label6.TabIndex = 52;
-            label6.Text = "Est. Duration (min)";
-            // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label4.ForeColor = Color.FromArgb(11, 94, 235);
-            label4.Location = new Point(8, 236);
-            label4.Name = "label4";
-            label4.Size = new Size(100, 20);
-            label4.TabIndex = 51;
-            label4.Text = "Distance (km)";
-            // 
-            // tbDestinationPort
-            // 
-            tbDestinationPort.Location = new Point(203, 176);
-            tbDestinationPort.Name = "tbDestinationPort";
-            tbDestinationPort.Size = new Size(163, 27);
-            tbDestinationPort.TabIndex = 50;
-            // 
-            // tbOriginPort
-            // 
-            tbOriginPort.Location = new Point(8, 176);
-            tbOriginPort.Name = "tbOriginPort";
-            tbOriginPort.Size = new Size(163, 27);
-            tbOriginPort.TabIndex = 49;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label3.ForeColor = Color.FromArgb(11, 94, 235);
-            label3.Location = new Point(203, 153);
-            label3.Name = "label3";
-            label3.Size = new Size(115, 20);
-            label3.TabIndex = 48;
-            label3.Text = "Destination Port";
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label2.ForeColor = Color.FromArgb(11, 94, 235);
-            label2.Location = new Point(8, 153);
-            label2.Name = "label2";
-            label2.Size = new Size(80, 20);
-            label2.TabIndex = 47;
-            label2.Text = "Origin Port";
-            // 
-            // cbFerry
-            // 
-            cbFerry.FormattingEnabled = true;
-            cbFerry.Location = new Point(8, 94);
-            cbFerry.Name = "cbFerry";
-            cbFerry.Size = new Size(382, 28);
-            cbFerry.TabIndex = 46;
-            cbFerry.SelectedIndexChanged += cbFerry_SelectedIndexChanged;
-
+            this.panel2.BackColor = System.Drawing.Color.White;
+            this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel2.Controls.Add(this.cbFerry);
+            this.panel2.Controls.Add(this.label5);
+            this.panel2.Location = new System.Drawing.Point(20, 100);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(560, 80);
+            this.panel2.TabIndex = 1;
             // 
             // label5
             // 
-            label5.AutoSize = true;
-            label5.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label5.ForeColor = Color.FromArgb(11, 94, 235);
-            label5.Location = new Point(8, 71);
-            label5.Name = "label5";
-            label5.Size = new Size(45, 20);
-            label5.TabIndex = 45;
-            label5.Text = "Ferry ";
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.label5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(94)))), ((int)(((byte)(235)))));
+            this.label5.Location = new System.Drawing.Point(15, 15);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(52, 23);
+            this.label5.TabIndex = 0;
+            this.label5.Text = "Ferry";
             // 
-            // label1
+            // cbFerry
             // 
-            label1.AutoSize = true;
-            label1.ForeColor = SystemColors.ControlDarkDark;
-            label1.Location = new Point(1, 31);
-            label1.Name = "label1";
-            label1.Size = new Size(292, 20);
-            label1.TabIndex = 44;
-            label1.Text = "Manage your ferry fleet and configurations";
+            this.cbFerry.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbFerry.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cbFerry.FormattingEnabled = true;
+            this.cbFerry.Location = new System.Drawing.Point(15, 40);
+            this.cbFerry.Name = "cbFerry";
+            this.cbFerry.Size = new System.Drawing.Size(530, 31);
+            this.cbFerry.TabIndex = 1;
+            this.cbFerry.SelectedIndexChanged += new System.EventHandler(this.cbFerry_SelectedIndexChanged);
             // 
-            // lblCompanyNameFleet
+            // panel3
             // 
-            lblCompanyNameFleet.AutoSize = true;
-            lblCompanyNameFleet.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblCompanyNameFleet.ForeColor = Color.FromArgb(11, 94, 235);
-            lblCompanyNameFleet.Location = new Point(-2, -25);
-            lblCompanyNameFleet.Name = "lblCompanyNameFleet";
-            lblCompanyNameFleet.Size = new Size(161, 56);
-            lblCompanyNameFleet.TabIndex = 43;
-            lblCompanyNameFleet.Text = "\r\nAdd New Route";
+            this.panel3.BackColor = System.Drawing.Color.White;
+            this.panel3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel3.Controls.Add(this.tbDestinationPort);
+            this.panel3.Controls.Add(this.label3);
+            this.panel3.Controls.Add(this.tbOriginPort);
+            this.panel3.Controls.Add(this.label2);
+            this.panel3.Location = new System.Drawing.Point(20, 195);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(560, 100);
+            this.panel3.TabIndex = 2;
             // 
-            // nudMin
+            // label2
             // 
-            nudMin.Location = new Point(285, 285);
-            nudMin.Name = "nudMin";
-            nudMin.Size = new Size(50, 27);
-            nudMin.TabIndex = 57;
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(94)))), ((int)(((byte)(235)))));
+            this.label2.Location = new System.Drawing.Point(15, 15);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(103, 23);
+            this.label2.TabIndex = 0;
+            this.label2.Text = "Origin Port";
+            // 
+            // tbOriginPort
+            // 
+            this.tbOriginPort.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.tbOriginPort.Location = new System.Drawing.Point(15, 45);
+            this.tbOriginPort.Name = "tbOriginPort";
+            this.tbOriginPort.PlaceholderText = "e.g., Manila";
+            this.tbOriginPort.Size = new System.Drawing.Size(250, 30);
+            this.tbOriginPort.TabIndex = 1;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(94)))), ((int)(((byte)(235)))));
+            this.label3.Location = new System.Drawing.Point(295, 15);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(147, 23);
+            this.label3.TabIndex = 2;
+            this.label3.Text = "Destination Port";
+            // 
+            // tbDestinationPort
+            // 
+            this.tbDestinationPort.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.tbDestinationPort.Location = new System.Drawing.Point(295, 45);
+            this.tbDestinationPort.Name = "tbDestinationPort";
+            this.tbDestinationPort.PlaceholderText = "e.g., Cebu";
+            this.tbDestinationPort.Size = new System.Drawing.Size(250, 30);
+            this.tbDestinationPort.TabIndex = 3;
+            // 
+            // panel4
+            // 
+            this.panel4.BackColor = System.Drawing.Color.White;
+            this.panel4.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel4.Controls.Add(this.nudMin);
+            this.panel4.Controls.Add(this.label8);
+            this.panel4.Controls.Add(this.nudHours);
+            this.panel4.Controls.Add(this.label7);
+            this.panel4.Controls.Add(this.nudDistance);
+            this.panel4.Controls.Add(this.label4);
+            this.panel4.Location = new System.Drawing.Point(20, 310);
+            this.panel4.Name = "panel4";
+            this.panel4.Size = new System.Drawing.Size(560, 100);
+            this.panel4.TabIndex = 3;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.label4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(94)))), ((int)(((byte)(235)))));
+            this.label4.Location = new System.Drawing.Point(15, 15);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(123, 23);
+            this.label4.TabIndex = 0;
+            this.label4.Text = "Distance (km)";
+            // 
+            // nudDistance
+            // 
+            this.nudDistance.DecimalPlaces = 2;
+            this.nudDistance.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.nudDistance.Increment = new decimal(new int[] {
+            5,
+            0,
+            0,
+            65536});
+            this.nudDistance.Location = new System.Drawing.Point(15, 45);
+            this.nudDistance.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.nudDistance.Name = "nudDistance";
+            this.nudDistance.Size = new System.Drawing.Size(150, 30);
+            this.nudDistance.TabIndex = 1;
             // 
             // label7
             // 
-            label7.AutoSize = true;
-            label7.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label7.ForeColor = Color.FromArgb(11, 94, 235);
-            label7.Location = new Point(205, 262);
-            label7.Name = "label7";
-            label7.Size = new Size(48, 20);
-            label7.TabIndex = 58;
-            label7.Text = "Hours";
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.label7.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(94)))), ((int)(((byte)(235)))));
+            this.label7.Location = new System.Drawing.Point(220, 15);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(162, 23);
+            this.label7.TabIndex = 2;
+            this.label7.Text = "Est. Duration (hrs)";
+            // 
+            // nudHours
+            // 
+            this.nudHours.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.nudHours.Location = new System.Drawing.Point(220, 45);
+            this.nudHours.Maximum = new decimal(new int[] {
+            48,
+            0,
+            0,
+            0});
+            this.nudHours.Name = "nudHours";
+            this.nudHours.Size = new System.Drawing.Size(80, 30);
+            this.nudHours.TabIndex = 3;
             // 
             // label8
             // 
-            label8.AutoSize = true;
-            label8.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label8.ForeColor = Color.FromArgb(11, 94, 235);
-            label8.Location = new Point(285, 262);
-            label8.Name = "label8";
-            label8.Size = new Size(34, 20);
-            label8.TabIndex = 59;
-            label8.Text = "Min";
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.label8.ForeColor = System.Drawing.Color.Gray;
+            this.label8.Location = new System.Drawing.Point(310, 50);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(14, 20);
+            this.label8.TabIndex = 4;
+            this.label8.Text = ":";
+            // 
+            // nudMin
+            // 
+            this.nudMin.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.nudMin.Increment = new decimal(new int[] {
+            15,
+            0,
+            0,
+            0});
+            this.nudMin.Location = new System.Drawing.Point(335, 45);
+            this.nudMin.Maximum = new decimal(new int[] {
+            59,
+            0,
+            0,
+            0});
+            this.nudMin.Name = "nudMin";
+            this.nudMin.Size = new System.Drawing.Size(80, 30);
+            this.nudMin.TabIndex = 5;
+            // 
+            // panel5
+            // 
+            this.panel5.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.panel5.Controls.Add(this.btnAddRoute);
+            this.panel5.Controls.Add(this.btnCancel);
+            this.panel5.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel5.Location = new System.Drawing.Point(0, 430);
+            this.panel5.Name = "panel5";
+            this.panel5.Size = new System.Drawing.Size(600, 70);
+            this.panel5.TabIndex = 4;
+            // 
+            // btnCancel
+            // 
+            this.btnCancel.BackColor = System.Drawing.Color.White;
+            this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCancel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnCancel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(94)))), ((int)(((byte)(235)))));
+            this.btnCancel.Location = new System.Drawing.Point(360, 15);
+            this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Size = new System.Drawing.Size(110, 40);
+            this.btnCancel.TabIndex = 0;
+            this.btnCancel.Text = "Cancel";
+            this.btnCancel.UseVisualStyleBackColor = false;
+            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+            // 
+            // btnAddRoute
+            // 
+            this.btnAddRoute.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(11)))), ((int)(((byte)(94)))), ((int)(((byte)(235)))));
+            this.btnAddRoute.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAddRoute.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnAddRoute.ForeColor = System.Drawing.Color.White;
+            this.btnAddRoute.Location = new System.Drawing.Point(480, 15);
+            this.btnAddRoute.Name = "btnAddRoute";
+            this.btnAddRoute.Size = new System.Drawing.Size(110, 40);
+            this.btnAddRoute.TabIndex = 1;
+            this.btnAddRoute.Text = "Save";
+            this.btnAddRoute.UseVisualStyleBackColor = false;
+            this.btnAddRoute.Click += new System.EventHandler(this.btnAddRoute_Click);
             // 
             // AddRoute
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(402, 389);
-            Controls.Add(label8);
-            Controls.Add(label7);
-            Controls.Add(nudMin);
-            Controls.Add(btnAddRoute);
-            Controls.Add(btnCancel);
-            Controls.Add(nudHours);
-            Controls.Add(nudDistance);
-            Controls.Add(label6);
-            Controls.Add(label4);
-            Controls.Add(tbDestinationPort);
-            Controls.Add(tbOriginPort);
-            Controls.Add(label3);
-            Controls.Add(label2);
-            Controls.Add(cbFerry);
-            Controls.Add(label5);
-            Controls.Add(label1);
-            Controls.Add(lblCompanyNameFleet);
-            Name = "AddRoute";
-            Text = "Route";
-            ((System.ComponentModel.ISupportInitialize)nudHours).EndInit();
-            ((System.ComponentModel.ISupportInitialize)nudDistance).EndInit();
-            ((System.ComponentModel.ISupportInitialize)nudMin).EndInit();
-            ResumeLayout(false);
-            PerformLayout();
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.ClientSize = new System.Drawing.Size(600, 500);
+            this.Controls.Add(this.panel5);
+            this.Controls.Add(this.panel4);
+            this.Controls.Add(this.panel3);
+            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.panel1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.Name = "AddRoute";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "Add Ferry Route";
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
+            this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
+            this.panel3.ResumeLayout(false);
+            this.panel3.PerformLayout();
+            this.panel4.ResumeLayout(false);
+            this.panel4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudDistance)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudHours)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudMin)).EndInit();
+            this.panel5.ResumeLayout(false);
+            this.ResumeLayout(false);
+
         }
 
         #endregion
 
-        private Button btnAddRoute;
-        private Button btnCancel;
-        private NumericUpDown nudHours;
-        private NumericUpDown nudDistance;
-        private Label label6;
-        private Label label4;
-        private TextBox tbDestinationPort;
-        private TextBox tbOriginPort;
-        private Label label3;
-        private Label label2;
-        private ComboBox cbFerry;
-        private Label label5;
-        private Label label1;
-        private Label lblCompanyNameFleet;
-        private NumericUpDown nudMin;
-        private Label label7;
-        private Label label8;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.Label lblSubtitle;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.ComboBox cbFerry;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Panel panel3;
+        private System.Windows.Forms.TextBox tbDestinationPort;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox tbOriginPort;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Panel panel4;
+        private System.Windows.Forms.NumericUpDown nudMin;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.NumericUpDown nudHours;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.NumericUpDown nudDistance;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Panel panel5;
+        private System.Windows.Forms.Button btnAddRoute;
+        private System.Windows.Forms.Button btnCancel;
     }
 }
