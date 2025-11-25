@@ -30,8 +30,7 @@ namespace FERRY_BOOKING.UC_Staff
 
         public decimal Price { get; private set; }
 
-
-
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SeatCode { get; set; }
 
         public event Action PriceChanged;

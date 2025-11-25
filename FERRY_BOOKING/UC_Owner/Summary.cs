@@ -13,6 +13,7 @@ namespace FERRY_BOOKING.UC_Ferry
 {
     public partial class Summary : UserControl
     {
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int OwnerID { get; set; }    
         public Summary(int ownerID)
         {

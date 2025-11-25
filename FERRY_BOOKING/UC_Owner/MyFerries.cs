@@ -19,10 +19,15 @@ namespace FERRY_BOOKING.UC_Ferry
 {
     public partial class MyFerries : UserControl
     {
-
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string UserEmail { get; set; }
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string CompanyName { get; set; }
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int OwnerID { get; set; }
+        
         public MyFerries(int OwnerID, string Email, string CompanyName)
         {
           
@@ -44,7 +49,6 @@ namespace FERRY_BOOKING.UC_Ferry
         {
             FerryRegistrationForm popup = new FerryRegistrationForm(OwnerID, CompanyName);
             popup.StartPosition = FormStartPosition.CenterParent;
-            popup.ShowDialog();
             if (popup.ShowDialog() == DialogResult.OK)
             {
                 LoadMyFerries(OwnerID);
@@ -59,7 +63,7 @@ namespace FERRY_BOOKING.UC_Ferry
         {
             DATABASE.DatabaseHelper db = new DATABASE.DatabaseHelper();
 
-            string query = "SELECT FerryID, FerryCode, FerryName, Status, Capacity, Seats, Route " +
+            string query = "SELECT FerryID, FerryCode, FerryName, Status, Capacity, Seats " +
                            "FROM vw_FerryDisplay WHERE OwnerID = @OwnerID";
 
             SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
@@ -97,9 +101,6 @@ namespace FERRY_BOOKING.UC_Ferry
                 dgvMyFerries.Visible = true;
                 dgvMyFerries.DataSource = dt;
             }
-
-
-
 
         }
 
@@ -146,12 +147,16 @@ namespace FERRY_BOOKING.UC_Ferry
 
                 int ferryID = Convert.ToInt32(dgvMyFerries.Rows[e.RowIndex].Cells["FerryID"].Value);
                 string ferryName = dgvMyFerries.Rows[e.RowIndex].Cells["FerryName"].Value.ToString();
-
                 if (x < w)      // VIEW
-                    MessageBox.Show($"VIEW ferry {ferryName} (ID {ferryID})", "View clicked");
+                {
+                    var viewDialog = new FerryViewDialog(ferryID);
+                    viewDialog.StartPosition = FormStartPosition.CenterParent;
+                    viewDialog.ShowDialog();
+                }
                 else if (x < w * 2) // EDIT
                 {
-                    var editForm = new FerryEditForm(ferryID, this.CompanyName);
+                    var editForm = new FerryRegistrationForm(ferryID, this.OwnerID, this.CompanyName, editMode: true);
+                    editForm.StartPosition = FormStartPosition.CenterParent;
                     if (editForm.ShowDialog() == DialogResult.OK)
                         LoadMyFerries(OwnerID);
                 }
@@ -187,9 +192,6 @@ namespace FERRY_BOOKING.UC_Ferry
             else
                 dgvMyFerries.Cursor = Cursors.Default;
         }
-
-
-
 
     }
 }

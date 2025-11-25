@@ -342,15 +342,40 @@ namespace FERRY_BOOKING.DATABASE
                 {
                     try
                     {
-                        // Update Route table
+                        // 1. Check if any trips for this route have bookings
+                        string checkBookingsQuery = @"
+                    SELECT COUNT(1)
+                    FROM Trip t
+                    JOIN Booking b ON t.TripID = b.TripID
+                    WHERE t.RouteID = @routeID
+                ";
+
+                        using (SqlCommand cmd = new SqlCommand(checkBookingsQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@routeID", routeID);
+                            int bookingCount = (int)cmd.ExecuteScalar();
+
+                            if (bookingCount > 0)
+                            {
+                                MessageBox.Show(
+                                    "Cannot edit Origin or Destination because there are bookings for trips on this route.",
+                                    "Validation Error",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Warning
+                                );
+                                return false; // Stop update
+                            }
+                        }
+
+                        // 2. Update Route table (safe fields: Distance and Duration always; Origin/Destination if no bookings)
                         string updateRouteQuery = @"
-                        UPDATE Route
-                        SET Origin = @origin,
-                            Destination = @destination,
-                            Distance = @distance,
-                            Duration = @duration
-                        WHERE RouteID = @routeID;
-                    ";
+                    UPDATE Route
+                    SET Origin = @origin,
+                        Destination = @destination,
+                        Distance = @distance,
+                        Duration = @duration
+                    WHERE RouteID = @routeID
+                ";
 
                         using (SqlCommand cmd = new SqlCommand(updateRouteQuery, conn, transaction))
                         {
@@ -362,14 +387,14 @@ namespace FERRY_BOOKING.DATABASE
                             cmd.ExecuteNonQuery();
                         }
 
-                        // Ensure FerryRoute link exists
+                        // 3. Ensure FerryRoute link exists
                         string ferryRouteQuery = @"
-                        IF NOT EXISTS (SELECT 1 FROM FerryRoute WHERE FerryID=@ferryID AND RouteID=@routeID)
-                        BEGIN
-                            INSERT INTO FerryRoute (FerryID, RouteID)
-                            VALUES (@ferryID, @routeID)
-                        END
-                    ";
+                    IF NOT EXISTS (SELECT 1 FROM FerryRoute WHERE FerryID=@ferryID AND RouteID=@routeID)
+                    BEGIN
+                        INSERT INTO FerryRoute (FerryID, RouteID)
+                        VALUES (@ferryID, @routeID)
+                    END
+                ";
 
                         using (SqlCommand cmd = new SqlCommand(ferryRouteQuery, conn, transaction))
                         {
@@ -384,31 +409,84 @@ namespace FERRY_BOOKING.DATABASE
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        MessageBox.Show("Error updating route:\n" + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(
+                            "Error updating route:\n" + ex.Message,
+                            "Database Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error
+                        );
                         return false;
                     }
                 }
             }
         }
+
         public bool DeleteRoute(int ferryRouteID)
         {
-            try
+            using (SqlConnection conn = db.GetConnection())
             {
-                string query = "DELETE FROM FerryRoute WHERE FerryRouteID = @ID";
-
-                SqlParameter[] parameters =
+                conn.Open();
+                using (SqlTransaction transaction = conn.BeginTransaction())
                 {
-            new SqlParameter("@ID", ferryRouteID)
-        };
+                    try
+                    {
+                        // 1. Check if any trips exist for this FerryRoute
+                        string checkTripsQuery = @"
+                    SELECT COUNT(1)
+                    FROM Trip t
+                    JOIN FerryRoute fr ON t.RouteID = fr.RouteID AND t.FerryID = fr.FerryID
+                    WHERE fr.FerryRouteID = @ferryRouteID
+                ";
 
-                DatabaseHelper db = new DatabaseHelper();
-                int affected = db.ExecuteNonQuery(query, parameters);
+                        using (SqlCommand cmd = new SqlCommand(checkTripsQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@ferryRouteID", ferryRouteID);
+                            int tripCount = (int)cmd.ExecuteScalar();
 
-                return affected > 0;
-            }
-            catch
-            {
-                return false;
+                            if (tripCount > 0)
+                            {
+                                MessageBox.Show(
+                                    "Cannot delete this Ferry-Route link because there are trips associated with it.",
+                                    "Validation Error",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Warning
+                                );
+                                return false; // Stop deletion
+                            }
+                        }
+
+                        // 2. Delete the FerryRoute record
+                        string deleteQuery = "DELETE FROM FerryRoute WHERE FerryRouteID = @ferryRouteID";
+
+                        using (SqlCommand cmd = new SqlCommand(deleteQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@ferryRouteID", ferryRouteID);
+                            int affected = cmd.ExecuteNonQuery();
+
+                            if (affected > 0)
+                            {
+                                transaction.Commit();
+                                return true;
+                            }
+                            else
+                            {
+                                transaction.Rollback();
+                                return false;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show(
+                            "Error deleting Ferry-Route:\n" + ex.Message,
+                            "Database Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error
+                        );
+                        return false;
+                    }
+                }
             }
         }
 
@@ -770,8 +848,6 @@ namespace FERRY_BOOKING.DATABASE
             }
         }
 
-  
-
         public bool CanDeleteFerry(int ferryId, out string reason)
         {
             reason = "";
@@ -822,6 +898,421 @@ namespace FERRY_BOOKING.DATABASE
                 return true;
             }
         }
+
+
+        // ============================================================================
+        // ENHANCED VALIDATION SYSTEM - Hybrid Soft/Hard Delete
+        // ============================================================================
+
+        /// <summary>
+        /// Validates if a ferry can be deleted (hard or soft)
+        /// Returns validation result with detailed information
+        /// </summary>
+        public ValidationResult ValidateFerryDeletion(int ferryId)
+        {
+            var result = new ValidationResult { CanProceed = true };
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                // Check for upcoming/active trips
+                string upcomingTripsQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Trip 
+                    WHERE FerryID = @id 
+                    AND TripDate >= CAST(GETDATE() AS DATE)";
+
+                int upcomingTrips = Convert.ToInt32(ExecuteScalar(conn, upcomingTripsQuery, ferryId));
+
+                // Check for completed trips (history)
+                string completedTripsQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Trip 
+                    WHERE FerryID = @id 
+                    AND TripDate < CAST(GETDATE() AS DATE)";
+
+                int completedTrips = Convert.ToInt32(ExecuteScalar(conn, completedTripsQuery, ferryId));
+
+                // Check for any bookings
+                string bookingsQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Booking b
+                    JOIN Trip t ON b.TripID = t.TripID
+                    WHERE t.FerryID = @id";
+
+                int totalBookings = Convert.ToInt32(ExecuteScalar(conn, bookingsQuery, ferryId));
+
+                // Determine delete type
+                if (upcomingTrips > 0)
+                {
+                    result.CanProceed = false;
+                    result.Message = $"Cannot delete ferry: {upcomingTrips} upcoming trip(s) scheduled.\n" +
+                                   "Please cancel or complete all upcoming trips first.";
+                    result.DeleteType = DeleteType.Blocked;
+                }
+                else if (completedTrips > 0 || totalBookings > 0)
+                {
+                    // Has history - use soft delete
+                    result.CanProceed = true;
+                    result.Message = $"This ferry has historical data:\n" +
+                                   $"- {completedTrips} completed trip(s)\n" +
+                                   $"- {totalBookings} total booking(s)\n\n" +
+                                   "The ferry will be marked as INACTIVE (soft delete) to preserve history.";
+                    result.DeleteType = DeleteType.Soft;
+                    result.AffectedRecords = completedTrips + totalBookings;
+                }
+                else
+                {
+                    // No history - can hard delete
+                    result.CanProceed = true;
+                    result.Message = "Ferry has no trip history and will be permanently deleted.";
+                    result.DeleteType = DeleteType.Hard;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validates if a route can be deleted
+        /// </summary>
+        public ValidationResult ValidateRouteDeletion(int ferryRouteID)
+        {
+            var result = new ValidationResult { CanProceed = true };
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                // Get RouteID from FerryRoute
+                string getRouteQuery = "SELECT RouteID FROM FerryRoute WHERE FerryRouteID = @id";
+                int routeID = Convert.ToInt32(ExecuteScalar(conn, getRouteQuery, ferryRouteID));
+
+                // Check for active schedules
+                string activeSchedulesQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Schedule 
+                    WHERE RouteID = @routeID 
+                    AND IsActive = 1
+                    AND (EndDate IS NULL OR EndDate >= CAST(GETDATE() AS DATE))";
+
+                int activeSchedules = Convert.ToInt32(ExecuteScalar(conn, activeSchedulesQuery, routeID));
+
+                // Check for future trips
+                string futureTripsQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Trip 
+                    WHERE RouteID = @routeID 
+                    AND TripDate >= CAST(GETDATE() AS DATE)";
+
+                int futureTrips = Convert.ToInt32(ExecuteScalar(conn, futureTripsQuery, routeID));
+
+                // Check for booking history
+                string bookingHistoryQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Booking b
+                    JOIN Trip t ON b.TripID = t.TripID
+                    WHERE t.RouteID = @routeID";
+
+                int bookings = Convert.ToInt32(ExecuteScalar(conn, bookingHistoryQuery, routeID));
+
+                if (activeSchedules > 0 || futureTrips > 0)
+                {
+                    result.CanProceed = false;
+                    result.Message = $"Cannot delete route:\n" +
+                                   $"- {activeSchedules} active schedule(s)\n" +
+                                   $"- {futureTrips} future trip(s)\n\n" +
+                                   "Please deactivate schedules and cancel future trips first.";
+                    result.DeleteType = DeleteType.Blocked;
+                }
+                else if (bookings > 0)
+                {
+                    result.CanProceed = true;
+                    result.Message = $"Route has {bookings} booking(s) in history.\n" +
+                                   "The route assignment will be removed but history will be preserved.";
+                    result.DeleteType = DeleteType.Soft;
+                    result.AffectedRecords = bookings;
+                }
+                else
+                {
+                    result.CanProceed = true;
+                    result.Message = "Route has no history and will be permanently deleted.";
+                    result.DeleteType = DeleteType.Hard;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validates if a schedule can be deleted
+        /// </summary>
+        public ValidationResult ValidateScheduleDeletion(int scheduleID)
+        {
+            var result = new ValidationResult { CanProceed = true };
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                // Check for future trips with bookings
+                string futureBookingsQuery = @"
+                    SELECT COUNT(DISTINCT b.BookingID)
+                    FROM Booking b
+                    JOIN Trip t ON b.TripID = t.TripID
+                    WHERE t.ScheduleID = @id
+                    AND t.TripDate >= CAST(GETDATE() AS DATE)";
+
+                int futureBookings = Convert.ToInt32(ExecuteScalar(conn, futureBookingsQuery, scheduleID));
+
+                // Check for all bookings
+                string allBookingsQuery = @"
+                    SELECT COUNT(DISTINCT b.BookingID)
+                    FROM Booking b
+                    JOIN Trip t ON b.TripID = t.TripID
+                    WHERE t.ScheduleID = @id";
+
+                int allBookings = Convert.ToInt32(ExecuteScalar(conn, allBookingsQuery, scheduleID));
+
+                if (futureBookings > 0)
+                {
+                    result.CanProceed = false;
+                    result.Message = $"Cannot delete schedule: {futureBookings} active booking(s) for future trips.\n\n" +
+                                   "Please cancel or complete all booked trips first.";
+                    result.DeleteType = DeleteType.Blocked;
+                    result.AffectedRecords = futureBookings;
+                }
+                else if (allBookings > 0)
+                {
+                    result.CanProceed = true;
+                    result.Message = $"Schedule has {allBookings} booking(s) in history.\n" +
+                                   "Schedule will be marked INACTIVE to preserve booking records.";
+                    result.DeleteType = DeleteType.Soft;
+                    result.AffectedRecords = allBookings;
+                }
+                else
+                {
+                    result.CanProceed = true;
+                    result.Message = "Schedule has no bookings and will be permanently deleted.";
+                    result.DeleteType = DeleteType.Hard;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validates if ferry can be edited
+        /// </summary>
+        public ValidationResult ValidateFerryEdit(int ferryId)
+        {
+            var result = new ValidationResult { CanProceed = true };
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                // Check for upcoming trips
+                string upcomingTripsQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Trip 
+                    WHERE FerryID = @id 
+                    AND TripDate >= CAST(GETDATE() AS DATE)";
+
+                int upcomingTrips = Convert.ToInt32(ExecuteScalar(conn, upcomingTripsQuery, ferryId));
+
+                // Check for booked seats
+                string bookedSeatsQuery = @"
+                    SELECT COUNT(*) 
+                    FROM BookedSeats bs
+                    JOIN Trip t ON bs.TripID = t.TripID
+                    WHERE bs.FerryID = @id
+                    AND t.TripDate >= CAST(GETDATE() AS DATE)";
+
+                int bookedSeats = Convert.ToInt32(ExecuteScalar(conn, bookedSeatsQuery, ferryId));
+
+                if (upcomingTrips > 0 || bookedSeats > 0)
+                {
+                    result.CanProceed = false;
+                    result.Message = $"Cannot edit ferry configuration:\n" +
+                                   $"- {upcomingTrips} upcoming trip(s)\n" +
+                                   $"- {bookedSeats} booked seat(s)\n\n" +
+                                   "Ferry name can be edited, but floor configuration is locked.";
+                    result.DeleteType = DeleteType.Blocked;
+                    result.AllowPartialEdit = true; // Can edit name only
+                }
+                else
+                {
+                    result.CanProceed = true;
+                    result.Message = "Ferry can be fully edited.";
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validates if route can be edited
+        /// </summary>
+        public ValidationResult ValidateRouteEdit(int routeID)
+        {
+            var result = new ValidationResult { CanProceed = true };
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                // Check for existing trips
+                string tripsQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Trip 
+                    WHERE RouteID = @id";
+
+                int trips = Convert.ToInt32(ExecuteScalar(conn, tripsQuery, routeID));
+
+                if (trips > 0)
+                {
+                    result.CanProceed = false;
+                    result.Message = $"Cannot change origin/destination: {trips} trip(s) exist using this route.\n\n" +
+                                   "Distance and duration can still be updated.";
+                    result.AllowPartialEdit = true; // Can edit distance/duration only
+                }
+                else
+                {
+                    result.CanProceed = true;
+                    result.Message = "Route can be fully edited.";
+                }
+            }
+
+            return result;
+        }
+
+        // ============================================================================
+        // ENHANCED DELETE OPERATIONS
+        // ============================================================================
+
+        /// <summary>
+        /// Delete ferry with hybrid soft/hard delete logic
+        /// </summary>
+        public bool DeleteFerryEnhanced(int ferryId, out string error)
+        {
+            error = "";
+            var validation = ValidateFerryDeletion(ferryId);
+
+            if (!validation.CanProceed)
+            {
+                error = validation.Message;
+                return false;
+            }
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+                using (SqlTransaction tran = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        if (validation.DeleteType == DeleteType.Soft)
+                        {
+                            // Soft delete - mark as inactive
+                            ExecuteNonQuery(tran, "UPDATE Ferry SET Status = 'Inactive' WHERE FerryID = @id", ferryId);
+                        }
+                        else
+                        {
+                            // Hard delete - remove all related records
+                            ExecuteDelete(tran, "DELETE FROM TripFloorPrice WHERE FerryID = @id", ferryId);
+                            ExecuteDelete(tran, "DELETE FROM FerryRoute WHERE FerryID = @id", ferryId);
+                            ExecuteDelete(tran, "DELETE FROM FerryDocuments WHERE FerryID = @id", ferryId);
+                            ExecuteDelete(tran, "DELETE FROM FerryFloor WHERE FerryID = @id", ferryId);
+                            ExecuteDelete(tran, "DELETE FROM Ferry WHERE FerryID = @id", ferryId);
+                        }
+
+                        tran.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        tran.Rollback();
+                        error = ex.Message;
+                        return false;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Delete schedule with hybrid logic
+        /// </summary>
+        public bool DeleteScheduleEnhanced(int scheduleID, out string error)
+        {
+            error = "";
+            var validation = ValidateScheduleDeletion(scheduleID);
+
+            if (!validation.CanProceed)
+            {
+                error = validation.Message;
+                return false;
+            }
+
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+                using (SqlTransaction tran = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        if (validation.DeleteType == DeleteType.Soft)
+                        {
+                            // Soft delete - mark as inactive
+                            ExecuteNonQuery(tran, "UPDATE Schedule SET IsActive = 0 WHERE ScheduleID = @id", scheduleID);
+                        }
+                        else
+                        {
+                            // Hard delete
+                            ExecuteDelete(tran, "DELETE FROM Schedule WHERE ScheduleID = @id", scheduleID);
+                        }
+
+                        tran.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        tran.Rollback();
+                        error = ex.Message;
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // ============================================================================
+        // HELPER METHODS
+        // ============================================================================
+
+        private object ExecuteScalar(SqlConnection conn, string query, int id)
+        {
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.Parameters.AddWithValue("@routeID", id);
+                return cmd.ExecuteScalar();
+            }
+        }
+
+        private void ExecuteNonQuery(SqlTransaction tran, string query, int id)
+        {
+            using (SqlCommand cmd = new SqlCommand(query, tran.Connection, tran))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        // ============================================================================
+        // DASHBOARD STATISTICS METHODS
+        // ============================================================================
+
         public int GetTotalBookingsToday(int ownerID)
         {
             string query = @"
@@ -887,22 +1378,42 @@ namespace FERRY_BOOKING.DATABASE
             return (available, trips);
         }
 
+        /// <summary>
+        /// Get ferry documents by FerryID
+        /// Returns DataRow with COFile, VRFile, SCFile, IDFile, POFile, FPFile as byte arrays
+        /// </summary>
+        public DataRow GetFerryDocuments(int ferryID)
+        {
+            string query = "SELECT COFile, VRFile, SCFile, IDFile, POFile, FPFile FROM FerryDocuments WHERE FerryID = @FerryID";
+            SqlParameter[] parameters = { new SqlParameter("@FerryID", ferryID) };
+            DataTable dt = db.ExecuteDataTable(query, parameters);
+            return dt != null && dt.Rows.Count > 0 ? dt.Rows[0] : null;
+        }
+    }
 
+    // ============================================================================
+    // VALIDATION RESULT CLASSES
+    // ============================================================================
 
+    /// <summary>
+    /// Result of validation checks for delete/edit operations
+    /// </summary>
+    public class ValidationResult
+    {
+        public bool CanProceed { get; set; }
+        public string Message { get; set; }
+        public DeleteType DeleteType { get; set; }
+        public int AffectedRecords { get; set; }
+        public bool AllowPartialEdit { get; set; }
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    /// <summary>
+    /// Type of delete operation
+    /// </summary>
+    public enum DeleteType
+    {
+        Hard,       // Permanent deletion
+        Soft,       // Mark as inactive
+        Blocked     // Cannot delete
     }
 }

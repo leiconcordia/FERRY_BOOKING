@@ -12,17 +12,26 @@ namespace FERRY_BOOKING.Forms
 {
     public partial class OwnerForm : Form
     {
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] 
         public int OwnerID { get; set; }
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string UserEmail { get; set; }
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string CompanyName { get; set; }
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string firstName { get; set; }
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string lastName { get; set; }
 
         public OwnerForm(int OwnerID, string email, string firstName, string lastName, string companyName)
         {
             InitializeComponent();
 
-            lblOwnerName.Text = $"{firstName} {lastName}";
+            lblOwnerName.Text = $"{companyName}";
             this.OwnerID = OwnerID;
             this.UserEmail = email;
             this.firstName = firstName;
@@ -99,6 +108,22 @@ namespace FERRY_BOOKING.Forms
         {
             ActivateButton(navSummary);
             LoadUserControl(new UC_Ferry.Summary(OwnerID));
+        }
+
+        private void navRefunds_Click(object sender, EventArgs e)
+        {
+            ActivateButton(navRefunds);
+            UC_Owner.RefundsAndCancellations refundsControl = new UC_Owner.RefundsAndCancellations();
+            refundsControl.SetOwnerID(OwnerID);
+            LoadUserControl(refundsControl);
+        }
+
+        private void navCancelledTrips_Click(object sender, EventArgs e)
+        {
+            ActivateButton(navCancelledTrips);
+            UC_Owner.CancelledTrips cancelledTripsControl = new UC_Owner.CancelledTrips();
+            cancelledTripsControl.SetOwnerID(OwnerID);
+            LoadUserControl(cancelledTripsControl);
         }
 
         private void btnLogout_Click(object sender, EventArgs e)

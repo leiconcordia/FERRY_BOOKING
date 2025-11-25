@@ -52,14 +52,18 @@ REFERENCES Ferry(FerryID);
 
 CREATE TABLE Trip (
     TripID INT IDENTITY(1,1) PRIMARY KEY,
+    ScheduleID INT NULL,
     FerryID INT NOT NULL,
     RouteID INT NOT NULL,
+    TripDate DATE NOT NULL,
     DepartureTime TIME NOT NULL,
     ArrivalTime TIME NOT NULL,
+    DaysOfWeek VARCHAR(50) NOT NULL,  -- e.g., 'Mon,Wed,Fri'
     StartDate DATE NOT NULL,
     EndDate DATE NOT NULL,
-    DaysOfWeek VARCHAR(50) NOT NULL,  -- e.g., 'Mon,Wed,Fri'
+    TripStatus VARCHAR(20) NOT NULL DEFAULT 'Active', -- Added TripStatus column
 
+    FOREIGN KEY (ScheduleID) REFERENCES Schedule(ScheduleID),
     FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID),
     FOREIGN KEY (RouteID) REFERENCES Route(RouteID)
 );
@@ -143,10 +147,64 @@ CREATE TABLE BookingPassenger
     IDImage       varbinary(max) null
 );
 
+    CREATE TABLE TripCancellation (
+        CancellationID INT IDENTITY(1,1) PRIMARY KEY,
+        TripID INT NOT NULL,
+        FerryID INT NOT NULL,
+        CancellationReason NVARCHAR(500) NOT NULL,
+        CancelledBy INT NOT NULL, -- UserID (OwnerID)
+        CancellationDate DATETIME NOT NULL DEFAULT GETDATE(),
+        TotalPassengersAffected INT NOT NULL DEFAULT 0,
+        TotalRefundAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        NotificationStatus VARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Sent, Failed
+        FOREIGN KEY (TripID) REFERENCES Trip(TripID),
+        FOREIGN KEY (FerryID) REFERENCES Ferry(FerryID),
+        FOREIGN KEY (CancelledBy) REFERENCES Users(UserID)
+        );
 
+-- First, add TripStatus column to Trip table
+ALTER TABLE Trip
+ADD TripStatus VARCHAR(20) NOT NULL DEFAULT 'Active';
 
+-- Create BookingRefund table (refined version)
+CREATE TABLE BookingRefund (
+    RefundID BIGINT IDENTITY(1,1) PRIMARY KEY,
+    BookingID BIGINT NOT NULL,
+    CancellationID INT NOT NULL,
+    RefundAmount DECIMAL(18,2) NOT NULL,
+    RefundStatus VARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Processed, Completed, Failed
+    RefundMethod VARCHAR(50) NULL, -- Cash, Bank Transfer, GCash, etc.
+    RefundDate DATETIME NULL,
+    ProcessedBy INT NULL, -- UserID who processed the refund
+    ProcessedDate DATETIME NULL,
+    Notes NVARCHAR(500) NULL,
+    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID),
+    FOREIGN KEY (CancellationID) REFERENCES TripCancellation(CancellationID),
+    FOREIGN KEY (ProcessedBy) REFERENCES Users(UserID)
+);
 
+-- Create PassengerNotification table (refined version)
+CREATE TABLE PassengerNotification (
+    NotificationID BIGINT IDENTITY(1,1) PRIMARY KEY,
+    BookingID BIGINT NOT NULL,
+    CancellationID INT NULL,
+    NotificationType VARCHAR(50) NOT NULL, -- Cancellation, Refund, Confirmation, etc.
+    RecipientEmail NVARCHAR(200) NULL,
+    RecipientName NVARCHAR(200) NOT NULL,
+    Subject NVARCHAR(200) NOT NULL,
+    MessageBody NVARCHAR(MAX) NOT NULL,
+    SentDate DATETIME NULL,
+    SentStatus VARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Sent, Failed
+    ErrorMessage NVARCHAR(500) NULL,
+    RetryCount INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID),
+    FOREIGN KEY (CancellationID) REFERENCES TripCancellation(CancellationID)
+);
 
+-- Add index for better performance
+CREATE INDEX IX_Trip_TripStatus ON Trip(TripStatus);
+CREATE INDEX IX_Trip_TripDate ON Trip(TripDate);
+CREATE INDEX IX_BookingRefund_CancellationID ON BookingRefund(CancellationID);
 
 
 //My ferries table
@@ -239,24 +297,41 @@ JOIN Route  r ON r.RouteID = t.RouteID;
 CREATE OR ALTER VIEW vw_TripScheduleWithPrices AS
 SELECT
     s.ScheduleID,
+    s.FerryID,
+    f.FerryName,
+    s.RouteID,
     r.Origin + ' -> ' + r.Destination AS Route,
     s.DepartureTime,
     s.ArrivalTime,
     s.DaysOfWeek,
     s.StartDate,
     s.EndDate,
-    f.OwnerID,   -- IMPORTANT: expose ownerID to filter in app
+    f.OwnerID,
+    s.IsActive,
+    -- Get floor prices from any trip belonging to this schedule
     (
-        SELECT STRING_AGG(CONCAT('Floor ', tfp.FloorNumber, ': P', tfp.Price), CHAR(13))
-        WITHIN GROUP (ORDER BY tfp.FloorNumber)
-        FROM TripFloorPrice tfp
-        WHERE tfp.TripID = s.ScheduleID
+        SELECT STRING_AGG(
+            CONCAT('Floor ', ff.FloorNumber, ': P', FORMAT(tfp.Price, 'N2')), 
+            CHAR(13) + CHAR(10)
+        )
+        WITHIN GROUP (ORDER BY ff.FloorNumber)
+        FROM FerryFloor ff
+        LEFT JOIN TripFloorPrice tfp 
+            ON tfp.FerryID = ff.FerryID 
+            AND tfp.FloorNumber = ff.FloorNumber
+            AND tfp.TripID = (
+                -- Get the first trip from this schedule
+                SELECT TOP 1 TripID 
+                FROM Trip 
+                WHERE ScheduleID = s.ScheduleID
+                ORDER BY TripDate
+            )
+        WHERE ff.FerryID = s.FerryID
     ) AS Price
 FROM Schedule s
+JOIN Ferry f ON s.FerryID = f.FerryID
 JOIN Route r ON s.RouteID = r.RouteID
-JOIN FerryRoute fr ON fr.RouteID = r.RouteID
-JOIN Ferry f ON f.FerryID = fr.FerryID;
-
+WHERE s.IsActive = 1;
 
 CREATE OR ALTER VIEW vw_RouteDisplay AS
 SELECT 

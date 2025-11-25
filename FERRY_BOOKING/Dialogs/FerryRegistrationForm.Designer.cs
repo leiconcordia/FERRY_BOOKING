@@ -408,7 +408,7 @@ namespace FERRY_BOOKING.Dialogs
             tbFerryCode.Location = new Point(11, 170);
             tbFerryCode.Margin = new Padding(3, 4, 3, 4);
             tbFerryCode.Name = "tbFerryCode";
-            tbFerryCode.PlaceholderText = "e.g., FRY-001";
+            tbFerryCode.PlaceholderText = "e.g., MVOQ";
             tbFerryCode.Size = new Size(250, 30);
             tbFerryCode.TabIndex = 6;
             // 

@@ -15,9 +15,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle5 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle6 = new DataGridViewCellStyle();
             panel1 = new Panel();
             lblBookings = new Label();
             pictureBox1 = new PictureBox();
@@ -59,7 +59,7 @@
             panel1.Controls.Add(lblBookings);
             panel1.Controls.Add(pictureBox1);
             panel1.Controls.Add(label1);
-            panel1.Location = new Point(123, 22);
+            panel1.Location = new Point(130, 3);
             panel1.Name = "panel1";
             panel1.Size = new Size(371, 134);
             panel1.TabIndex = 0;
@@ -102,7 +102,7 @@
             panel2.Controls.Add(lblRevenue);
             panel2.Controls.Add(pictureBox2);
             panel2.Controls.Add(label2);
-            panel2.Location = new Point(500, 22);
+            panel2.Location = new Point(507, 3);
             panel2.Name = "panel2";
             panel2.Size = new Size(371, 134);
             panel2.TabIndex = 1;
@@ -148,7 +148,7 @@
             panel3.Controls.Add(lblAvailableSeats);
             panel3.Controls.Add(pictureBox4);
             panel3.Controls.Add(label4);
-            panel3.Location = new Point(1254, 22);
+            panel3.Location = new Point(1261, 3);
             panel3.Name = "panel3";
             panel3.Size = new Size(371, 134);
             panel3.TabIndex = 1;
@@ -224,7 +224,7 @@
             panel4.Controls.Add(lblMostBooked);
             panel4.Controls.Add(pictureBox3);
             panel4.Controls.Add(label3);
-            panel4.Location = new Point(877, 22);
+            panel4.Location = new Point(884, 3);
             panel4.Name = "panel4";
             panel4.Size = new Size(371, 134);
             panel4.TabIndex = 1;
@@ -267,7 +267,7 @@
             panel5.Controls.Add(dgvTodaysTrip);
             panel5.Controls.Add(label7);
             panel5.Controls.Add(lblCompanyNameFleet);
-            panel5.Location = new Point(126, 179);
+            panel5.Location = new Point(130, 143);
             panel5.Name = "panel5";
             panel5.Size = new Size(1497, 470);
             panel5.TabIndex = 2;
@@ -278,33 +278,34 @@
             dgvTodaysTrip.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
             dgvTodaysTrip.BackgroundColor = Color.White;
             dgvTodaysTrip.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = Color.White;
-            dataGridViewCellStyle1.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            dataGridViewCellStyle1.ForeColor = Color.FromArgb(11, 94, 235);
-            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
-            dgvTodaysTrip.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = Color.White;
+            dataGridViewCellStyle4.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            dataGridViewCellStyle4.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle4.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = DataGridViewTriState.True;
+            dgvTodaysTrip.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle4;
             dgvTodaysTrip.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = Color.White;
-            dataGridViewCellStyle2.Font = new Font("Segoe UI", 10F);
-            dataGridViewCellStyle2.ForeColor = Color.FromArgb(11, 94, 235);
-            dataGridViewCellStyle2.SelectionBackColor = Color.LightGray;
-            dataGridViewCellStyle2.SelectionForeColor = Color.Black;
-            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
-            dgvTodaysTrip.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle5.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = Color.White;
+            dataGridViewCellStyle5.Font = new Font("Segoe UI", 10F);
+            dataGridViewCellStyle5.ForeColor = Color.FromArgb(11, 94, 235);
+            dataGridViewCellStyle5.SelectionBackColor = Color.LightGray;
+            dataGridViewCellStyle5.SelectionForeColor = Color.Black;
+            dataGridViewCellStyle5.WrapMode = DataGridViewTriState.False;
+            dgvTodaysTrip.DefaultCellStyle = dataGridViewCellStyle5;
             dgvTodaysTrip.EnableHeadersVisualStyles = false;
             dgvTodaysTrip.Location = new Point(28, 78);
             dgvTodaysTrip.Name = "dgvTodaysTrip";
             dgvTodaysTrip.RowHeadersVisible = false;
             dgvTodaysTrip.RowHeadersWidth = 51;
-            dataGridViewCellStyle3.BackColor = Color.White;
-            dgvTodaysTrip.RowsDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle6.BackColor = Color.White;
+            dgvTodaysTrip.RowsDefaultCellStyle = dataGridViewCellStyle6;
             dgvTodaysTrip.RowTemplate.Height = 45;
             dgvTodaysTrip.Size = new Size(1456, 365);
             dgvTodaysTrip.TabIndex = 3;
+            dgvTodaysTrip.CellClick += dgvTodaysTrip_CellClick;
             // 
             // label7
             // 
@@ -339,7 +340,7 @@
             Controls.Add(panel2);
             Controls.Add(panel1);
             Name = "Dashboard";
-            Size = new Size(1530, 446);
+            Size = new Size(1677, 551);
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();

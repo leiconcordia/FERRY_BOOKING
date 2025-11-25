@@ -13,8 +13,16 @@ namespace FERRY_BOOKING.Dialogs
 {
     public partial class FerryRegistrationForm : Form
     {
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string CompanyName { get; set; }
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int OwnerID { get; set; }
+        
+        private bool _isEditMode = false;
+        private int? _ferryId = null;
+        private bool _fullEditAllowed = true;
+        private bool _partialEditAllowed = false;
         
         // File upload tracking
         private string coFileName = "";
@@ -31,14 +39,220 @@ namespace FERRY_BOOKING.Dialogs
         byte[] poFileBytes;   // Purchase Order
         byte[] fpFileBytes;   // Ferry Picture (Image only)
 
+        // Constructor for Registration (Add new ferry)
         public FerryRegistrationForm(int OwnerID, String CompanyName)
         {
             InitializeComponent();
             this.CompanyName = CompanyName;
             this.OwnerID = OwnerID;
+            this._isEditMode = false;
 
             tbCompanyName.Text = CompanyName;
             tbCompanyName.ReadOnly = true;
+        }
+
+        // Constructor for Edit mode
+        public FerryRegistrationForm(int ferryId, int ownerId, string companyName, bool editMode)
+        {
+            InitializeComponent();
+            this._ferryId = ferryId;
+            this.OwnerID = ownerId;
+            this.CompanyName = companyName;
+            this._isEditMode = editMode;
+
+            tbCompanyName.Text = companyName;
+            tbCompanyName.ReadOnly = true;
+
+            if (_isEditMode)
+            {
+                this.Text = "Edit Ferry";
+                lblTitle.Text = "Edit Ferry Details";
+                lblSubtitle.Text = "Update ferry information and layout";
+                btnSave.Text = "Update";
+                
+                LoadFerryForEdit(ferryId);
+            }
+            else
+            {
+                this.Text = "View Ferry";
+                lblTitle.Text = "Ferry Details";
+                lblSubtitle.Text = "View ferry information and layout";
+                btnSave.Visible = false;
+                
+                LoadFerryForView(ferryId);
+            }
+        }
+
+        private void LoadFerryForEdit(int ferryId)
+        {
+            DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
+            
+            // Load basic ferry details
+            var ferryRow = helper.GetFerryById(ferryId);
+            if (ferryRow != null)
+            {
+                tbFerryName.Text = ferryRow["FerryName"].ToString();
+                tbFerryCode.Text = ferryRow["FerryCode"].ToString();
+            }
+
+            // Load floor information
+            DataTable floors = helper.GetFerryFloors(ferryId);
+            if (floors != null && floors.Rows.Count > 0)
+            {
+                nudFloorNumbers.Value = floors.Rows.Count;
+                GenerateFloorInputs(floors.Rows.Count);
+
+                // Populate floor data
+                for (int i = 0; i < floors.Rows.Count; i++)
+                {
+                    int floorNum = i + 1;
+                    var row = flowFloors.Controls.Find($"nudRow_{floorNum}", true).FirstOrDefault() as NumericUpDown;
+                    var col = flowFloors.Controls.Find($"nudColumn_{floorNum}", true).FirstOrDefault() as NumericUpDown;
+
+                    if (row != null && col != null)
+                    {
+                        row.Value = Convert.ToInt32(floors.Rows[i]["Rows"]);
+                        col.Value = Convert.ToInt32(floors.Rows[i]["Columns"]);
+                    }
+                }
+                
+                UpdateFloorAndTotalCapacity();
+            }
+            
+            // Hide document upload section in edit mode (documents can't be changed)
+            panel4.Visible = false;
+        }
+
+        private void LoadFerryForView(int ferryId)
+        {
+            DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
+            
+            // Load basic ferry details
+            var ferryRow = helper.GetFerryById(ferryId);
+            if (ferryRow != null)
+            {
+                tbFerryName.Text = ferryRow["FerryName"].ToString();
+                tbFerryCode.Text = ferryRow["FerryCode"].ToString();
+                
+                // Validate and highlight issues
+                ValidateViewData(ferryRow);
+            }
+
+            // Load floor information
+            DataTable floors = helper.GetFerryFloors(ferryId);
+            if (floors != null && floors.Rows.Count > 0)
+            {
+                nudFloorNumbers.Value = floors.Rows.Count;
+                GenerateFloorInputs(floors.Rows.Count);
+
+                // Populate floor data
+                for (int i = 0; i < floors.Rows.Count; i++)
+                {
+                    int floorNum = i + 1;
+                    var row = flowFloors.Controls.Find($"nudRow_{floorNum}", true).FirstOrDefault() as NumericUpDown;
+                    var col = flowFloors.Controls.Find($"nudColumn_{floorNum}", true).FirstOrDefault() as NumericUpDown;
+
+                    if (row != null && col != null)
+                    {
+                        row.Value = Convert.ToInt32(floors.Rows[i]["Rows"]);
+                        col.Value = Convert.ToInt32(floors.Rows[i]["Columns"]);
+                    }
+                }
+                
+                UpdateFloorAndTotalCapacity();
+                ValidateFloorData(floors);
+            }
+        }
+
+        private void ValidateViewData(DataRow ferryRow)
+        {
+            List<string> validationMessages = new List<string>();
+
+            // Validate Ferry Name
+            if (string.IsNullOrWhiteSpace(ferryRow["FerryName"].ToString()))
+            {
+                tbFerryName.BackColor = Color.LightYellow;
+                validationMessages.Add("⚠ Ferry Name is empty");
+            }
+
+            // Validate Ferry Code
+            if (string.IsNullOrWhiteSpace(ferryRow["FerryCode"].ToString()))
+            {
+                tbFerryCode.BackColor = Color.LightYellow;
+                validationMessages.Add("⚠ Ferry Code is empty");
+            }
+
+            // Check for unusual ferry code patterns (example validation)
+            string code = ferryRow["FerryCode"].ToString();
+            if (!string.IsNullOrWhiteSpace(code) && code.Length < 3)
+            {
+                tbFerryCode.BackColor = Color.LightCoral;
+                validationMessages.Add("⚠ Ferry Code seems too short (less than 3 characters)");
+            }
+
+            // Display validation summary if there are issues
+            if (validationMessages.Count > 0)
+            {
+                ShowValidationWarning(string.Join("\n", validationMessages));
+            }
+        }
+
+        private void ValidateFloorData(DataTable floors)
+        {
+            List<string> floorIssues = new List<string>();
+            
+            foreach (DataRow floor in floors.Rows)
+            {
+                int floorNum = Convert.ToInt32(floor["FloorNumber"]);
+                int rows = Convert.ToInt32(floor["Rows"]);
+                int cols = Convert.ToInt32(floor["Columns"]);
+                
+                // Validate minimum capacity
+                if (rows < 1 || cols < 1)
+                {
+                    floorIssues.Add($"⚠ Floor {floorNum} has invalid dimensions ({rows}x{cols})");
+                }
+                
+                // Warn about unusually large floors
+                if (rows * cols > 200)
+                {
+                    floorIssues.Add($"ℹ Floor {floorNum} has large capacity ({rows * cols} seats)");
+                }
+                
+                // Warn about unusually small floors
+                if (rows * cols < 10)
+                {
+                    floorIssues.Add($"ℹ Floor {floorNum} has small capacity ({rows * cols} seats)");
+                }
+            }
+            
+            if (floorIssues.Count > 0)
+            {
+                ShowValidationWarning(string.Join("\n", floorIssues));
+            }
+        }
+
+        private void ShowValidationWarning(string message)
+        {
+            // Option 1: Show as a non-blocking label at the top of form
+            Label lblWarning = new Label
+            {
+                Text = message,
+                AutoSize = false,
+                Width = this.Width - 40,
+                Height = 60,
+                Location = new Point(20, 10),
+                BackColor = Color.FromArgb(255, 243, 205),
+                ForeColor = Color.FromArgb(133, 100, 4),
+                Font = new Font("Segoe UI", 9F),
+                Padding = new Padding(10),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            this.Controls.Add(lblWarning);
+            lblWarning.BringToFront();
+            
+            // Option 2: Show as MessageBox (less recommended for view mode)
+            // MessageBox.Show(message, "Data Validation Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void nudFloorNumbers_ValueChanged(object sender, EventArgs e)
@@ -52,13 +266,16 @@ namespace FERRY_BOOKING.Dialogs
 
             foreach (GroupBox group in flowFloors.Controls.OfType<GroupBox>())
             {
-                var nudRow = group.Controls.OfType<NumericUpDown>().First(x => x.Name.Contains("nudRow"));
-                var nudCol = group.Controls.OfType<NumericUpDown>().First(x => x.Name.Contains("nudColumn"));
-                var lblCap = group.Controls.OfType<Label>().First(x => x.Name.Contains("lblCapacity"));
+                var nudRow = group.Controls.OfType<NumericUpDown>().FirstOrDefault(x => x.Name.Contains("nudRow"));
+                var nudCol = group.Controls.OfType<NumericUpDown>().FirstOrDefault(x => x.Name.Contains("nudColumn"));
+                var lblCap = group.Controls.OfType<Label>().FirstOrDefault(x => x.Name.Contains("lblCapacity"));
 
-                int floorCapacity = (int)nudRow.Value * (int)nudCol.Value;
-                lblCap.Text = $"Capacity: {floorCapacity} seats";
-                total += floorCapacity;
+                if (nudRow != null && nudCol != null && lblCap != null)
+                {
+                    int floorCapacity = (int)nudRow.Value * (int)nudCol.Value;
+                    lblCap.Text = $"Capacity: {floorCapacity} seats";
+                    total += floorCapacity;
+                }
             }
 
             lblTotalCapacity.Text = $"Total Capacity: {total} seats";
@@ -245,64 +462,103 @@ namespace FERRY_BOOKING.Dialogs
                 return;
             }
 
-            if (coFileBytes == null || vrFileBytes == null || scFileBytes == null || idFileBytes == null)
+            if (_isEditMode)
             {
-                MessageBox.Show("Please upload all required documents (CO, VR, SC, ID).", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                // UPDATE EXISTING FERRY
+                DataTable floors = new DataTable();
+                floors.Columns.Add("FloorNumber", typeof(int));
+                floors.Columns.Add("Rows", typeof(int));
+                floors.Columns.Add("Columns", typeof(int));
 
-            // --- GET FLOOR DATA (NO PRICE) ---
-            List<FloorLayout> floors = new List<FloorLayout>();
-            int totalCapacity = 0;
-
-            for (int i = 1; i <= nudFloorNumbers.Value; i++)
-            {
-                var row = flowFloors.Controls.Find($"nudRow_{i}", true).FirstOrDefault() as NumericUpDown;
-                var col = flowFloors.Controls.Find($"nudColumn_{i}", true).FirstOrDefault() as NumericUpDown;
-
-                if (row == null || col == null)
-                    continue;
-
-                int r = (int)row.Value;
-                int c = (int)col.Value;
-
-                totalCapacity += r * c;
-
-                floors.Add(new FloorLayout
+                for (int i = 1; i <= nudFloorNumbers.Value; i++)
                 {
-                    FloorNumber = i,
-                    Rows = r,
-                    Columns = c
-                });
-            }
+                    var row = flowFloors.Controls.Find($"nudRow_{i}", true).FirstOrDefault() as NumericUpDown;
+                    var col = flowFloors.Controls.Find($"nudColumn_{i}", true).FirstOrDefault() as NumericUpDown;
 
-            DATABASE.FerryOwnerHelper FerryHelper = new DATABASE.FerryOwnerHelper();
+                    if (row != null && col != null)
+                    {
+                        floors.Rows.Add(i, (int)row.Value, (int)col.Value);
+                    }
+                }
 
-            // --- INSERT INTO DATABASE ---
-            bool success = FerryHelper.RegisterFerry(
-                tbFerryName.Text.Trim(),
-                tbFerryCode.Text.Trim(),
-                floors.Count,
-                totalCapacity,
-                floors,
-                coFileBytes,
-                vrFileBytes,
-                scFileBytes,
-                idFileBytes,
-                poFileBytes,
-                fpFileBytes,
-                this.OwnerID
-            );
+                DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
+                string error;
+                
+                bool success = helper.UpdateFerry(_ferryId.Value, tbFerryCode.Text.Trim(), tbFerryName.Text.Trim(), floors, out error);
 
-            if (success)
-            {
-                MessageBox.Show("Ferry registered successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                if (success)
+                {
+                    MessageBox.Show("Ferry updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show(error, "Update Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             else
             {
-                MessageBox.Show("Error occurred while saving ferry.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // REGISTER NEW FERRY
+                if (coFileBytes == null || vrFileBytes == null || scFileBytes == null || idFileBytes == null)
+                {
+                    MessageBox.Show("Please upload all required documents (CO, VR, SC, ID).", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // --- GET FLOOR DATA (NO PRICE) ---
+                List<FloorLayout> floors = new List<FloorLayout>();
+                int totalCapacity = 0;
+
+                for (int i = 1; i <= nudFloorNumbers.Value; i++)
+                {
+                    var row = flowFloors.Controls.Find($"nudRow_{i}", true).FirstOrDefault() as NumericUpDown;
+                    var col = flowFloors.Controls.Find($"nudColumn_{i}", true).FirstOrDefault() as NumericUpDown;
+
+                    if (row == null || col == null)
+                        continue;
+
+                    int r = (int)row.Value;
+                    int c = (int)col.Value;
+
+                    totalCapacity += r * c;
+
+                    floors.Add(new FloorLayout
+                    {
+                        FloorNumber = i,
+                        Rows = r,
+                        Columns = c
+                    });
+                }
+
+                DATABASE.FerryOwnerHelper FerryHelper = new DATABASE.FerryOwnerHelper();
+
+                // --- INSERT INTO DATABASE ---
+                bool success = FerryHelper.RegisterFerry(
+                    tbFerryName.Text.Trim(),
+                    tbFerryCode.Text.Trim(),
+                    floors.Count,
+                    totalCapacity,
+                    floors,
+                    coFileBytes,
+                    vrFileBytes,
+                    scFileBytes,
+                    idFileBytes,
+                    poFileBytes,
+                    fpFileBytes,
+                    this.OwnerID
+                );
+
+                if (success)
+                {
+                    MessageBox.Show("Ferry registered successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Error occurred while saving ferry.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }

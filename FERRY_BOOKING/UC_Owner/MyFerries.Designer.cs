@@ -32,11 +32,11 @@
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             panel1 = new Panel();
+            lblEmptyMessage = new Label();
             dgvMyFerries = new DataGridView();
             label1 = new Label();
             lblCompanyNameFleet = new Label();
             btnRegisterFerry = new Button();
-            lblEmptyMessage = new Label();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvMyFerries).BeginInit();
             SuspendLayout();
@@ -53,6 +53,18 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(1497, 470);
             panel1.TabIndex = 0;
+            // 
+            // lblEmptyMessage
+            // 
+            lblEmptyMessage.AutoSize = true;
+            lblEmptyMessage.BackColor = SystemColors.ButtonFace;
+            lblEmptyMessage.Font = new Font("Segoe UI", 19.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEmptyMessage.ForeColor = SystemColors.AppWorkspace;
+            lblEmptyMessage.Location = new Point(538, 219);
+            lblEmptyMessage.Name = "lblEmptyMessage";
+            lblEmptyMessage.Size = new Size(282, 46);
+            lblEmptyMessage.TabIndex = 48;
+            lblEmptyMessage.Text = "lblEmptyMessage";
             // 
             // dgvMyFerries
             // 
@@ -124,25 +136,13 @@
             btnRegisterFerry.UseVisualStyleBackColor = false;
             btnRegisterFerry.Click += btnRegisterFerry_Click;
             // 
-            // lblEmptyMessage
-            // 
-            lblEmptyMessage.AutoSize = true;
-            lblEmptyMessage.BackColor = SystemColors.ButtonFace;
-            lblEmptyMessage.Font = new Font("Segoe UI", 19.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblEmptyMessage.ForeColor = SystemColors.AppWorkspace;
-            lblEmptyMessage.Location = new Point(538, 219);
-            lblEmptyMessage.Name = "lblEmptyMessage";
-            lblEmptyMessage.Size = new Size(282, 46);
-            lblEmptyMessage.TabIndex = 48;
-            lblEmptyMessage.Text = "lblEmptyMessage";
-            // 
             // MyFerries
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(panel1);
             Name = "MyFerries";
-            Size = new Size(1656, 551);
+            Size = new Size(1761, 551);
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvMyFerries).EndInit();

@@ -1,4 +1,4 @@
-﻿        using FERRY_BOOKING.DATABASE;
+﻿using FERRY_BOOKING.DATABASE;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,6 +18,8 @@ namespace FERRY_BOOKING.Dialogs
         private int selectedFerryID = 0;
         private string selectedFerryName = "";
         private int? RouteID;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int OwnerID { get; set; }
         public AddRoute(int OwnerID)
         {
@@ -147,7 +149,6 @@ namespace FERRY_BOOKING.Dialogs
             {
                 MessageBox.Show("Failed to save route.");
             }
-
 
 
         }

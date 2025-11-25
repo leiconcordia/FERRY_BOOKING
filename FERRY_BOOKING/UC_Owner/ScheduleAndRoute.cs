@@ -14,7 +14,7 @@ namespace FERRY_BOOKING.UC_Ferry
 {
     public partial class ScheduleAndRoute : UserControl
     {
-
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int OwnerID { get; set; }
 
 

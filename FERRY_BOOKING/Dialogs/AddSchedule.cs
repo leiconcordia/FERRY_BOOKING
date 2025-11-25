@@ -512,6 +512,7 @@ namespace FERRY_BOOKING.Dialogs
                 );
 
                 // 5.3 Insert Floor Prices for each Trip
+                // The view will automatically pick up prices from any trip in the schedule
                 foreach (int tripID in tripIDs)
                 {
                     foreach (var fp in floorPrices)

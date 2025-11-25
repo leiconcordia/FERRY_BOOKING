@@ -41,6 +41,8 @@
             navSummary = new Button();
             navSchedule = new Button();
             navFerries = new Button();
+            navRefunds = new Button();
+            navCancelledTrips = new Button();
             HeaderPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)headerLogoPictureBox).BeginInit();
             SuspendLayout();
@@ -147,9 +149,9 @@
             // 
             // navDashboard
             // 
-            navDashboard.Location = new Point(137, 124);
+            navDashboard.Location = new Point(116, 124);
             navDashboard.Name = "navDashboard";
-            navDashboard.Size = new Size(371, 29);
+            navDashboard.Size = new Size(240, 29);
             navDashboard.TabIndex = 3;
             navDashboard.Text = "Dashboard";
             navDashboard.UseVisualStyleBackColor = true;
@@ -157,9 +159,9 @@
             // 
             // navSummary
             // 
-            navSummary.Location = new Point(1268, 124);
+            navSummary.Location = new Point(1395, 124);
             navSummary.Name = "navSummary";
-            navSummary.Size = new Size(371, 29);
+            navSummary.Size = new Size(240, 29);
             navSummary.TabIndex = 4;
             navSummary.Text = "Booking Summary";
             navSummary.UseVisualStyleBackColor = true;
@@ -167,9 +169,9 @@
             // 
             // navSchedule
             // 
-            navSchedule.Location = new Point(891, 124);
+            navSchedule.Location = new Point(618, 124);
             navSchedule.Name = "navSchedule";
-            navSchedule.Size = new Size(371, 29);
+            navSchedule.Size = new Size(250, 29);
             navSchedule.TabIndex = 5;
             navSchedule.Text = "Routes and Schedule";
             navSchedule.UseVisualStyleBackColor = true;
@@ -177,19 +179,46 @@
             // 
             // navFerries
             // 
-            navFerries.Location = new Point(514, 124);
+            navFerries.Location = new Point(362, 124);
             navFerries.Name = "navFerries";
-            navFerries.Size = new Size(371, 29);
+            navFerries.Size = new Size(250, 29);
             navFerries.TabIndex = 6;
             navFerries.Text = "My Ferries";
             navFerries.UseVisualStyleBackColor = true;
             navFerries.Click += navFerries_Click;
+            // 
+            // navRefunds
+            // 
+            
+            navRefunds.ForeColor = Color.Black;
+            navRefunds.Location = new Point(1145, 124);
+            navRefunds.Name = "navRefunds";
+            navRefunds.Size = new Size(244, 29);
+            navRefunds.TabIndex = 7;
+            navRefunds.Text = "Refunds & Cancellations";
+            navRefunds.UseVisualStyleBackColor = true;
+            navRefunds.Click += navRefunds_Click;
+            // 
+            // navCancelledTrips
+            // 
+            navCancelledTrips.BackColor = SystemColors.Control;
+            
+            navCancelledTrips.ForeColor = Color.Black;
+            navCancelledTrips.Location = new Point(874, 124);
+            navCancelledTrips.Name = "navCancelledTrips";
+            navCancelledTrips.Size = new Size(265, 29);
+            navCancelledTrips.TabIndex = 8;
+            navCancelledTrips.Text = "Cancelled Trips";
+            navCancelledTrips.UseVisualStyleBackColor = true;
+            navCancelledTrips.Click += navCancelledTrips_Click;
             // 
             // OwnerForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1785, 739);
+            Controls.Add(navCancelledTrips);
+            Controls.Add(navRefunds);
             Controls.Add(navFerries);
             Controls.Add(navSchedule);
             Controls.Add(navSummary);
@@ -221,5 +250,7 @@
         private Button navSchedule;
         private Button navFerries;
         private Label lblOwnerName;
+        private Button navRefunds;
+        private Button navCancelledTrips;
     }
 }

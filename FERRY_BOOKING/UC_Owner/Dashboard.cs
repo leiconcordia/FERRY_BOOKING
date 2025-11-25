@@ -16,8 +16,8 @@ namespace FERRY_BOOKING.UC_Ferry
 {
     public partial class Dashboard : UserControl
     {
-
-        public int OwnerID { get; set; }    
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int OwnerID { get; set; }
         public Dashboard(int OwnerID)
         {
             InitializeComponent();
@@ -66,23 +66,22 @@ namespace FERRY_BOOKING.UC_Ferry
 
                 // Add necessary columns
                 dgvTodaysTrip.Columns.Add("TripID", "Trip ID");
+                dgvTodaysTrip.Columns.Add("FerryID", "Ferry ID");
                 dgvTodaysTrip.Columns.Add("FerryName", "Ferry Name");
                 dgvTodaysTrip.Columns.Add("Route", "Route");
                 dgvTodaysTrip.Columns.Add("Schedule", "Schedule");
                 dgvTodaysTrip.Columns.Add("FloorBreakdown", "Floor Breakdown");
 
                 dgvTodaysTrip.Columns["TripID"].Visible = false;
+                dgvTodaysTrip.Columns["FerryID"].Visible = false;
 
                 // Add Action column with eye icon
                 DataGridViewImageColumn actionCol = new DataGridViewImageColumn();
                 actionCol.Name = "Action";
                 actionCol.HeaderText = "Action";
-                actionCol.Image = Properties.Resources.eye;
+                actionCol.Image = Properties.Resources.edit;
                 actionCol.ImageLayout = DataGridViewImageCellLayout.Zoom;
                 dgvTodaysTrip.Columns.Add(actionCol);
-               
-
-
 
                 // Populate rows
                 foreach (DataRow row in dt.Rows)
@@ -93,6 +92,7 @@ namespace FERRY_BOOKING.UC_Ferry
 
                     dgvTodaysTrip.Rows.Add(
                         row["TripID"],
+                        row["FerryID"],
                         row["FerryName"],
                         row["Route"],
                         schedule,
@@ -100,7 +100,6 @@ namespace FERRY_BOOKING.UC_Ferry
                         Properties.Resources.eye
                     );
                 }
-             
 
                 dgvTodaysTrip.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             }
@@ -115,18 +114,14 @@ namespace FERRY_BOOKING.UC_Ferry
             if (e.RowIndex >= 0 && e.ColumnIndex == dgvTodaysTrip.Columns["Action"].Index)
             {
                 int tripID = Convert.ToInt32(dgvTodaysTrip.Rows[e.RowIndex].Cells["TripID"].Value);
-                int ferryID = Convert.ToInt32(dgvTodaysTrip.Rows[e.RowIndex].Cells["FerryName"].Value); // Adjust if needed
-                int ownerID = Convert.ToInt32(dgvTodaysTrip.Rows[e.RowIndex].Cells["OwnerID"].Value);   // Optional
+                int ferryID = Convert.ToInt32(dgvTodaysTrip.Rows[e.RowIndex].Cells["FerryID"].Value);
 
-                //// Open BookingSummaryDetail form
-                //BookingSummaryDetail detailForm = new BookingSummaryDetail(tripID, ferryID, ownerID);
-                //detailForm.ShowDialog();
+                // Open TripViewDialog to view booked seats
+                var viewDialog = new TripViewDialog(tripID, ferryID);
+                viewDialog.ShowDialog();
             }
         }
 
-
-
-
-
+        
     }
 }
