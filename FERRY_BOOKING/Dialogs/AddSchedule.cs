@@ -712,7 +712,53 @@ namespace FERRY_BOOKING.Dialogs
             bool isActive = cbStatus.SelectedItem.ToString() == "Active";
 
             // ================================
-            // 2. COLLECT FLOOR PRICES
+            // 2. CHECK FOR CONFLICTING TRIPS - IMMEDIATE ABORT
+            // ================================
+            DATABASE.FerryOwnerHelper db = new DATABASE.FerryOwnerHelper();
+
+            var (hasConflict, conflictMessage, conflictDetails) = db.CheckTripConflicts(
+                ferryID,
+                routeID,
+                startDate,
+                endDate,
+                operatingDays,
+                departure.TimeOfDay,
+                arrival.TimeOfDay,
+                EditingScheduleID // Exclude current schedule if editing
+            );
+
+            if (hasConflict)
+            {
+                // Show conflict dialog with details
+                MessageBox.Show(
+                    conflictMessage,
+                    "⚠️ Schedule Conflict",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+
+                // Optional: Show detailed conflict grid
+                if (conflictDetails.Rows.Count > 0)
+                {
+                    DialogResult showDetails = MessageBox.Show(
+                        "Would you like to view detailed conflict information?",
+                        "View Conflicts",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question
+                    );
+
+                    if (showDetails == DialogResult.Yes)
+                    {
+                        ShowConflictDetailsDialog(conflictDetails);
+                    }
+                }
+
+                // ABORT - Do not proceed with schedule creation
+                return;
+            }
+
+            // ================================
+            // 3. COLLECT FLOOR PRICES
             // ================================
             Dictionary<int, decimal> floorPrices = new Dictionary<int, decimal>();
             foreach (Control ctrl in flpFloorPrice.Controls)
@@ -732,7 +778,7 @@ namespace FERRY_BOOKING.Dialogs
             }
 
             // ================================
-            // 3. BUILD SUMMARY STRING
+            // 4. BUILD SUMMARY STRING
             // ================================
             string summary =
                 $"FERRY INFORMATION\n" +
@@ -755,10 +801,10 @@ namespace FERRY_BOOKING.Dialogs
             foreach (var fp in floorPrices)
                 summary += $"• Floor {fp.Key}: ₱{fp.Value}\n";
 
-            summary += $"Status: {(isActive ? "Active" : "Inactive")}";
+            summary += $"\nStatus: {(isActive ? "Active" : "Inactive")}";
 
             // ================================
-            // 4. CONFIRMATION DIALOG
+            // 5. CONFIRMATION DIALOG
             // ================================
             DialogResult result = MessageBox.Show(
                 summary,
@@ -774,12 +820,10 @@ namespace FERRY_BOOKING.Dialogs
             }
 
             // ================================
-            // 5. DATABASE INSERT / UPDATE
+            // 6. DATABASE INSERT / UPDATE
             // ================================
             try
             {
-                DATABASE.FerryOwnerHelper db = new DATABASE.FerryOwnerHelper();
-
                 if (EditingScheduleID.HasValue)
                 {
                     // UPDATE existing schedule
@@ -825,7 +869,7 @@ namespace FERRY_BOOKING.Dialogs
                         isActive
                     );
 
-                    // 5.2 Generate Trips based on schedule
+                    // Generate Trips based on schedule
                     List<int> tripIDs = db.GenerateTripsFromSchedule(
                         scheduleID,
                         ferryID,
@@ -837,7 +881,7 @@ namespace FERRY_BOOKING.Dialogs
                         arrival.TimeOfDay
                     );
 
-                    // 5.3 Insert Floor Prices for each Trip
+                    // Insert Floor Prices for each Trip
                     foreach (int tripID in tripIDs)
                     {
                         foreach (var fp in floorPrices)
@@ -846,9 +890,10 @@ namespace FERRY_BOOKING.Dialogs
                         }
                     }
 
-                    MessageBox.Show($"Schedule created successfully!\nGenerated {tripIDs.Count} trips.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"✅ Schedule created successfully!\nGenerated {tripIDs.Count} trip(s).", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 
+                this.DialogResult = DialogResult.OK;
                 this.Close();
             }
             catch (Exception ex)
@@ -857,5 +902,56 @@ namespace FERRY_BOOKING.Dialogs
             }
         }
 
+        // Add this helper method to show conflict details in a dialog
+        private void ShowConflictDetailsDialog(DataTable conflictDetails)
+        {
+            Form detailsForm = new Form
+            {
+                Text = "Conflict Details",
+                Width = 800,
+                Height = 500,
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            DataGridView dgv = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                DataSource = conflictDetails,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect
+            };
+
+            // Customize column headers
+            if (dgv.Columns.Contains("TripID"))
+                dgv.Columns["TripID"].HeaderText = "Trip ID";
+            if (dgv.Columns.Contains("TripDate"))
+                dgv.Columns["TripDate"].HeaderText = "Date";
+            if (dgv.Columns.Contains("DepartureTime"))
+                dgv.Columns["DepartureTime"].HeaderText = "Departure";
+            if (dgv.Columns.Contains("ArrivalTime"))
+                dgv.Columns["ArrivalTime"].HeaderText = "Arrival";
+            if (dgv.Columns.Contains("ConflictType"))
+                dgv.Columns["ConflictType"].HeaderText = "Conflict Type";
+
+            Button closeButton = new Button
+            {
+                Text = "Close",
+                Width = 100,
+                Height = 35,
+                Dock = DockStyle.Bottom
+            };
+            closeButton.Click += (s, e) => detailsForm.Close();
+
+            detailsForm.Controls.Add(dgv);
+            detailsForm.Controls.Add(closeButton);
+
+            detailsForm.ShowDialog(this);
+        }
     }
 }

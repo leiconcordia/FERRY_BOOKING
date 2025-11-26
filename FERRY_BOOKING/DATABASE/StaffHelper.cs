@@ -65,23 +65,34 @@ namespace FERRY_BOOKING.DATABASE
                 using (SqlConnection conn = db.GetConnection())
                 {
                     conn.Open();
-                    string query = "SELECT RouteID, Origin, Destination FROM Route";
+            
+                    // Get DISTINCT routes across all ferries
+                    string query = @"
+                SELECT DISTINCT 
+                    r.RouteID, 
+                    r.Origin + ' -> ' + r.Destination AS RouteDisplay,
+                    r.Origin,
+                    r.Destination
+                FROM Route r
+                INNER JOIN Trip t ON t.RouteID = r.RouteID
+                WHERE t.TripStatus = 'Active'
+                  AND t.TripDate >= CAST(GETDATE() AS DATE)
+                ORDER BY r.Origin, r.Destination
+            ";
+            
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         DataTable dt = new DataTable();
                         dt.Load(cmd.ExecuteReader());
-
-                        // Add a new column for display purposes
-                        dt.Columns.Add("RouteDisplay", typeof(string), "Origin + ' -> ' + Destination");
-
                         return dt;
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error fetching routes: " + ex.Message);
-                return null;
+                MessageBox.Show("Error fetching routes: " + ex.Message, "Error",
+                       MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new DataTable();
             }
         }
 

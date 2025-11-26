@@ -105,6 +105,10 @@
             tbPhone.Name = "tbPhone";
             tbPhone.Size = new Size(260, 27);
             tbPhone.TabIndex = 7;
+            tbPhone.MaxLength = 11;       // Limit to 11 digits
+            tbPhone.KeyPress += TbPhone_KeyPress;
+            tbPhone.TextChanged += TbPhone_TextChanged;
+
             // 
             // cmbGender
             // 

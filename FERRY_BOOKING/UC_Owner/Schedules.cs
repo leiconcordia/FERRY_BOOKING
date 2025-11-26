@@ -104,7 +104,7 @@ namespace FERRY_BOOKING.UC_Ferry
                 // 7. Optional: prevent user from editing
                 dgvSchedule.ReadOnly = true;
 
-                // 8. Use single "Actions" column and paint three buttons like dgvMyFerries
+                // 8. Use single "Actions" column with only View and Delete buttons
                 if (!dgvSchedule.Columns.Contains("Actions"))
                 {
                     var act = new DataGridViewButtonColumn
@@ -167,14 +167,13 @@ namespace FERRY_BOOKING.UC_Ferry
             {
                 e.PaintBackground(e.CellBounds, true);
 
-                // Load your icons (make sure you have them in Resources or as files)
+                // Load only View and Delete icons (Edit removed)
                 Image viewIcon = Properties.Resources.research;    // Eye icon for View
-                Image editIcon = Properties.Resources.edit; // Pencil icon for Edit
                 Image deleteIcon = Properties.Resources.delete; // Trash icon for Delete
 
                 int iconSize = 35;
-                int padding = 5;
-                int totalWidth = (iconSize * 3) + (padding * 2);
+                int padding = 10; // Increased padding for better spacing with 2 icons
+                int totalWidth = (iconSize * 2) + padding;
 
                 // calculate starting X to center the block
                 int startX = e.CellBounds.X + (e.CellBounds.Width - totalWidth) / 2;
@@ -182,10 +181,9 @@ namespace FERRY_BOOKING.UC_Ferry
                 // vertical center
                 int y = e.CellBounds.Y + (e.CellBounds.Height - iconSize) / 2;
 
-                // Draw icons spaced horizontally
+                // Draw only View and Delete icons
                 e.Graphics.DrawImage(viewIcon, startX, y, iconSize, iconSize);
-                e.Graphics.DrawImage(editIcon, startX + iconSize + padding, y, iconSize, iconSize);
-                e.Graphics.DrawImage(deleteIcon, startX + (iconSize + padding) * 2, y, iconSize, iconSize);
+                e.Graphics.DrawImage(deleteIcon, startX + iconSize + padding, y, iconSize, iconSize);
 
                 e.Handled = true;
             }
@@ -198,7 +196,7 @@ namespace FERRY_BOOKING.UC_Ferry
                 var cell = dgvSchedule.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
                 int clickX = dgvSchedule.PointToClient(Cursor.Position).X - cell.X;
                 int iconSize = 35;
-                int padding = 5;
+                int padding = 10; // Updated padding to match CellPainting
 
                 try
                 {
@@ -235,7 +233,7 @@ namespace FERRY_BOOKING.UC_Ferry
                     DateTime endDate = Convert.ToDateTime(dgvSchedule.Rows[e.RowIndex].Cells["EndDate"].Value);
                     string daysOfWeek = dgvSchedule.Rows[e.RowIndex].Cells["DaysOfWeek"].Value?.ToString() ?? "";
 
-                    if (clickX < padding + iconSize) // View/Research icon clicked
+                    if (clickX < iconSize + (padding / 2)) // View icon clicked
                     {
                         // Open ScheduleViewDialog with calendar
                         var viewDialog = new Dialogs.ScheduleViewDialog(scheduleID, ferryID, startDate, endDate, daysOfWeek);
@@ -244,89 +242,97 @@ namespace FERRY_BOOKING.UC_Ferry
                         // Refresh the schedule grid after viewing
                         LoadSchedule(OwnerID);
                     }
-                    else if (clickX < padding + iconSize + padding + iconSize) // Edit icon clicked
-                    {
-                        // Check if schedule has bookings
-                        DATABASE.FerryOwnerHelper ownerHelper = new DATABASE.FerryOwnerHelper();
-                        var (hasBookings, futureBookings, totalBookings) = ownerHelper.CheckScheduleBookings(scheduleID);
-
-                        if (hasBookings)
-                        {
-                            string message = futureBookings > 0
-                                ? $"Cannot edit this schedule.\n\n" +
-                                  $"Active Bookings: {futureBookings}\n" +
-                                  $"Total Bookings: {totalBookings}\n\n" +
-                                  $"Schedules with active bookings cannot be modified to protect passenger reservations."
-                                : $"Cannot edit this schedule.\n\n" +
-                                  $"This schedule has {totalBookings} booking(s) in history.\n" +
-                                  $"Schedules with booking history cannot be modified to maintain data integrity.";
-
-                            MessageBox.Show(message, "Edit Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-
-                        // No bookings - allow edit
-                        var editDialog = new Dialogs.AddSchedule(OwnerID, scheduleID);
-                        editDialog.StartPosition = FormStartPosition.CenterParent;
-                        if (editDialog.ShowDialog() == DialogResult.OK)
-                        {
-                            // Refresh the schedule grid after successful edit
-                            LoadSchedule(OwnerID);
-                        }
-                    }
                     else // Delete icon clicked
                     {
                         // Use the enhanced validation system from FerryOwnerHelper
                         DATABASE.FerryOwnerHelper ownerHelper = new DATABASE.FerryOwnerHelper();
                         var validation = ownerHelper.ValidateScheduleDeletion(scheduleID);
 
+                        // Check if deletion is blocked due to bookings
                         if (!validation.CanProceed)
                         {
-                            MessageBox.Show(validation.Message, "Delete Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            // Show error message with detailed information
+                            MessageBox.Show(
+                                validation.Message,
+                                "⚠️ Cannot Delete Schedule",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning
+                            );
                             return;
                         }
 
-                        // Show confirmation with appropriate message based on delete type
-                        string confirmMessage = validation.DeleteType == DATABASE.DeleteType.Soft
-                            ? $"This schedule will be marked as INACTIVE (not permanently deleted).\n\n{validation.Message}\n\nContinue?"
-                            : $"This schedule will be PERMANENTLY DELETED.\n\n{validation.Message}\n\nContinue?";
-
-                        DialogResult result = MessageBox.Show(
-                            confirmMessage,
-                            "Confirm Delete",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Question
-                        );
-
-                        if (result == DialogResult.Yes)
+                        // Check if it's a soft delete (has booking history)
+                        if (validation.DeleteType == DATABASE.DeleteType.Soft)
                         {
-                            string error;
-                            bool success = ownerHelper.DeleteScheduleEnhanced(scheduleID, out error);
+                            // Show warning that schedule has bookings and cannot be deleted
+                            MessageBox.Show(
+                                $"❌ CANNOT DELETE SCHEDULE\n\n" +
+                                $"This schedule has {validation.AffectedRecords} booking(s) in the system.\n\n" +
+                                $"⚠️ Schedules with active or historical bookings cannot be deleted to preserve booking records and maintain data integrity.\n\n" +
+                                $"📋 What you can do:\n" +
+                                $"• Wait for all future trips to complete\n" +
+                                $"• Contact administrator for data archival\n" +
+                                $"• Create a new schedule instead",
+                                "Cannot Delete - Active Bookings",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error
+                            );
+                            return;
+                        }
 
-                            if (success)
+                        // Only proceed if it's a hard delete (no bookings)
+                        if (validation.DeleteType == DATABASE.DeleteType.Hard)
+                        {
+                            string confirmMessage = 
+                                "⚠️ PERMANENT DELETE WARNING\n\n" +
+                                "This schedule and all associated trips will be PERMANENTLY DELETED.\n\n" +
+                                "This action cannot be undone.\n\n" +
+                                "Do you want to continue?";
+
+                            DialogResult result = MessageBox.Show(
+                                confirmMessage,
+                                "Confirm Permanent Deletion",
+                                MessageBoxButtons.YesNo,
+                                MessageBoxIcon.Warning
+                            );
+
+                            if (result == DialogResult.Yes)
                             {
-                                MessageBox.Show(
-                                    validation.DeleteType == DATABASE.DeleteType.Soft 
-                                        ? "Schedule has been deactivated successfully." 
-                                        : "Schedule deleted successfully.",
-                                    "Success",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information
-                                );
-                                LoadSchedule(OwnerID);
-                            }
-                            else
-                            {
-                                MessageBox.Show($"Error deleting schedule: {error}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                string error;
+                                bool success = ownerHelper.DeleteScheduleEnhanced(scheduleID, out error);
+
+                                if (success)
+                                {
+                                    MessageBox.Show(
+                                        "✅ Schedule and all associated trips have been permanently deleted.",
+                                        "Delete Successful",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Information
+                                    );
+                                    LoadSchedule(OwnerID);
+                                }
+                                else
+                                {
+                                    MessageBox.Show(
+                                        $"❌ Error deleting schedule:\n\n{error}",
+                                        "Delete Failed",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error
+                                    );
+                                }
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error accessing schedule data: {ex.Message}\n\n" +
+                    MessageBox.Show(
+                        $"Error accessing schedule data:\n\n{ex.Message}\n\n" +
                         $"Stack trace: {ex.StackTrace}", 
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        "Error", 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Error
+                    );
                 }
             }
         }

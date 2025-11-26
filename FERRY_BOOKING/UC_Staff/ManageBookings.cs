@@ -33,9 +33,10 @@ namespace FERRY_BOOKING.UC_Staff
                         b.BookingRef AS [Booking Ref],
                         FORMAT(t.TripDate, 'MMM dd, yyyy') AS [Travel Date],
                         STRING_AGG(bp.FullName, ', ') AS Passengers,
-                        COUNT(bs.SeatNumber) AS Seats,
+                        COUNT(DISTINCT bp.PassengerID) AS Seats,
                         FORMAT(b.TotalAmount, 'C', 'en-PH') AS Amount,
                         CASE 
+                            WHEN b.BookingStatus = 'Cancelled' THEN 'Cancelled'
                             WHEN t.TripStatus = 'Cancelled' THEN 'Cancelled'
                             WHEN t.TripDate < CAST(GETDATE() AS DATE) THEN 'Completed'
                             WHEN t.TripDate = CAST(GETDATE() AS DATE) THEN 'Today'
@@ -50,12 +51,12 @@ namespace FERRY_BOOKING.UC_Staff
                     INNER JOIN Users u ON f.OwnerID = u.UserID
                     INNER JOIN Route r ON t.RouteID = r.RouteID
                     LEFT JOIN BookingPassenger bp ON b.BookingID = bp.BookingID
-                    LEFT JOIN BookedSeats bs ON b.TripID = bs.TripID
                     GROUP BY 
                         b.BookingID,
                         b.BookingRef,
                         t.TripDate,
                         b.TotalAmount,
+                        b.BookingStatus,
                         t.TripStatus,
                         u.CompanyName,
                         f.FerryName,
@@ -264,7 +265,7 @@ namespace FERRY_BOOKING.UC_Staff
             {
                 // Check if booking is for a future trip
                 string checkQuery = @"
-                    SELECT t.TripID, t.TripDate, t.TripStatus, b.TotalAmount
+                    SELECT t.TripID, t.TripDate, t.TripStatus, b.TotalAmount, b.BookingStatus
                     FROM Booking b
                     INNER JOIN Trip t ON b.TripID = t.TripID
                     WHERE b.BookingID = @BookingID";
@@ -282,6 +283,13 @@ namespace FERRY_BOOKING.UC_Staff
                 string tripStatus = dt.Rows[0]["TripStatus"].ToString();
                 int tripID = Convert.ToInt32(dt.Rows[0]["TripID"]);
                 decimal totalAmount = Convert.ToDecimal(dt.Rows[0]["TotalAmount"]);
+                string bookingStatus = dt.Rows[0]["BookingStatus"]?.ToString() ?? "";
+
+                if (bookingStatus == "Cancelled")
+                {
+                    MessageBox.Show("This booking has already been cancelled.", "Cannot Cancel", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
                 if (tripStatus == "Cancelled")
                 {
@@ -329,14 +337,16 @@ namespace FERRY_BOOKING.UC_Staff
 
                     db.ExecuteNonQuery(releaseSeatsQuery, releaseParams);
 
-                    // Update booking status to cancelled (if you have a status field)
-                    // Or you can insert a cancellation record
+                    // Update booking status to cancelled
                     string updateBookingQuery = @"
                         UPDATE Booking 
-                        SET BookingDate = GETDATE() 
+                        SET BookingStatus = 'Cancelled'
                         WHERE BookingID = @BookingID";
                     
-                    // Insert cancellation record (if you have a Cancellation table)
+                    SqlParameter[] updateParams = { new SqlParameter("@BookingID", bookingID) };
+                    db.ExecuteNonQuery(updateBookingQuery, updateParams);
+                    
+                    // Insert cancellation record
                     string insertCancellationQuery = @"
                         INSERT INTO Cancellation (BookingID, CancellationDate, RefundAmount, Reason, Status)
                         VALUES (@BookingID, GETDATE(), @RefundAmount, 'Cancelled by Staff', 'Pending')";

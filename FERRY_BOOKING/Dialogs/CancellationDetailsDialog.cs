@@ -101,16 +101,16 @@ namespace FERRY_BOOKING.Dialogs
                 BackColor = Color.WhiteSmoke
             };
 
-            Button btnRefundAll = new Button
-            {
-                Text = "💰 Refund All Pending",
-                Location = new Point(700, 15),
-                Size = new Size(150, 35),
-                BackColor = Color.FromArgb(40, 167, 69),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold)
-            };
+            //Button btnRefundAll = new Button
+            //{
+            //    Text = "💰 Refund All Pending",
+            //    Location = new Point(700, 15),
+            //    Size = new Size(150, 35),
+            //    BackColor = Color.FromArgb(40, 167, 69),
+            //    ForeColor = Color.White,
+            //    FlatStyle = FlatStyle.Flat,
+            //    Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            //};
         //    btnRefundAll.Click += BtnRefundAll_Click;
 
             Button btnClose = new Button
@@ -134,7 +134,7 @@ namespace FERRY_BOOKING.Dialogs
                 ForeColor = Color.FromArgb(11, 94, 215)
             };
 
-            buttonPanel.Controls.AddRange(new Control[] { lblSummary, btnRefundAll, btnClose });
+            buttonPanel.Controls.AddRange(new Control[] { lblSummary, btnClose });
 
             // Add all controls to form
             this.Controls.AddRange(new Control[] { headerPanel, dgvPassengers, buttonPanel });

@@ -20,8 +20,16 @@ namespace FERRY_BOOKING.UC_Ferry
 
             this.OwnerID = ownerID;
             InitializeComponent();
+            ConfigureDateTimePicker();
             LoadFilters();
             LoadBookingSummary(this.OwnerID);
+        }
+
+        private void ConfigureDateTimePicker()
+        {
+            // Set maximum date to today to disable future dates
+            dtpDate.MaxDate = DateTime.Today;
+            dtpDate.Value = DateTime.Today;
         }
 
         private void LoadFilters()
@@ -101,9 +109,11 @@ namespace FERRY_BOOKING.UC_Ferry
             LEFT JOIN (
                 SELECT b.TripID, SUM(b.TotalAmount) AS TotalRevenue
                 FROM Booking b
+                WHERE ISNULL(b.BookingStatus, 'Active') <> 'Cancelled'
                 GROUP BY b.TripID
             ) AS Rev ON Rev.TripID = t.TripID
             WHERE f.OwnerID = @OwnerID
+              AND CAST(t.TripDate AS DATE) <= CAST(GETDATE() AS DATE)
         ";
 
                 // Prepare parameters
@@ -126,10 +136,12 @@ namespace FERRY_BOOKING.UC_Ferry
                     parameters.Add(new SqlParameter("@Route", cmbRoute.Text));
                 }
 
-                // Filter by date
+                // Filter by date - only show trips up to selected date (no future trips)
                 DateTime selectedDate = dtpDate.Value.Date;
                 query += " AND CAST(t.TripDate AS DATE) = @TripDate";
                 parameters.Add(new SqlParameter("@TripDate", selectedDate));
+
+                query += " ORDER BY t.TripDate DESC, t.DepartureTime DESC";
 
                 DataTable dt = db.ExecuteDataTable(query, parameters.ToArray());
 
@@ -186,7 +198,7 @@ namespace FERRY_BOOKING.UC_Ferry
                 lblEmptyMessage.Visible = dt.Rows.Count == 0;
                 dgvBookingSummary.Visible = dt.Rows.Count > 0;
                 if (lblEmptyMessage.Visible)
-                    lblEmptyMessage.Text = "No booking history available";
+                    lblEmptyMessage.Text = "No booking history available for the selected date";
             }
             catch (Exception ex)
             {
@@ -224,7 +236,7 @@ namespace FERRY_BOOKING.UC_Ferry
                 int x = e.CellBounds.Left + (e.CellBounds.Width - iconSize) / 2;
                 int y = e.CellBounds.Top + (e.CellBounds.Height - iconSize) / 2;
 
-                e.Graphics.DrawImage(Properties.Resources.eye, new Rectangle(x, y, iconSize, iconSize));
+                e.Graphics.DrawImage(Properties.Resources.research, new Rectangle(x, y, iconSize, iconSize));
                 e.Handled = true;
             }
         }

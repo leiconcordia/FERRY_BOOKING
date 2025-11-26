@@ -54,6 +54,47 @@ namespace FERRY_BOOKING.UC_Staff
 
             lblPrice.Text = $"Price: {labelPrice}";
         }
+        private void TbPhone_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Allow Backspace and control keys
+            if (char.IsControl(e.KeyChar))
+                return;
+
+            // Block non-numeric keys
+            if (!char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+                return;
+            }
+
+            string currentText = tbPhone.Text;
+
+            // Enforce "09" prefix
+            if (currentText.Length == 0 && e.KeyChar != '0')
+            {
+                e.Handled = true; // First digit must be 0
+                return;
+            }
+
+            if (currentText.Length == 1 && e.KeyChar != '9')
+            {
+                e.Handled = true; // Second digit must be 9
+                return;
+            }
+        }
+
+
+        private void TbPhone_TextChanged(object sender, EventArgs e)
+        {
+            // Enforce max length strictly (in case of pasted text)
+            if (tbPhone.Text.Length > 11)
+            {
+                tbPhone.Text = tbPhone.Text.Substring(0, 11);
+                tbPhone.SelectionStart = tbPhone.Text.Length; // keep cursor at end
+            }
+        }
+
+
 
         private void CmbDiscount_SelectedIndexChanged(object sender, EventArgs e)
         {

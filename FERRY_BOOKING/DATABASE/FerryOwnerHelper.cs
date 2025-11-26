@@ -1262,7 +1262,38 @@ namespace FERRY_BOOKING.DATABASE
                         }
                         else
                         {
-                            // Hard delete
+                            // Hard delete - remove all related data (trips, floor prices, booked seats)
+                            
+                            // 1. Delete TripFloorPrice for all trips in this schedule
+                            using (SqlCommand cmd = new SqlCommand(@"
+                                DELETE FROM TripFloorPrice 
+                                WHERE TripID IN (SELECT TripID FROM Trip WHERE ScheduleID = @id)", 
+                                tran.Connection, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@id", scheduleID);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // 2. Delete BookedSeats for all trips in this schedule (in case any exist)
+                            using (SqlCommand cmd = new SqlCommand(@"
+                                DELETE FROM BookedSeats 
+                                WHERE TripID IN (SELECT TripID FROM Trip WHERE ScheduleID = @id)", 
+                                tran.Connection, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@id", scheduleID);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // 3. Delete all trips for this schedule
+                            using (SqlCommand cmd = new SqlCommand(@"
+                                DELETE FROM Trip WHERE ScheduleID = @id", 
+                                tran.Connection, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@id", scheduleID);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // 4. Finally, delete the schedule itself
                             ExecuteDelete(tran, "DELETE FROM Schedule WHERE ScheduleID = @id", scheduleID);
                         }
 
@@ -1605,52 +1636,141 @@ ORDER BY TripDate, DepartureTime;
             return (conflictCount > 0, suggested, details);
         }
 
-   
         /// <summary>
-        /// Checks if a schedule has any bookings (past or future).
-        /// Returns: (hasBookings, futureBookingsCount, totalBookingsCount)
+        /// Checks for conflicting trips for a given ferry, route, and date range with time overlap detection.
+        /// Returns detailed conflict information including specific conflicting trip instances.
+        /// - Checks trips on same ferry with same route
+        /// - Enforces time conflict: trips on the same day cannot overlap
+        /// - IMMEDIATE ABORT if same ferry + same route + same date + overlapping times
         /// </summary>
-        public (bool HasBookings, int FutureBookings, int TotalBookings) CheckScheduleBookings(int scheduleID)
+        public (bool HasConflict, string ConflictMessage, DataTable ConflictDetails) CheckTripConflicts(
+            int ferryID,
+            int routeID,
+            DateTime startDate,
+            DateTime endDate,
+            string daysOfWeekCsv,
+            TimeSpan proposedDeparture,
+            TimeSpan proposedArrival,
+            int? excludeScheduleID = null
+        )
         {
-            using (SqlConnection conn = db.GetConnection())
+            try
             {
-                conn.Open();
-
-                // Check for future bookings (active trips with bookings)
-                string futureBookingsQuery = @"
-            SELECT COUNT(DISTINCT b.BookingID)
-            FROM Booking b
-            JOIN Trip t ON b.TripID = t.TripID
-            WHERE t.ScheduleID = @ScheduleID
-            AND t.TripDate >= CAST(GETDATE() AS DATE)
-            AND t.TripStatus != 'Cancelled'";
-
-                int futureBookings;
-                using (SqlCommand cmd = new SqlCommand(futureBookingsQuery, conn))
+                using (SqlConnection conn = db.GetConnection())
                 {
-                    cmd.Parameters.AddWithValue("@ScheduleID", scheduleID);
-                    futureBookings = Convert.ToInt32(cmd.ExecuteScalar());
+                    conn.Open();
+
+                    // Query to find conflicting trips
+                    string conflictQuery = @"
+WITH Conflicts AS (
+    SELECT 
+        t.TripID,
+        t.TripDate,
+        t.DepartureTime,
+        t.ArrivalTime,
+        t.ScheduleID,
+        f.FerryName,
+        r.Origin + ' -> ' + r.Destination AS RouteName,
+        CASE 
+            -- Exact overlap or departure during existing trip
+            WHEN @ProposedDep < t.ArrivalTime AND @ProposedArr > t.DepartureTime THEN 'Time Overlap'
+            -- Proposed trip starts before existing ends
+            WHEN @ProposedDep >= t.DepartureTime AND @ProposedDep < t.ArrivalTime THEN 'Departure Conflict'
+            -- Proposed trip ends after existing starts
+            WHEN @ProposedArr > t.DepartureTime AND @ProposedArr <= t.ArrivalTime THEN 'Arrival Conflict'
+            -- Proposed trip encompasses existing trip
+            WHEN @ProposedDep <= t.DepartureTime AND @ProposedArr >= t.ArrivalTime THEN 'Complete Overlap'
+            ELSE 'Unknown Conflict'
+        END AS ConflictType
+    FROM Trip t
+    INNER JOIN Ferry f ON t.FerryID = f.FerryID
+    INNER JOIN Route r ON t.RouteID = r.RouteID
+    WHERE t.FerryID = @FerryID
+      AND t.RouteID = @RouteID
+      AND t.TripStatus = 'Active'
+      AND t.TripDate BETWEEN @StartDate AND @EndDate
+      AND EXISTS (
+            SELECT 1 
+            FROM string_split(@DaysCsv, ',') s 
+            WHERE UPPER(LTRIM(RTRIM(s.value))) = UPPER(DATENAME(weekday, t.TripDate))
+      )
+      -- Time conflict check: overlapping times on same day
+      AND NOT (
+            @ProposedArr <= t.DepartureTime OR @ProposedDep >= t.ArrivalTime
+      )
+      AND (@ExcludeScheduleID IS NULL OR ISNULL(t.ScheduleID, 0) <> @ExcludeScheduleID)
+)
+SELECT 
+    TripID,
+    CONVERT(VARCHAR(10), TripDate, 120) AS TripDate,
+    CONVERT(VARCHAR(8), DepartureTime, 108) AS DepartureTime,
+    CONVERT(VARCHAR(8), ArrivalTime, 108) AS ArrivalTime,
+    FerryName,
+    RouteName,
+    ConflictType,
+    DATENAME(weekday, TripDate) AS DayOfWeek
+FROM Conflicts
+ORDER BY TripDate, DepartureTime;";
+
+                    using (SqlCommand cmd = new SqlCommand(conflictQuery, conn))
+                    {
+                        // Explicitly set parameter types to avoid conversion issues
+                        cmd.Parameters.Add("@FerryID", SqlDbType.Int).Value = ferryID;
+                        cmd.Parameters.Add("@RouteID", SqlDbType.Int).Value = routeID;
+                        cmd.Parameters.Add("@StartDate", SqlDbType.Date).Value = startDate.Date;
+                        cmd.Parameters.Add("@EndDate", SqlDbType.Date).Value = endDate.Date;
+                        cmd.Parameters.Add("@DaysCsv", SqlDbType.NVarChar).Value = daysOfWeekCsv ?? string.Empty;
+                        cmd.Parameters.Add("@ProposedDep", SqlDbType.Time).Value = proposedDeparture;
+                        cmd.Parameters.Add("@ProposedArr", SqlDbType.Time).Value = proposedArrival;
+                        cmd.Parameters.Add("@ExcludeScheduleID", SqlDbType.Int).Value = (object)excludeScheduleID ?? DBNull.Value;
+
+                        DataTable conflictDetails = new DataTable();
+                        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                        {
+                            adapter.Fill(conflictDetails);
+                        }
+
+                        if (conflictDetails.Rows.Count > 0)
+                        {
+                            // Build detailed conflict message
+                            StringBuilder conflictMsg = new StringBuilder();
+                            conflictMsg.AppendLine("⚠️ SCHEDULE CONFLICT DETECTED ⚠️");
+                            conflictMsg.AppendLine();
+                            conflictMsg.AppendLine($"Found {conflictDetails.Rows.Count} conflicting trip(s):");
+                            conflictMsg.AppendLine();
+
+                            int displayCount = Math.Min(5, conflictDetails.Rows.Count);
+                            for (int i = 0; i < displayCount; i++)
+                            {
+                                DataRow row = conflictDetails.Rows[i];
+                                conflictMsg.AppendLine($"• {row["TripDate"]} ({row["DayOfWeek"]})");
+                                conflictMsg.AppendLine($"  Existing: {row["DepartureTime"]} - {row["ArrivalTime"]}");
+                                conflictMsg.AppendLine($"  Conflict: {row["ConflictType"]}");
+                                conflictMsg.AppendLine();
+                            }
+
+                            if (conflictDetails.Rows.Count > 5)
+                            {
+                                conflictMsg.AppendLine($"... and {conflictDetails.Rows.Count - 5} more conflict(s)");
+                                conflictMsg.AppendLine();
+                            }
+
+                            conflictMsg.AppendLine("❌ Cannot create schedule due to time conflicts.");
+                            conflictMsg.AppendLine("Please adjust departure/arrival times or operating days.");
+
+                            return (true, conflictMsg.ToString(), conflictDetails);
+                        }
+
+                        return (false, "No conflicts detected.", conflictDetails);
+                    }
                 }
-
-                // Check for all bookings
-                string allBookingsQuery = @"
-            SELECT COUNT(DISTINCT b.BookingID)
-            FROM Booking b
-            JOIN Trip t ON b.TripID = t.TripID
-            WHERE t.ScheduleID = @ScheduleID";
-
-                int totalBookings;
-                using (SqlCommand cmd = new SqlCommand(allBookingsQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@ScheduleID", scheduleID);
-                    totalBookings = Convert.ToInt32(cmd.ExecuteScalar());
-                }
-
-                return (totalBookings > 0, futureBookings, totalBookings);
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error checking conflicts: {ex.Message}", new DataTable());
             }
         }
     }
-
     public class ValidationResult
     {
         public bool CanProceed { get; set; }

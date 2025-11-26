@@ -376,9 +376,12 @@ namespace FERRY_BOOKING.Dialogs
 
             // pass the list to your ticket window / printer
             using (var frm = new TicketForm(tickets, bookingRef))
+            {
+                frm.StartPosition = FormStartPosition.CenterParent;  // ✔ Center relative to parent form
                 frm.ShowDialog();
-        }
+            }
 
+        }
 
 
         private void btnCancel_Click(object sender, EventArgs e)
