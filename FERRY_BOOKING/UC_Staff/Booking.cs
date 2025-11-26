@@ -109,7 +109,7 @@ namespace FERRY_BOOKING.UC_Staff
                     FerryStatus,
                     FloorPrices
                 FROM vw_FerrySearch
-                WHERE 1 = 1
+                WHERE 1 = 1 AND FerryStatus = 'Active'
         ";
 
                 List<SqlParameter> parameters = new List<SqlParameter>();

@@ -246,11 +246,80 @@ namespace FERRY_BOOKING.UC_Ferry
                     }
                     else if (clickX < padding + iconSize + padding + iconSize) // Edit icon clicked
                     {
-                        MessageBox.Show("Edit functionality coming soon for Schedule ID: " + scheduleID);
+                        // Check if schedule has bookings
+                        DATABASE.FerryOwnerHelper ownerHelper = new DATABASE.FerryOwnerHelper();
+                        var (hasBookings, futureBookings, totalBookings) = ownerHelper.CheckScheduleBookings(scheduleID);
+
+                        if (hasBookings)
+                        {
+                            string message = futureBookings > 0
+                                ? $"Cannot edit this schedule.\n\n" +
+                                  $"Active Bookings: {futureBookings}\n" +
+                                  $"Total Bookings: {totalBookings}\n\n" +
+                                  $"Schedules with active bookings cannot be modified to protect passenger reservations."
+                                : $"Cannot edit this schedule.\n\n" +
+                                  $"This schedule has {totalBookings} booking(s) in history.\n" +
+                                  $"Schedules with booking history cannot be modified to maintain data integrity.";
+
+                            MessageBox.Show(message, "Edit Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        // No bookings - allow edit
+                        var editDialog = new Dialogs.AddSchedule(OwnerID, scheduleID);
+                        editDialog.StartPosition = FormStartPosition.CenterParent;
+                        if (editDialog.ShowDialog() == DialogResult.OK)
+                        {
+                            // Refresh the schedule grid after successful edit
+                            LoadSchedule(OwnerID);
+                        }
                     }
                     else // Delete icon clicked
                     {
-                        MessageBox.Show("Delete functionality coming soon for Schedule ID: " + scheduleID);
+                        // Use the enhanced validation system from FerryOwnerHelper
+                        DATABASE.FerryOwnerHelper ownerHelper = new DATABASE.FerryOwnerHelper();
+                        var validation = ownerHelper.ValidateScheduleDeletion(scheduleID);
+
+                        if (!validation.CanProceed)
+                        {
+                            MessageBox.Show(validation.Message, "Delete Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        // Show confirmation with appropriate message based on delete type
+                        string confirmMessage = validation.DeleteType == DATABASE.DeleteType.Soft
+                            ? $"This schedule will be marked as INACTIVE (not permanently deleted).\n\n{validation.Message}\n\nContinue?"
+                            : $"This schedule will be PERMANENTLY DELETED.\n\n{validation.Message}\n\nContinue?";
+
+                        DialogResult result = MessageBox.Show(
+                            confirmMessage,
+                            "Confirm Delete",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question
+                        );
+
+                        if (result == DialogResult.Yes)
+                        {
+                            string error;
+                            bool success = ownerHelper.DeleteScheduleEnhanced(scheduleID, out error);
+
+                            if (success)
+                            {
+                                MessageBox.Show(
+                                    validation.DeleteType == DATABASE.DeleteType.Soft 
+                                        ? "Schedule has been deactivated successfully." 
+                                        : "Schedule deleted successfully.",
+                                    "Success",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information
+                                );
+                                LoadSchedule(OwnerID);
+                            }
+                            else
+                            {
+                                MessageBox.Show($"Error deleting schedule: {error}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)

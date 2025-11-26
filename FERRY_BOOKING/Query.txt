@@ -145,6 +145,9 @@ CREATE TABLE BookingPassenger
     Discount      varchar(20)    null,
     Price         money          not null,
     IDImage       varbinary(max) null
+    ContactNumber NVARCHAR(50) NOT NULL DEFAULT('');
+    ValidID VARBINARY(MAX) NULL;
+
 );
 
     CREATE TABLE TripCancellation (
@@ -257,7 +260,7 @@ SELECT
     CAST(t.TripDate AS date) AS TripDate,
     t.DepartureTime,
     t.ArrivalTime,
-    f.Status           AS FerryStatus,
+    f.TripStatus           AS FerryStatus,
 
     /* existing seat counts */
     ISNULL((SELECT SUM(capacity) FROM FerryFloor ff WHERE ff.FerryID = f.FerryID),0) AS TotalSeats,

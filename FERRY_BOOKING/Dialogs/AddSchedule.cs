@@ -18,6 +18,8 @@ namespace FERRY_BOOKING.Dialogs
     public partial class AddSchedule : Form
     {
         private int OwnerID;
+        private int? EditingScheduleID = null; // null => create mode, otherwise edit mode
+
         public AddSchedule(int OwnerID)
         {
             InitializeComponent();
@@ -25,6 +27,127 @@ namespace FERRY_BOOKING.Dialogs
 
             LoadFerriesDropdown();
             InitializeDayButtons();
+        }
+
+        // New constructor to open the dialog in Edit mode and populate fields
+        public AddSchedule(int OwnerID, int scheduleID) : this(OwnerID)
+        {
+            this.EditingScheduleID = scheduleID;
+
+            // Update UI to reflect edit mode
+            this.lblTitle.Text = "Edit Schedule";
+            this.lblSubtitle.Text = "Modify schedule details";
+            this.btnAddSchedule.Text = "Save";
+
+            LoadScheduleForEdit(scheduleID);
+        }
+
+        private void LoadScheduleForEdit(int scheduleID)
+        {
+            try
+            {
+                DATABASE.DatabaseHelper db = new DATABASE.DatabaseHelper();
+
+                string query = @"
+                    SELECT s.ScheduleID, s.FerryID, s.RouteID, s.DepartureTime, s.ArrivalTime,
+                           s.DaysOfWeek, s.StartDate, s.EndDate, s.IsActive
+                    FROM Schedule s
+                    WHERE s.ScheduleID = @ScheduleID
+                ";
+
+                SqlParameter[] prms = { new SqlParameter("@ScheduleID", scheduleID) };
+                SqlParameter[] pricePrms = { new SqlParameter("@ScheduleID", scheduleID) };
+                DataTable dt = db.ExecuteDataTable(query, prms);
+                
+
+                if (dt.Rows.Count == 0)
+                {
+                    MessageBox.Show("Schedule not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                DataRow row = dt.Rows[0];
+
+                int ferryID = Convert.ToInt32(row["FerryID"]);
+                int routeID = Convert.ToInt32(row["RouteID"]);
+                TimeSpan departure = (TimeSpan)row["DepartureTime"];
+                TimeSpan arrival = (TimeSpan)row["ArrivalTime"];
+                string daysOfWeek = row["DaysOfWeek"].ToString();
+                DateTime startDate = Convert.ToDateTime(row["StartDate"]);
+                DateTime endDate = Convert.ToDateTime(row["EndDate"]);
+                bool isActive = row["IsActive"] != DBNull.Value && Convert.ToBoolean(row["IsActive"]);
+
+                // Ensure ferries dropdown is loaded (constructor already did this)
+                if (cbFerry.DataSource == null)
+                    LoadFerriesDropdown();
+
+                // Select ferry (this will trigger routes+floors load via SelectedIndexChanged handler)
+                cbFerry.SelectedValue = ferryID;
+
+                // Force loading routes explicitly and select route
+                LoadRoutesForFerry(ferryID);
+                if (cbRoute.DataSource != null)
+                {
+                    try { cbRoute.SelectedValue = routeID; }
+                    catch { cbRoute.SelectedIndex = -1; }
+                }
+
+                // Fill date/time and status
+                dtpDepartureTime.Value = DateTime.Today.Add(departure);
+                dtpArrivalTime.Value = DateTime.Today.Add(arrival);
+                dtpStartDate.Value = startDate;
+                dtpEndDate.Value = endDate;
+                cbStatus.SelectedItem = isActive ? "Active" : "Inactive";
+
+                // Set days buttons
+                SetSelectedDays(daysOfWeek);
+
+                // Ensure floor controls are loaded for selected ferry
+                LoadFloors(ferryID);
+
+                // Try to populate floor prices using TripFloorPrice for any trip in this schedule
+                try
+                {
+                    string priceQuery = @"
+                        SELECT tfp.FloorNumber, tfp.Price
+                        FROM TripFloorPrice tfp
+                        INNER JOIN Trip t ON tfp.TripID = t.TripID
+                        WHERE t.ScheduleID = @ScheduleID
+                    ";
+                    DataTable dtPrices = db.ExecuteDataTable(priceQuery, pricePrms);
+
+                    foreach (DataRow pRow in dtPrices.Rows)
+                    {
+                        int floorNumber = Convert.ToInt32(pRow["FloorNumber"]);
+                        decimal price = Convert.ToDecimal(pRow["Price"]);
+
+                        // Find nud by generated name pattern: nudPrice_{ferryID}_{floorNumber}
+                        string nudName = $"nudPrice_{ferryID}_{floorNumber}";
+
+                        foreach (Control ctrl in flpFloorPrice.Controls)
+                        {
+                            if (ctrl is Panel panel)
+                            {
+                                foreach (Control c in panel.Controls)
+                                {
+                                    if (c is NumericUpDown nud && nud.Name == nudName)
+                                    {
+                                        nud.Value = Math.Min(nud.Maximum, Math.Max(nud.Minimum, price));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Non-fatal - floor prices may not be present; ignore
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading schedule for edit: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void LoadFerriesDropdown()
@@ -45,6 +168,96 @@ namespace FERRY_BOOKING.Dialogs
                 MessageBox.Show("Error loading ferries: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void LoadScheduleDetails(int scheduleID)
+        {
+            DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
+
+            try
+            {
+                // 1. Load schedule basic info
+                DataRow schedule = helper.GetScheduleById(scheduleID);
+
+                if (schedule == null)
+                {
+                    MessageBox.Show("Schedule not found!");
+                    this.Close();
+                    return;
+                }
+
+                // Use DataRow["ColumnName"] instead of properties
+                cbFerry.SelectedValue = Convert.ToInt32(schedule["FerryID"]);
+                cbRoute.SelectedValue = Convert.ToInt32(schedule["RouteID"]);
+
+                // Schedule times stored as TimeSpan
+                TimeSpan departureTime = (TimeSpan)schedule["DepartureTime"];
+                TimeSpan arrivalTime = (TimeSpan)schedule["ArrivalTime"];
+                dtpDepartureTime.Value = DateTime.Today.Add(departureTime);
+                dtpArrivalTime.Value = DateTime.Today.Add(arrivalTime);
+
+                // Status
+                cbStatus.SelectedItem = Convert.ToBoolean(schedule["IsActive"]) ? "Active" : "Inactive";
+
+                // 2. Load operating days
+                string operatingDays = schedule["DaysOfWeek"].ToString(); // e.g., "Mon,Wed,Fri"
+                SetSelectedDays(operatingDays);
+
+                // 3. Load floor prices
+                LoadFloors(Convert.ToInt32(schedule["FerryID"]));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading schedule details: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+        }
+        //private void ValidateDepartureTime()
+        //{
+        //    if (cbFerry.SelectedIndex == -1)
+        //    {
+               
+        //        return;
+        //    }
+
+        //    // Safely get ferry ID
+        //    int ferryID = Convert.ToInt32(((DataRowView)cbFerry.SelectedItem)["FerryID"]);
+        //    string ferryName = ((DataRowView)cbFerry.SelectedItem)["FerryName"].ToString();
+
+        //    // Route
+        //    if (cbRoute.SelectedIndex == -1)
+        //    {
+                
+        //        return;
+        //    }
+        //    int routeID = Convert.ToInt32(((DataRowView)cbRoute.SelectedItem)["RouteID"]);
+        //    string routeName = ((DataRowView)cbRoute.SelectedItem)["Route"].ToString();
+
+        //    // Get schedule start/end dates from DateTimePickers
+        //    DateTime startDate = dtpStartDate.Value.Date;
+        //    DateTime endDate = dtpEndDate.Value.Date;
+
+        //    // Store original trip duration
+        //    TimeSpan originalDuration = dtpArrivalTime.Value - dtpDepartureTime.Value;
+
+        //    FerryOwnerHelper db = new FerryOwnerHelper();
+        //    TimeSpan earliest = db.GetEarliestAvailableDeparture(ferryID, routeID, startDate, endDate);
+
+        //    if (earliest != TimeSpan.Zero && dtpDepartureTime.Value.TimeOfDay < earliest)
+        //    {
+        //        MessageBox.Show(
+        //            $"This ferry already has trips scheduled.\n" +
+        //            $"Earliest possible departure is {earliest:hh\\:mm}."
+        //        );
+
+        //        // Automatically set the departure to earliest allowed
+        //        dtpDepartureTime.Value = dtpDepartureTime.Value.Date + earliest;
+
+        //        // Adjust arrival to maintain original duration
+        //        dtpArrivalTime.Value = dtpDepartureTime.Value + originalDuration;
+        //    }
+        //}
+
+
 
 
         private void cbFerry_SelectedIndexChanged(object sender, EventArgs e)
@@ -152,9 +365,12 @@ namespace FERRY_BOOKING.Dialogs
 
         private void dtpDepartureTime_ValueChanged(object sender, EventArgs e)
         {
-            if (cbRoute.SelectedValue == null) return;
+            if (cbRoute.SelectedItem == null) return;
 
-            int routeID = (int)cbRoute.SelectedValue;
+            DataRowView drv = cbRoute.SelectedItem as DataRowView;
+            if (drv == null) return;
+
+            int routeID = Convert.ToInt32(drv["RouteID"]);
             DATABASE.DatabaseHelper db = new DATABASE.DatabaseHelper();
 
             object obj = db.ExecuteScalar(
@@ -179,12 +395,88 @@ namespace FERRY_BOOKING.Dialogs
         }
 
 
+        private void dtpStartDate_ValueChanged(object sender, EventArgs e)
+        {
+            if (dtpStartDate.Value > dtpEndDate.Value)
+            {
+                MessageBox.Show("Start date cannot be after end date.");
+                return;
+            }
+            UpdateDayButtonsForDateRange(dtpStartDate.Value.Date, dtpEndDate.Value.Date);
+        }
+
+        private void dtpEndDate_ValueChanged(object sender, EventArgs e)
+        {
+            // Ensure end date >= start date
+            if (dtpEndDate.Value < dtpStartDate.Value)
+            {
+                MessageBox.Show("End date cannot be before start date.");
+                dtpEndDate.Value = dtpStartDate.Value;
+                return;
+            }
+
+            UpdateDayButtonsForDateRange(dtpStartDate.Value.Date, dtpEndDate.Value.Date);
+        }
 
 
 
 
 
 
+
+
+        private void UpdateDayButtonsForDateRange(DateTime startDate, DateTime endDate)
+        {
+            // Reset all buttons first
+            ResetAllDayButtons();
+
+            Button[] dayButtons = { btnMon, btnTue, btnWed, btnThu, btnFri, btnSat, btnSun };
+
+            // Map buttons to DayOfWeek
+            Dictionary<Button, DayOfWeek> buttonDays = new Dictionary<Button, DayOfWeek>()
+    {
+        { btnMon, DayOfWeek.Monday },
+        { btnTue, DayOfWeek.Tuesday },
+        { btnWed, DayOfWeek.Wednesday },
+        { btnThu, DayOfWeek.Thursday },
+        { btnFri, DayOfWeek.Friday },
+        { btnSat, DayOfWeek.Saturday },
+        { btnSun, DayOfWeek.Sunday }
+    };
+
+            foreach (var kvp in buttonDays)
+            {
+                Button btn = kvp.Key;
+                DayOfWeek day = kvp.Value;
+
+                // Check if this day exists within startDate -> endDate
+                bool dayInRange = false;
+                for (DateTime d = startDate; d <= endDate; d = d.AddDays(1))
+                {
+                    if (d.DayOfWeek == day)
+                    {
+                        dayInRange = true;
+                        break;
+                    }
+                }
+
+                if (dayInRange)
+                {
+                    btn.Enabled = true; // selectable
+                    btn.BackColor = Color.LightGray;
+                    btn.FlatAppearance.BorderColor = Color.Gray;
+                }
+                else
+                {
+                    btn.Enabled = false; // disable
+                    btn.BackColor = Color.DarkGray;
+                    btn.FlatAppearance.BorderColor = Color.DarkGray;
+                }
+            }
+
+            // Update Select All button state
+            UpdateSelectAllButtonText();
+        }
 
 
 
@@ -235,30 +527,28 @@ namespace FERRY_BOOKING.Dialogs
         {
             Button[] allDayButtons = { btnMon, btnTue, btnWed, btnThu, btnFri, btnSat, btnSun };
 
-            // Check if any button is not selected
-            bool anyUnselected = allDayButtons.Any(btn => btn.BackColor != Color.White);
+            // Only consider enabled buttons
+            bool anyUnselected = allDayButtons.Any(btn => btn.Enabled && btn.BackColor != Color.White);
 
-            if (anyUnselected)
+            foreach (Button btn in allDayButtons)
             {
-                // Select all
-                foreach (Button btn in allDayButtons)
+                if (!btn.Enabled) continue;
+
+                if (anyUnselected)
                 {
                     btn.BackColor = Color.White;
                     btn.FlatAppearance.BorderColor = Color.Blue;
                 }
-                btnSelectAll.Text = "Clear All";
-            }
-            else
-            {
-                // Clear all
-                foreach (Button btn in allDayButtons)
+                else
                 {
                     btn.BackColor = Color.LightGray;
                     btn.FlatAppearance.BorderColor = Color.Gray;
                 }
-                btnSelectAll.Text = "Select All";
             }
+
+            btnSelectAll.Text = anyUnselected ? "Clear All" : "Select All";
         }
+
 
         // Helper method to toggle individual button selection
         private void ToggleButtonSelection(Button button)
@@ -294,16 +584,18 @@ namespace FERRY_BOOKING.Dialogs
         {
             List<string> selectedDays = new List<string>();
 
-            if (btnMon.BackColor == Color.White) selectedDays.Add("Monday");
-            if (btnTue.BackColor == Color.White) selectedDays.Add("Tuesday");
-            if (btnWed.BackColor == Color.White) selectedDays.Add("Wednesday");
-            if (btnThu.BackColor == Color.White) selectedDays.Add("Thursday");
-            if (btnFri.BackColor == Color.White) selectedDays.Add("Friday");
-            if (btnSat.BackColor == Color.White) selectedDays.Add("Saturday");
-            if (btnSun.BackColor == Color.White) selectedDays.Add("Sunday"); // FIXED
+            // Only include buttons that are enabled and selected (white)
+            if (btnMon.Enabled && btnMon.BackColor == Color.White) selectedDays.Add("Monday");
+            if (btnTue.Enabled && btnTue.BackColor == Color.White) selectedDays.Add("Tuesday");
+            if (btnWed.Enabled && btnWed.BackColor == Color.White) selectedDays.Add("Wednesday");
+            if (btnThu.Enabled && btnThu.BackColor == Color.White) selectedDays.Add("Thursday");
+            if (btnFri.Enabled && btnFri.BackColor == Color.White) selectedDays.Add("Friday");
+            if (btnSat.Enabled && btnSat.BackColor == Color.White) selectedDays.Add("Saturday");
+            if (btnSun.Enabled && btnSun.BackColor == Color.White) selectedDays.Add("Sunday");
 
             return string.Join(",", selectedDays);
         }
+
 
         // Method to set selected days from string
         public void SetSelectedDays(string daysString)
@@ -315,24 +607,25 @@ namespace FERRY_BOOKING.Dialogs
             // Reset all buttons to unselected first
             ResetAllDayButtons();
 
-            // Select the specified days
             foreach (string day in days)
             {
-                switch (day.Trim().ToUpper())
+                string d = day.Trim();
+
+                switch (d.ToUpper())
                 {
-                    case "Monday": btnMon.BackColor = Color.White; break;
-                    case "Tuesday": btnTue.BackColor = Color.White; break;
-                    case "Wednesday": btnWed.BackColor = Color.White; break;
-                    case "Thursday": btnThu.BackColor = Color.White; break;
-                    case "Friday": btnFri.BackColor = Color.White; break;
-                    case "Saturday": btnSat.BackColor = Color.White; break;
-                    case "Sunday": btnSun.BackColor = Color.White; break;
-                    default: break; // ignore unknown
+                    case "MONDAY": if (btnMon.Enabled) { btnMon.BackColor = Color.White; btnMon.FlatAppearance.BorderColor = Color.Blue; } break;
+                    case "TUESDAY": if (btnTue.Enabled) { btnTue.BackColor = Color.White; btnTue.FlatAppearance.BorderColor = Color.Blue; } break;
+                    case "WEDNESDAY": if (btnWed.Enabled) { btnWed.BackColor = Color.White; btnWed.FlatAppearance.BorderColor = Color.Blue; } break;
+                    case "THURSDAY": if (btnThu.Enabled) { btnThu.BackColor = Color.White; btnThu.FlatAppearance.BorderColor = Color.Blue; } break;
+                    case "FRIDAY": if (btnFri.Enabled) { btnFri.BackColor = Color.White; btnFri.FlatAppearance.BorderColor = Color.Blue; } break;
+                    case "SATURDAY": if (btnSat.Enabled) { btnSat.BackColor = Color.White; btnSat.FlatAppearance.BorderColor = Color.Blue; } break;
+                    case "SUNDAY": if (btnSun.Enabled) { btnSun.BackColor = Color.White; btnSun.FlatAppearance.BorderColor = Color.Blue; } break;
                 }
             }
 
             UpdateSelectAllButtonText();
         }
+
 
 
         // Reset all buttons to unselected
@@ -469,7 +762,7 @@ namespace FERRY_BOOKING.Dialogs
             // ================================
             DialogResult result = MessageBox.Show(
                 summary,
-                "Confirm Schedule Creation",
+                EditingScheduleID.HasValue ? "Confirm Schedule Update" : "Confirm Schedule Creation",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question
             );
@@ -481,47 +774,81 @@ namespace FERRY_BOOKING.Dialogs
             }
 
             // ================================
-            // 5. DATABASE INSERT
+            // 5. DATABASE INSERT / UPDATE
             // ================================
             try
             {
                 DATABASE.FerryOwnerHelper db = new DATABASE.FerryOwnerHelper();
 
-                // 5.1 Insert Schedule
-                int scheduleID = db.InsertSchedule(
-                    ferryID,
-                    routeID,
-                    departure.TimeOfDay,
-                    arrival.TimeOfDay,
-                    operatingDays,
-                    startDate,
-                    endDate,
-                    isActive
-                );
-
-                // 5.2 Generate Trips based on schedule
-                List<int> tripIDs = db.GenerateTripsFromSchedule(
-                    scheduleID,
-                    ferryID,
-                    routeID,
-                    operatingDays,
-                    startDate,
-                    endDate,
-                    departure.TimeOfDay,
-                    arrival.TimeOfDay
-                );
-
-                // 5.3 Insert Floor Prices for each Trip
-                // The view will automatically pick up prices from any trip in the schedule
-                foreach (int tripID in tripIDs)
+                if (EditingScheduleID.HasValue)
                 {
-                    foreach (var fp in floorPrices)
+                    // UPDATE existing schedule
+                    bool ok = db.UpdateSchedule(
+                        EditingScheduleID.Value,
+                        ferryID,
+                        routeID,
+                        departure.TimeOfDay,
+                        arrival.TimeOfDay,
+                        operatingDays,
+                        startDate,
+                        endDate,
+                        isActive
+                    );
+
+                    if (ok)
                     {
-                        db.InsertTripFloorPrice(tripID, ferryID, fp.Key, fp.Value);
+                        // Also update trip timings to keep them in sync
+                        db.UpdateTripsTimes(EditingScheduleID.Value, departure.TimeOfDay, arrival.TimeOfDay);
+
+                        MessageBox.Show("Schedule updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                        return;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to update schedule.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                     }
                 }
+                else
+                {
+                    // Insert new schedule (existing behavior)
+                    int scheduleID = db.InsertSchedule(
+                        ferryID,
+                        routeID,
+                        departure.TimeOfDay,
+                        arrival.TimeOfDay,
+                        operatingDays,
+                        startDate,
+                        endDate,
+                        isActive
+                    );
 
-                MessageBox.Show($"Schedule created successfully!\nGenerated {tripIDs.Count} trips.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // 5.2 Generate Trips based on schedule
+                    List<int> tripIDs = db.GenerateTripsFromSchedule(
+                        scheduleID,
+                        ferryID,
+                        routeID,
+                        operatingDays,
+                        startDate,
+                        endDate,
+                        departure.TimeOfDay,
+                        arrival.TimeOfDay
+                    );
+
+                    // 5.3 Insert Floor Prices for each Trip
+                    foreach (int tripID in tripIDs)
+                    {
+                        foreach (var fp in floorPrices)
+                        {
+                            db.InsertTripFloorPrice(tripID, ferryID, fp.Key, fp.Value);
+                        }
+                    }
+
+                    MessageBox.Show($"Schedule created successfully!\nGenerated {tripIDs.Count} trips.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                
                 this.Close();
             }
             catch (Exception ex)

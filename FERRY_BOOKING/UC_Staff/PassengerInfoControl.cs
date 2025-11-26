@@ -17,15 +17,17 @@ namespace FERRY_BOOKING.UC_Staff
     public partial class PassengerInfoControl : UserControl
     {
 
-        public string PassengerName => tbFullName.Text;
+        public string PassengerName => tbFullName.Text.Trim();
         public int PassengerAge => (int)nudAge.Value;
-
         public string PassengerGender => cmbGender.SelectedItem?.ToString();
         public string PassengerDiscount => cmbDiscount.SelectedItem?.ToString();
-        public byte[] IDImage { get; private set; }   // raw file
+        public string ContactNumber => tbPhone.Text.Trim();
+        
+        public byte[] IDImage { get; private set; }   // Discount ID (optional if discount = None)
+        public byte[] ValidIDImage { get; private set; }   // Valid ID (required for all)
 
         public Image IDImageBytes => IDImage == null ? null
-                                  : Image.FromStream(new MemoryStream(IDImage));// raw JPG/PNG bytes
+                                  : Image.FromStream(new MemoryStream(IDImage));
         public string DiscountType => cmbDiscount.SelectedItem?.ToString();
 
         public decimal Price { get; private set; }
@@ -34,18 +36,14 @@ namespace FERRY_BOOKING.UC_Staff
         public string SeatCode { get; set; }
 
         public event Action PriceChanged;
+        
         public PassengerInfoControl(string seatCode, decimal SeatPrice)
         {
-
-          
-
-
-        InitializeComponent();
+            InitializeComponent();
             SeatCode = seatCode;
             Price = SeatPrice;
             string labelPrice = Price.ToString("C", new CultureInfo("fil-PH"));
             lblSeat.Text = $"Seat: {seatCode}";
-
 
             cmbGender.Items.AddRange(new string[] { "Male", "Female", "Other" });
             cmbDiscount.Items.AddRange(new string[] { "None", "Senior", "Student", "PWD" });
@@ -56,8 +54,6 @@ namespace FERRY_BOOKING.UC_Staff
 
             lblPrice.Text = $"Price: {labelPrice}";
         }
-
-     
 
         private void CmbDiscount_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -71,7 +67,7 @@ namespace FERRY_BOOKING.UC_Staff
             using (OpenFileDialog dlg = new OpenFileDialog())
             {
                 dlg.Filter = "Image files|*.jpg;*.jpeg;*.png;*.bmp";
-                dlg.Title = "Select ID picture";
+                dlg.Title = "Select Discount ID picture";
 
                 if (dlg.ShowDialog() == DialogResult.OK)
                 {
@@ -81,7 +77,22 @@ namespace FERRY_BOOKING.UC_Staff
 
                     // 20 % discount on any discount type
                     ApplyDiscount();
-                    
+                }
+            }
+        }
+
+        private void btnUploadValidID_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog dlg = new OpenFileDialog())
+            {
+                dlg.Filter = "Image files|*.jpg;*.jpeg;*.png;*.bmp";
+                dlg.Title = "Select Valid ID (Required)";
+
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    ValidIDImage = File.ReadAllBytes(dlg.FileName);
+                    lblValidIDFileName.Text = $"✓ {Path.GetFileName(dlg.FileName)}";
+                    btnUploadValidID.Text = "Change Valid ID";
                 }
             }
         }
@@ -95,6 +106,65 @@ namespace FERRY_BOOKING.UC_Staff
 
             PriceChanged?.Invoke();
         }
-    }
 
+        /// <summary>
+        /// Validates that all required fields are filled.
+        /// Returns true if valid, false otherwise with error message.
+        /// </summary>
+        public bool ValidateInput(out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            // Check Full Name
+            if (string.IsNullOrWhiteSpace(PassengerName))
+            {
+                errorMessage = $"Seat {SeatCode}: Full name is required.";
+                return false;
+            }
+
+            // Check Age (should be > 0, already handled by NumericUpDown minimum)
+            if (PassengerAge <= 0)
+            {
+                errorMessage = $"Seat {SeatCode}: Age must be greater than 0.";
+                return false;
+            }
+
+            // Check Gender
+            if (string.IsNullOrEmpty(PassengerGender))
+            {
+                errorMessage = $"Seat {SeatCode}: Gender is required.";
+                return false;
+            }
+
+            // Check Contact Number
+            if (string.IsNullOrWhiteSpace(ContactNumber))
+            {
+                errorMessage = $"Seat {SeatCode}: Contact number is required.";
+                return false;
+            }
+
+            // Check Discount Type
+            if (string.IsNullOrEmpty(PassengerDiscount))
+            {
+                errorMessage = $"Seat {SeatCode}: Discount type is required.";
+                return false;
+            }
+
+            // Check Discount ID if discount is not "None"
+            if (PassengerDiscount != "None" && (IDImage == null || IDImage.Length == 0))
+            {
+                errorMessage = $"Seat {SeatCode}: Discount ID is required for {PassengerDiscount} discount.";
+                return false;
+            }
+
+            // Check Valid ID (required for all passengers)
+            if (ValidIDImage == null || ValidIDImage.Length == 0)
+            {
+                errorMessage = $"Seat {SeatCode}: Valid ID is required.";
+                return false;
+            }
+
+            return true;
+        }
+    }
 }

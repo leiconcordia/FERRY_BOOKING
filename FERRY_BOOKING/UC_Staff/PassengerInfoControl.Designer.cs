@@ -42,6 +42,9 @@
             nudAge = new NumericUpDown();
             lblPrice = new Label();
             lblFileName = new Label();
+            label6 = new Label();
+            btnUploadValidID = new Button();
+            lblValidIDFileName = new Label();
             ((System.ComponentModel.ISupportInitialize)nudAge).BeginInit();
             SuspendLayout();
             // 
@@ -138,7 +141,7 @@
             btnUploadID.Name = "btnUploadID";
             btnUploadID.Size = new Size(107, 54);
             btnUploadID.TabIndex = 11;
-            btnUploadID.Text = "Upload ID";
+            btnUploadID.Text = "Upload Discount ID";
             btnUploadID.UseVisualStyleBackColor = false;
             btnUploadID.Click += btnUploadID_Click;
             // 
@@ -156,9 +159,11 @@
             // nudAge
             // 
             nudAge.Location = new Point(76, 133);
+            nudAge.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             nudAge.Name = "nudAge";
             nudAge.Size = new Size(83, 27);
             nudAge.TabIndex = 13;
+            nudAge.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // lblPrice
             // 
@@ -182,10 +187,47 @@
             lblFileName.TabIndex = 15;
             lblFileName.Text = "File Name:";
             // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label6.ForeColor = Color.FromArgb(11, 94, 235);
+            label6.Location = new Point(31, 408);
+            label6.Name = "label6";
+            label6.Size = new Size(151, 23);
+            label6.TabIndex = 16;
+            label6.Text = "Valid ID (Required):";
+            // 
+            // btnUploadValidID
+            // 
+            btnUploadValidID.BackColor = Color.FromArgb(11, 94, 235);
+            btnUploadValidID.ForeColor = SystemColors.ButtonHighlight;
+            btnUploadValidID.Location = new Point(188, 396);
+            btnUploadValidID.Name = "btnUploadValidID";
+            btnUploadValidID.Size = new Size(107, 54);
+            btnUploadValidID.TabIndex = 17;
+            btnUploadValidID.Text = "Upload Valid ID";
+            btnUploadValidID.UseVisualStyleBackColor = false;
+            btnUploadValidID.Click += btnUploadValidID_Click;
+            // 
+            // lblValidIDFileName
+            // 
+            lblValidIDFileName.AutoSize = true;
+            lblValidIDFileName.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblValidIDFileName.ForeColor = Color.Black;
+            lblValidIDFileName.Location = new Point(31, 466);
+            lblValidIDFileName.Name = "lblValidIDFileName";
+            lblValidIDFileName.Size = new Size(118, 23);
+            lblValidIDFileName.TabIndex = 18;
+            lblValidIDFileName.Text = "No file selected";
+            // 
             // PassengerInfoControl
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(lblValidIDFileName);
+            Controls.Add(btnUploadValidID);
+            Controls.Add(label6);
             Controls.Add(lblFileName);
             Controls.Add(lblPrice);
             Controls.Add(nudAge);
@@ -201,7 +243,7 @@
             Controls.Add(label1);
             Controls.Add(tbFullName);
             Name = "PassengerInfoControl";
-            Size = new Size(482, 445);
+            Size = new Size(482, 510);
             ((System.ComponentModel.ISupportInitialize)nudAge).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -223,5 +265,8 @@
         private NumericUpDown nudAge;
         private Label lblPrice;
         private Label lblFileName;
+        private Label label6;
+        private Button btnUploadValidID;
+        private Label lblValidIDFileName;
     }
 }

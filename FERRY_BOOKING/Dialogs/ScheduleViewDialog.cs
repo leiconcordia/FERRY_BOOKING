@@ -246,8 +246,10 @@ namespace FERRY_BOOKING.Dialogs
             }
         }
 
+
         private void LoadFloorInfo(int tripID)
         {
+MessageBox.Show("Loading floor info for TripID: " + tripID.ToString());
             try
             {
                 string query = @"

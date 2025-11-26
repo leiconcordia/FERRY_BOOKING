@@ -155,33 +155,45 @@ namespace FERRY_BOOKING.Dialogs
                     seat.Text = seatCode;
                     seat.Tag = seatCode;
 
-                    // Store original color
+                    // store original color
                     Color originalColor = SystemColors.Control;
                     seat.BackColor = originalColor;
 
-                    // Mark booked seats
+                    // Mark booked seats (cannot be selected)
                     if (bookedSeats.Contains(seatCode))
                     {
                         seat.BackColor = Color.DarkRed;
                         seat.ForeColor = Color.White;
                         seat.Enabled = false;
                     }
+                    else
+                    {
+                        // ⭐ Restore previously selected seats on this floor
+                        if (selectedSeatsByFloor.ContainsKey(floorNumber) &&
+                            selectedSeatsByFloor[floorNumber].Contains(seatCode))
+                        {
+                            seat.BackColor = Color.LightGreen;
+                        }
+                    }
 
-                    // Seat click event
+                    // --- Seat Click Event ---
                     seat.Click += (s, e) =>
                     {
                         Button clickedSeat = (Button)s;
                         string code = clickedSeat.Tag.ToString();
+
                         decimal seatPrice = db.GetTripFloorPrice(this.TripID, floorNumber);
 
-                        // show price to user or store it
-                        // show price to user or store it
-                        lblPrice.Text = seatPrice.ToString("C", new System.Globalization.CultureInfo("fil-PH"));
 
-                        // Unselect seat
+                        // Ensure dictionary contains floor entry
+                        if (!selectedSeatsByFloor.ContainsKey(floorNumber))
+                            selectedSeatsByFloor[floorNumber] = new HashSet<string>();
+
+                        // UNSELECT seat
                         if (clickedSeat.BackColor == Color.LightGreen)
                         {
                             clickedSeat.BackColor = originalColor;
+                            selectedSeatsByFloor[floorNumber].Remove(code);
 
                             var passengerControl = flpPassengerInfo.Controls
                                 .OfType<PassengerInfoControl>()
@@ -197,15 +209,17 @@ namespace FERRY_BOOKING.Dialogs
                             return;
                         }
 
-                        // Select seat
+                        // SELECT seat
                         clickedSeat.BackColor = Color.LightGreen;
+                        selectedSeatsByFloor[floorNumber].Add(code);
 
                         PassengerInfoControl passengerForm = new PassengerInfoControl(code, seatPrice)
                         {
                             SeatCode = code
                         };
+
                         flpPassengerInfo.Controls.Add(passengerForm);
-                        passengerForm.PriceChanged += (() => UpdateTotalPrice()); 
+                        passengerForm.PriceChanged += (() => UpdateTotalPrice());
                         UpdateTotalPrice();
 
                         PassengerPanel.Visible = true;
@@ -213,9 +227,9 @@ namespace FERRY_BOOKING.Dialogs
 
                     tlpSeats.Controls.Add(seat, c, r);
                     seatCounter++;
-                    
                 }
             }
+
         }
 
         // BookingForm
@@ -231,6 +245,10 @@ namespace FERRY_BOOKING.Dialogs
 
         private Button firstFloorButton = null; // store reference
 
+        // Stores selected seat codes per floor
+        private Dictionary<int, HashSet<string>> selectedSeatsByFloor = new Dictionary<int, HashSet<string>>();
+
+
         private void GenerateFloorButtons(int ferryID)
         {
             flpFloors.Controls.Clear();
@@ -239,12 +257,11 @@ namespace FERRY_BOOKING.Dialogs
 
             foreach (DataRow floor in dtFloors.Rows)
             {
-
                 int floorNumber = Convert.ToInt32(floor["FloorNumber"]);
                 int rows = Convert.ToInt32(floor["Rows"]);
                 int cols = Convert.ToInt32(floor["Columns"]);
 
-
+                // Local copies to avoid closure issues
                 int flrNum = floorNumber;
                 int flrRows = rows;
                 int flrCols = cols;
@@ -257,28 +274,40 @@ namespace FERRY_BOOKING.Dialogs
 
                 btnFloor.Click += (s, e) =>
                 {
+                    // Reset highlight for all floor buttons
                     foreach (Button btn in flpFloors.Controls.OfType<Button>())
                     {
                         btn.BackColor = SystemColors.Control;
                         btn.ForeColor = Color.Black;
                     }
 
+                    // Highlight selected button
                     btnFloor.BackColor = Color.Green;
                     btnFloor.ForeColor = Color.White;
 
+                    UpdateTotalPrice();
+
+                    // Load the seat plan for the selected floor
                     GenerateSeatPlan(flrNum, flrRows, flrCols);
+
+
+                    decimal seatPrice = db.GetTripFloorPrice(this.TripID, flrNum);
+
+                    // show price to user or store it
+                    lblPrice.Text = seatPrice.ToString("C", new System.Globalization.CultureInfo("fil-PH"));
+
                 };
 
                 flpFloors.Controls.Add(btnFloor);
 
-                // save first floor btn + values
+                // Save first floor button (optional)
                 if (firstFloorButton == null)
                     firstFloorButton = btnFloor;
             }
         }
 
 
-        
+
         private string GenerateBookingRef()
         {
             // 10-digit numeric string : yymm + 6-char random
@@ -291,6 +320,29 @@ namespace FERRY_BOOKING.Dialogs
 
         private void btnGenerateTicket_Click(object sender, EventArgs e)
         {
+            // Validate that at least one seat is selected
+            if (flpPassengerInfo.Controls.Count == 0)
+            {
+                MessageBox.Show("Please select at least one seat before generating tickets.",
+                               "No Seats Selected",
+                               MessageBoxButtons.OK,
+                               MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validate all passenger information
+            foreach (PassengerInfoControl ctrl in flpPassengerInfo.Controls)
+            {
+                if (!ctrl.ValidateInput(out string errorMessage))
+                {
+                    MessageBox.Show(errorMessage,
+                                   "Validation Error",
+                                   MessageBoxButtons.OK,
+                                   MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
             string bookingRef = GenerateBookingRef();   // 10-digit code you create
 
             var tickets = new List<TicketData>();
@@ -316,6 +368,8 @@ namespace FERRY_BOOKING.Dialogs
                     Gender = ctrl.PassengerGender,
                     Discount = ctrl.DiscountType,
                     IDImage = ctrl.IDImageBytes,   // null if None
+                    ValidIDImage = ctrl.ValidIDImage, // Required for all
+                    ContactNumber = ctrl.ContactNumber, // Required for all
                     Price = ctrl.Price
                 });
             }
@@ -333,28 +387,30 @@ namespace FERRY_BOOKING.Dialogs
         }
     }
 
-        public class TicketData
-        {
-            public int FerryID { get; set; }
-            public int TripID { get; set; }
-            public string BookingRef { get; set; }   // same for whole group
-            public string Company { get; set; }
-            public string Ferry { get; set; }
-            public string Origin { get; set; }
-            public string Destination { get; set; }
-            public string Route => $"{Origin} -> {Destination}";
-            public string Departure { get; set; }
-            public string Arrival { get; set; }
-            public string TripDate { get; set; }
+    public class TicketData
+    {
+        public int FerryID { get; set; }
+        public int TripID { get; set; }
+        public string BookingRef { get; set; }   // same for whole group
+        public string Company { get; set; }
+        public string Ferry { get; set; }
+        public string Origin { get; set; }
+        public string Destination { get; set; }
+        public string Route => $"{Origin} -> {Destination}";
+        public string Departure { get; set; }
+        public string Arrival { get; set; }
+        public string TripDate { get; set; }
 
-            // per-passenger
-            public string Seat { get; set; }
-            public string Name { get; set; }
-            public int Age { get; set; }
-            public string Gender { get; set; }
-            public string Discount { get; set; }
-            public Image IDImage { get; set; }
-            public decimal Price { get; set; }
-        }
+        // per-passenger
+        public string Seat { get; set; }
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public string Gender { get; set; }
+        public string Discount { get; set; }
+        public Image IDImage { get; set; }
+        public byte[] ValidIDImage { get; set; }  // New: Required Valid ID
+        public string ContactNumber { get; set; }  // New: Required Contact Number
+        public decimal Price { get; set; }
+    }
     
 }

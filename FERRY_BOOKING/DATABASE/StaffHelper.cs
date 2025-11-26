@@ -108,7 +108,8 @@ namespace FERRY_BOOKING.DATABASE
                             INNER JOIN Trip t ON t.FerryID = f.FerryID
                             INNER JOIN Route r ON r.RouteID = t.RouteID
                             WHERE f.FerryID = @ferryID
-                              AND t.TripID  = @tripID;
+                              AND t.TripID  = @tripID
+                              AND t.TripStatus  = 'Active';  
             ";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -129,9 +130,6 @@ namespace FERRY_BOOKING.DATABASE
                                     reader["ArrivalTime"].ToString(),
                                     reader["Origin"].ToString(),
                                     reader["Destination"].ToString()
-
-
-
                                 );
                             }
                             else
@@ -265,25 +263,28 @@ namespace FERRY_BOOKING.DATABASE
         /* 2.  passenger --------------------------------------------------- */
         public void SavePassenger(long bookingID, string seatCode, string fullName,
                           int age, string gender, string discount,
-                          decimal price, byte[] idImage)
+                          decimal price, byte[] idImage, byte[] validIDImage, string contactNumber)
         {
             const string sql =
                 "INSERT INTO BookingPassenger(BookingID, SeatCode, FullName, Age, Gender, " +
-                "                             Discount, Price, IDImage) " +
-                "VALUES (@id, @seat, @name, @age, @g, @disc, @price, @img);";
+                "                             Discount, Price, IDImage, ValidID, ContactNumber) " +
+                "VALUES (@id, @seat, @name, @age, @g, @disc, @price, @img, @validID, @contact);";
 
             SqlParameter[] p =
             {
-        new SqlParameter("@id",    bookingID),
-        new SqlParameter("@seat",  seatCode),
-        new SqlParameter("@name",  fullName),
-        new SqlParameter("@age",   age),
-        new SqlParameter("@g",     gender),
-        new SqlParameter("@disc",  string.IsNullOrEmpty(discount) ? DBNull.Value : discount),
-        new SqlParameter("@price", price),
-        new SqlParameter("@img",   SqlDbType.VarBinary)   // <-- force binary
-        { Value = (object)idImage ?? DBNull.Value }
-    };
+                new SqlParameter("@id",       bookingID),
+                new SqlParameter("@seat",     seatCode),
+                new SqlParameter("@name",     fullName),
+                new SqlParameter("@age",      age),
+                new SqlParameter("@g",        gender),
+                new SqlParameter("@disc",     string.IsNullOrEmpty(discount) ? DBNull.Value : discount),
+                new SqlParameter("@price",    price),
+                new SqlParameter("@img",      SqlDbType.VarBinary)   // Discount ID (optional)
+                { Value = (object)idImage ?? DBNull.Value },
+                new SqlParameter("@validID",  SqlDbType.VarBinary)   // Valid ID (required)
+                { Value = (object)validIDImage ?? DBNull.Value },
+                new SqlParameter("@contact",  contactNumber ?? string.Empty)
+            };
 
             db.ExecuteNonQuery(sql, p);
         }
@@ -304,7 +305,5 @@ namespace FERRY_BOOKING.DATABASE
             };
             db.ExecuteNonQuery(sql, p);
         }
-    
-
     }
 }

@@ -511,30 +511,29 @@ namespace FERRY_BOOKING.DATABASE
             string daysOfWeek,
             DateTime startDate,
             DateTime endDate,
-            bool isActive
-                 )
-              {
+            bool isActive)
+        {
             string query = @"
-            INSERT INTO Schedule (
-                FerryID, RouteID, DepartureTime, ArrivalTime, 
-                DaysOfWeek, StartDate, EndDate, IsActive
-            )
-            VALUES (
-                @FerryID, @RouteID, @Departure, @Arrival,
-                @DaysOfWeek, @StartDate, @EndDate, @IsActive
-            );
-            SELECT SCOPE_IDENTITY();
-             ";
+        INSERT INTO Schedule (
+            FerryID, RouteID, DepartureTime, ArrivalTime, 
+            DaysOfWeek, StartDate, EndDate, IsActive
+        )
+        VALUES (
+            @FerryID, @RouteID, @Departure, @Arrival,
+            @DaysOfWeek, @StartDate, @EndDate, @IsActive
+        );
+        SELECT SCOPE_IDENTITY();";
 
-            SqlParameter[] prms = {
-            new SqlParameter("@FerryID", ferryID),
-            new SqlParameter("@RouteID", routeID),
-            new SqlParameter("@Departure", departure),
-            new SqlParameter("@Arrival", arrival),
-            new SqlParameter("@DaysOfWeek", daysOfWeek),
-            new SqlParameter("@StartDate", startDate),
-            new SqlParameter("@EndDate", endDate),
-            new SqlParameter("@IsActive", isActive)
+            var prms = new[]
+            {
+                new SqlParameter("@FerryID", ferryID),
+                new SqlParameter("@RouteID", routeID),
+                new SqlParameter("@Departure", SqlDbType.Time){ Value = departure },
+                new SqlParameter("@Arrival",   SqlDbType.Time){ Value = arrival },
+                new SqlParameter("@DaysOfWeek", daysOfWeek),
+                new SqlParameter("@StartDate", SqlDbType.Date){ Value = startDate.Date },
+                new SqlParameter("@EndDate",   SqlDbType.Date){ Value = endDate.Date },
+                new SqlParameter("@IsActive", isActive),
             };
 
             object result = db.ExecuteScalar(query, prms);
@@ -550,43 +549,37 @@ namespace FERRY_BOOKING.DATABASE
         DateTime startDate,
         DateTime endDate,
         TimeSpan departure,
-        TimeSpan arrival
-)
+        TimeSpan arrival)
         {
-            List<int> tripIDs = new List<int>();
+            List<int> tripIDs = new();
 
-            // Convert "MON,TUE,FRI" → HashSet<DayOfWeek>
             var allowed = new HashSet<DayOfWeek>(
-                daysOfWeek.Split(',')
-                    .Select(d => (DayOfWeek)Enum.Parse(typeof(DayOfWeek), d, true))
-            );
+                daysOfWeek.Split(',').Select(d => (DayOfWeek)Enum.Parse(typeof(DayOfWeek), d, true)));
 
-            DateTime current = startDate;
+            DateTime current = startDate.Date;
 
-            while (current <= endDate)
+            while (current <= endDate.Date)
             {
                 if (allowed.Contains(current.DayOfWeek))
                 {
-                    // INSERT Trip
                     string insertTrip = @"
                 INSERT INTO Trip (ScheduleID, FerryID, RouteID, TripDate, DepartureTime, ArrivalTime)
                 VALUES (@ScheduleID, @FerryID, @RouteID, @TripDate, @Departure, @Arrival);
-                SELECT SCOPE_IDENTITY();
-            ";
+                SELECT SCOPE_IDENTITY();";
 
-                    SqlParameter[] prms = {
-                new SqlParameter("@ScheduleID", scheduleID),
-                new SqlParameter("@FerryID", ferryID),
-                new SqlParameter("@RouteID", routeID),
-                new SqlParameter("@TripDate", current.Date),
-                new SqlParameter("@Departure", departure),
-                new SqlParameter("@Arrival", arrival)
-            };
+                    var prms = new[]
+                    {
+                        new SqlParameter("@ScheduleID", scheduleID),
+                        new SqlParameter("@FerryID", ferryID),
+                        new SqlParameter("@RouteID", routeID),
+                        new SqlParameter("@TripDate", SqlDbType.Date){ Value = current.Date },
+                        new SqlParameter("@Departure", SqlDbType.Time){ Value = departure },
+                        new SqlParameter("@Arrival",   SqlDbType.Time){ Value = arrival },
+                    };
 
                     int tripID = Convert.ToInt32(db.ExecuteScalar(insertTrip, prms));
                     tripIDs.Add(tripID);
                 }
-
                 current = current.AddDays(1);
             }
 
@@ -600,7 +593,7 @@ namespace FERRY_BOOKING.DATABASE
         VALUES (@TripID, @FerryID, @FloorNumber, @Price);
         ";
 
-                SqlParameter[] prms = {
+            SqlParameter[] prms = {
             new SqlParameter("@TripID", tripID),
             new SqlParameter("@FerryID", ferryID),
             new SqlParameter("@FloorNumber", floorNumber),
@@ -1073,7 +1066,7 @@ namespace FERRY_BOOKING.DATABASE
                     JOIN Trip t ON b.TripID = t.TripID
                     WHERE t.ScheduleID = @id";
 
-                int allBookings = Convert.ToInt32(ExecuteScalar(conn, allBookingsQuery, scheduleID));
+                int totalBookings = Convert.ToInt32(ExecuteScalar(conn, allBookingsQuery, scheduleID));
 
                 if (futureBookings > 0)
                 {
@@ -1083,13 +1076,13 @@ namespace FERRY_BOOKING.DATABASE
                     result.DeleteType = DeleteType.Blocked;
                     result.AffectedRecords = futureBookings;
                 }
-                else if (allBookings > 0)
+                else if (totalBookings > 0)
                 {
                     result.CanProceed = true;
-                    result.Message = $"Schedule has {allBookings} booking(s) in history.\n" +
+                    result.Message = $"Schedule has {totalBookings} booking(s) in history.\n" +
                                    "Schedule will be marked INACTIVE to preserve booking records.";
                     result.DeleteType = DeleteType.Soft;
-                    result.AffectedRecords = allBookings;
+                    result.AffectedRecords = totalBookings;
                 }
                 else
                 {
@@ -1316,12 +1309,13 @@ namespace FERRY_BOOKING.DATABASE
         public int GetTotalBookingsToday(int ownerID)
         {
             string query = @"
-            SELECT COUNT(*)
-            FROM Booking b
-            JOIN Trip t ON b.TripID = t.TripID
-            JOIN Ferry f ON t.FerryID = f.FerryID
-            WHERE f.OwnerID = @OwnerID
-            AND CAST(b.BookingDate AS DATE) = CAST(GETDATE() AS DATE)";
+        SELECT COUNT(*)
+        FROM Booking b
+        JOIN Trip t ON b.TripID = t.TripID
+        JOIN Ferry f ON t.FerryID = f.FerryID
+        WHERE f.OwnerID = @OwnerID
+        AND CAST(b.BookingDate AS DATE) = CAST(GETDATE() AS DATE)
+        AND t.TripStatus = 'Active'";
             SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
             return Convert.ToInt32(db.ExecuteScalar(query, parameters));
         }
@@ -1329,48 +1323,58 @@ namespace FERRY_BOOKING.DATABASE
         public decimal GetTotalRevenueToday(int ownerID)
         {
             string query = @"
-            SELECT ISNULL(SUM(b.TotalAmount), 0)
-            FROM Booking b
-            JOIN Trip t ON b.TripID = t.TripID
-            JOIN Ferry f ON t.FerryID = f.FerryID
-            WHERE f.OwnerID = @OwnerID
-            AND CAST(b.BookingDate AS DATE) = CAST(GETDATE() AS DATE)";
+        SELECT 
+            ISNULL(SUM(b.TotalAmount), 0) - ISNULL(SUM(CASE 
+                WHEN br.RefundStatus = 'Completed' AND CAST(br.RefundDate AS DATE) = CAST(GETDATE() AS DATE) 
+                THEN br.RefundAmount 
+                ELSE 0 
+            END), 0) AS NetRevenue
+        FROM Booking b
+        JOIN Trip t ON b.TripID = t.TripID
+        JOIN Ferry f ON t.FerryID = f.FerryID
+        LEFT JOIN BookingRefund br ON b.BookingID = br.BookingID
+        WHERE f.OwnerID = @OwnerID
+        AND CAST(b.BookingDate AS DATE) = CAST(GETDATE() AS DATE)
+        AND t.TripStatus = 'Active'";
             SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
-            return Convert.ToDecimal(db.ExecuteScalar(query, parameters));
+            object result = db.ExecuteScalar(query, parameters);
+            return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
         }
 
         public string GetMostBookedFerry(int ownerID)
         {
             string query = @"
-            SELECT TOP 1 f.FerryName,
-                CAST((CAST(COUNT(bs.BookedSeatID) AS FLOAT) / f.TotalCapacity) * 100 AS DECIMAL(5,2)) AS Occupancy
-            FROM Ferry f
-            JOIN Trip t ON f.FerryID = t.FerryID
-            LEFT JOIN BookedSeats bs ON t.TripID = bs.TripID
-            WHERE f.OwnerID = @OwnerID
-            GROUP BY f.FerryName, f.TotalCapacity
-            ORDER BY Occupancy DESC";
+        SELECT TOP 1 f.FerryName,
+            CAST((CAST(COUNT(bs.BookedSeatID) AS FLOAT) / f.TotalCapacity) * 100 AS DECIMAL(5,2)) AS Occupancy
+        FROM Ferry f
+        JOIN Trip t ON f.FerryID = t.FerryID
+        LEFT JOIN BookedSeats bs ON t.TripID = bs.TripID
+        WHERE f.OwnerID = @OwnerID
+        AND t.TripStatus = 'Active'
+        GROUP BY f.FerryName, f.TotalCapacity
+        ORDER BY Occupancy DESC";
             SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
             DataTable dt = db.ExecuteDataTable(query, parameters);
             if (dt.Rows.Count == 0) return "No data";
-            return $"{dt.Rows[0]["FerryName"]} ({dt.Rows[0]["Occupancy"]}% )";
+            return $"{dt.Rows[0]["FerryName"]} ({dt.Rows[0]["Occupancy"]}%)";
         }
 
         public (int availableSeats, int tripsToday) GetAvailableSeatsAndTrips(int ownerID)
         {
             string query = @"
-            SELECT 
-                SUM(f.TotalCapacity - ISNULL(BS.BookedSeats, 0)) AS AvailableSeats,
-                COUNT(*) AS TripsToday
-            FROM Trip t
-            JOIN Ferry f ON t.FerryID = f.FerryID
-            LEFT JOIN (
-                SELECT TripID, COUNT(*) AS BookedSeats
-                FROM BookedSeats
-                GROUP BY TripID
-            ) BS ON BS.TripID = t.TripID
-            WHERE f.OwnerID = @OwnerID
-            AND CAST(t.TripDate AS DATE) = CAST(GETDATE() AS DATE)";
+        SELECT 
+            SUM(f.TotalCapacity - ISNULL(BS.BookedSeats, 0)) AS AvailableSeats,
+            COUNT(*) AS TripsToday
+        FROM Trip t
+        JOIN Ferry f ON t.FerryID = f.FerryID
+        LEFT JOIN (
+            SELECT TripID, COUNT(*) AS BookedSeats
+            FROM BookedSeats
+            GROUP BY TripID
+        ) BS ON BS.TripID = t.TripID
+        WHERE f.OwnerID = @OwnerID
+        AND CAST(t.TripDate AS DATE) = CAST(GETDATE() AS DATE)
+        AND t.TripStatus = 'Active'";
             SqlParameter[] parameters = { new SqlParameter("@OwnerID", ownerID) };
             DataTable dt = db.ExecuteDataTable(query, parameters);
             int available = dt.Rows[0]["AvailableSeats"] != DBNull.Value ? Convert.ToInt32(dt.Rows[0]["AvailableSeats"]) : 0;
@@ -1389,15 +1393,264 @@ namespace FERRY_BOOKING.DATABASE
             DataTable dt = db.ExecuteDataTable(query, parameters);
             return dt != null && dt.Rows.Count > 0 ? dt.Rows[0] : null;
         }
+
+        public DataRow GetScheduleById(int scheduleID)
+        {
+            string query = "SELECT * FROM Schedule WHERE ScheduleID = @ScheduleID";
+            SqlParameter[] p = { new SqlParameter("@ScheduleID", scheduleID) };
+            DataTable dt = db.ExecuteDataTable(query, p);
+            return dt.Rows.Count == 1 ? dt.Rows[0] : null;
+        }
+
+        /// <summary>
+        /// Update schedule record. Returns true on success.
+        /// Also leaves trips in place; call UpdateTripsTimes to sync trip times if desired.
+        /// </summary>
+        public bool UpdateSchedule(
+            int scheduleID,
+            int ferryID,
+            int routeID,
+            TimeSpan departure,
+            TimeSpan arrival,
+            string daysOfWeek,
+            DateTime startDate,
+            DateTime endDate,
+            bool isActive)
+        {
+            try
+            {
+                string query = @"
+                    UPDATE Schedule
+                    SET FerryID = @FerryID,
+                        RouteID = @RouteID,
+                        DepartureTime = @Departure,
+                        ArrivalTime = @Arrival,
+                        DaysOfWeek = @DaysOfWeek,
+                        StartDate = @StartDate,
+                        EndDate = @EndDate,
+                        IsActive = @IsActive
+                    WHERE ScheduleID = @ScheduleID
+                ";
+
+                var prms = new[]
+                {
+                    new SqlParameter("@FerryID", ferryID),
+                    new SqlParameter("@RouteID", routeID),
+                    new SqlParameter("@Departure", SqlDbType.Time){ Value = departure },
+                    new SqlParameter("@Arrival",   SqlDbType.Time){ Value = arrival },
+                    new SqlParameter("@DaysOfWeek", daysOfWeek),
+                    new SqlParameter("@StartDate", SqlDbType.Date){ Value = startDate.Date },
+                    new SqlParameter("@EndDate",   SqlDbType.Date){ Value = endDate.Date },
+                    new SqlParameter("@IsActive", isActive),
+                    new SqlParameter("@ScheduleID", scheduleID),
+                };
+
+                db.ExecuteNonQuery(query, prms);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error updating schedule: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update departure/arrival times for trips that belong to the schedule.
+        /// </summary>
+        public void UpdateTripsTimes(int scheduleID, TimeSpan departure, TimeSpan arrival)
+        {
+            try
+            {
+                string q = @"
+                    UPDATE Trip
+                    SET DepartureTime = @Departure, ArrivalTime = @Arrival
+                    WHERE ScheduleID = @ScheduleID
+                ";
+
+                var prms = new[]
+                {
+                    new SqlParameter("@Departure", SqlDbType.Time){ Value = departure },
+                    new SqlParameter("@Arrival",   SqlDbType.Time){ Value = arrival },
+                    new SqlParameter("@ScheduleID", scheduleID),
+                };
+
+                db.ExecuteNonQuery(q, prms);
+            }
+            catch
+            {
+                // non-fatal
+            }
+        }
+
+        /// <summary>
+        /// Checks for time conflicts for a proposed schedule against existing active trips for the same ferry.
+        /// - Applies to dates between startDate and endDate
+        /// - Applies only on the selected operating days (daysOfWeekCsv uses names like "Monday,Tuesday")
+        /// - Enforces a 30-minute buffer: newDep >= existing.Arrival + 30 OR newArr <= existing.Departure - 30
+        /// - If Editing a schedule, pass excludeScheduleID to ignore own trips
+        /// Returns:
+        ///   HasConflict: true if any conflicting trips found
+        ///   SuggestedEarliestDeparture: the max(existing.Arrival + 30) among conflicts (as a TimeSpan) to help user snap
+        ///   Details: rows of TripDate, DepartureTime, ArrivalTime for the conflicting instances (top list)
+        /// </summary>
+        public (bool HasConflict, TimeSpan? SuggestedEarliestDeparture, DataTable Details) CheckScheduleConflicts(
+            int ferryID,
+            DateTime startDate,
+            DateTime endDate,
+            string daysOfWeekCsv,
+            TimeSpan proposedDeparture,
+            TimeSpan proposedArrival,
+            int? excludeScheduleID = null
+        )
+        {
+            // Summary: count + suggested earliest departure
+            string summarySql = @"
+WITH Conflicts AS (
+    SELECT 
+        t.TripDate,
+        t.DepartureTime,
+        t.ArrivalTime,
+        DATEADD(minute, 30, t.ArrivalTime) AS AllowedAfter
+    FROM Trip t
+    WHERE t.FerryID = @FerryID
+      AND t.TripStatus = 'Active'
+      AND t.TripDate BETWEEN @StartDate AND @EndDate
+      AND EXISTS (
+            SELECT 1 
+            FROM string_split(@DaysCsv, ',') s 
+            WHERE UPPER(LTRIM(RTRIM(s.value))) = UPPER(DATENAME(weekday, t.TripDate))
+      )
+      -- Overlap check with 30-minute buffer
+      AND NOT (
+            @Dep >= DATEADD(minute, 30, t.ArrivalTime) 
+            OR 
+            @Arr <= DATEADD(minute, -30, t.DepartureTime)
+      )
+      AND (
+            @ExcludeScheduleID IS NULL OR ISNULL(t.ScheduleID, 0) <> @ExcludeScheduleID
+      )
+)
+SELECT 
+    COUNT(*) AS ConflictCount,
+    CAST(MAX(AllowedAfter) AS time) AS SuggestedDeparture
+FROM Conflicts;
+";
+
+            SqlParameter[] prms =
+            {
+                new SqlParameter("@FerryID", ferryID),
+                new SqlParameter("@StartDate", startDate.Date),
+                new SqlParameter("@EndDate", endDate.Date),
+                new SqlParameter("@DaysCsv", daysOfWeekCsv ?? string.Empty),
+                new SqlParameter("@Dep", proposedDeparture),
+                new SqlParameter("@Arr", proposedArrival),
+                new SqlParameter("@ExcludeScheduleID", (object?)excludeScheduleID ?? DBNull.Value),
+            };
+
+            DataTable summary = db.ExecuteDataTable(summarySql, prms);
+            int conflictCount = 0;
+            TimeSpan? suggested = null;
+
+            if (summary.Rows.Count > 0)
+            {
+                conflictCount = summary.Rows[0]["ConflictCount"] != DBNull.Value
+                    ? Convert.ToInt32(summary.Rows[0]["ConflictCount"])
+                    : 0;
+
+                if (summary.Rows[0]["SuggestedDeparture"] != DBNull.Value)
+                    suggested = (TimeSpan)summary.Rows[0]["SuggestedDeparture"];
+            }
+
+            DataTable details = new DataTable();
+
+            if (conflictCount > 0)
+            {
+                string detailsSql = @"
+WITH Conflicts AS (
+    SELECT 
+        t.TripDate,
+        t.DepartureTime,
+        t.ArrivalTime,
+        DATEADD(minute, 30, t.ArrivalTime) AS AllowedAfter
+    FROM Trip t
+    WHERE t.FerryID = @FerryID
+      AND t.TripStatus = 'Active'
+      AND t.TripDate BETWEEN @StartDate AND @EndDate
+      AND EXISTS (
+            SELECT 1 
+            FROM string_split(@DaysCsv, ',') s 
+            WHERE UPPER(LTRIM(RTRIM(s.value))) = UPPER(DATENAME(weekday, t.TripDate))
+      )
+      AND NOT (
+            @Dep >= DATEADD(minute, 30, t.ArrivalTime) 
+            OR 
+            @Arr <= DATEADD(minute, -30, t.DepartureTime)
+      )
+      AND (
+            @ExcludeScheduleID IS NULL OR ISNULL(t.ScheduleID, 0) <> @ExcludeScheduleID
+      )
+)
+SELECT TOP 10 
+    TripDate, 
+    DepartureTime, 
+    ArrivalTime,
+    CAST(AllowedAfter AS time) AS EarliestAllowedAfter
+FROM Conflicts
+ORDER BY TripDate, DepartureTime;
+";
+                details = db.ExecuteDataTable(detailsSql, prms);
+            }
+
+            return (conflictCount > 0, suggested, details);
+        }
+
+   
+        /// <summary>
+        /// Checks if a schedule has any bookings (past or future).
+        /// Returns: (hasBookings, futureBookingsCount, totalBookingsCount)
+        /// </summary>
+        public (bool HasBookings, int FutureBookings, int TotalBookings) CheckScheduleBookings(int scheduleID)
+        {
+            using (SqlConnection conn = db.GetConnection())
+            {
+                conn.Open();
+
+                // Check for future bookings (active trips with bookings)
+                string futureBookingsQuery = @"
+            SELECT COUNT(DISTINCT b.BookingID)
+            FROM Booking b
+            JOIN Trip t ON b.TripID = t.TripID
+            WHERE t.ScheduleID = @ScheduleID
+            AND t.TripDate >= CAST(GETDATE() AS DATE)
+            AND t.TripStatus != 'Cancelled'";
+
+                int futureBookings;
+                using (SqlCommand cmd = new SqlCommand(futureBookingsQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ScheduleID", scheduleID);
+                    futureBookings = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+
+                // Check for all bookings
+                string allBookingsQuery = @"
+            SELECT COUNT(DISTINCT b.BookingID)
+            FROM Booking b
+            JOIN Trip t ON b.TripID = t.TripID
+            WHERE t.ScheduleID = @ScheduleID";
+
+                int totalBookings;
+                using (SqlCommand cmd = new SqlCommand(allBookingsQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ScheduleID", scheduleID);
+                    totalBookings = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+
+                return (totalBookings > 0, futureBookings, totalBookings);
+            }
+        }
     }
 
-    // ============================================================================
-    // VALIDATION RESULT CLASSES
-    // ============================================================================
-
-    /// <summary>
-    /// Result of validation checks for delete/edit operations
-    /// </summary>
     public class ValidationResult
     {
         public bool CanProceed { get; set; }
@@ -1407,13 +1660,10 @@ namespace FERRY_BOOKING.DATABASE
         public bool AllowPartialEdit { get; set; }
     }
 
-    /// <summary>
-    /// Type of delete operation
-    /// </summary>
     public enum DeleteType
     {
-        Hard,       // Permanent deletion
-        Soft,       // Mark as inactive
-        Blocked     // Cannot delete
+        Hard,
+        Soft,
+        Blocked
     }
 }

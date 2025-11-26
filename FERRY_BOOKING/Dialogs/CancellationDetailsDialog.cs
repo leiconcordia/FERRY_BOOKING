@@ -111,7 +111,7 @@ namespace FERRY_BOOKING.Dialogs
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold)
             };
-            btnRefundAll.Click += BtnRefundAll_Click;
+        //    btnRefundAll.Click += BtnRefundAll_Click;
 
             Button btnClose = new Button
             {
@@ -367,64 +367,64 @@ namespace FERRY_BOOKING.Dialogs
             }
         }
 
-        private void BtnRefundAll_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Get all pending refunds for this cancellation
-                string queryPending = @"
-                    SELECT RefundID, RefundAmount, BookingID
-                    FROM BookingRefund
-                    WHERE CancellationID = @CancellationID
-                    AND RefundStatus = 'Pending'";
+        //private void BtnRefundAll_Click(object sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        // Get all pending refunds for this cancellation
+        //        string queryPending = @"
+        //            SELECT RefundID, RefundAmount, BookingID
+        //            FROM BookingRefund
+        //            WHERE CancellationID = @CancellationID
+        //            AND RefundStatus = 'Pending'";
 
-                SqlParameter[] parameters = { new SqlParameter("@CancellationID", cancellationID) };
-                DataTable dt = db.ExecuteDataTable(queryPending, parameters);
+        //        SqlParameter[] parameters = { new SqlParameter("@CancellationID", cancellationID) };
+        //        DataTable dt = db.ExecuteDataTable(queryPending, parameters);
 
-                if (dt.Rows.Count == 0)
-                {
-                    MessageBox.Show("No pending refunds to process.", "Information",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
+        //        if (dt.Rows.Count == 0)
+        //        {
+        //            MessageBox.Show("No pending refunds to process.", "Information",
+        //                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //            return;
+        //        }
 
-                decimal totalAmount = 0;
-                foreach (DataRow row in dt.Rows)
-                {
-                    totalAmount += Convert.ToDecimal(row["RefundAmount"]);
-                }
+        //        decimal totalAmount = 0;
+        //        foreach (DataRow row in dt.Rows)
+        //        {
+        //            totalAmount += Convert.ToDecimal(row["RefundAmount"]);
+        //        }
 
-                DialogResult result = MessageBox.Show(
-                    $"Process {dt.Rows.Count} pending refunds?\n\nTotal Amount: ₱{totalAmount:N2}\n\nAll refunds will be marked as 'Completed' with method 'Cash'.",
-                    "Confirm Bulk Refund",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+        //        DialogResult result = MessageBox.Show(
+        //            $"Process {dt.Rows.Count} pending refunds?\n\nTotal Amount: ₱{totalAmount:N2}\n\nAll refunds will be marked as 'Completed' with method 'Cash'.",
+        //            "Confirm Bulk Refund",
+        //            MessageBoxButtons.YesNo,
+        //            MessageBoxIcon.Question);
 
-                if (result == DialogResult.Yes)
-                {
-                    int processed = 0;
-                    foreach (DataRow row in dt.Rows)
-                    {
-                        long refundID = Convert.ToInt64(row["RefundID"]);
-                        if (ProcessRefund(refundID, "Cash", "Bulk refund processing"))
-                        {
-                            processed++;
-                        }
-                    }
+        //        if (result == DialogResult.Yes)
+        //        {
+        //            int processed = 0;
+        //            foreach (DataRow row in dt.Rows)
+        //            {
+        //                long refundID = Convert.ToInt64(row["RefundID"]);
+        //                if (ProcessRefund(refundID, "Cash", "Bulk refund processing"))
+        //                {
+        //                    processed++;
+        //                }
+        //            }
 
-                    MessageBox.Show($"Successfully processed {processed} refunds!\n\nTotal Amount: ₱{totalAmount:N2}",
-                        "Refund Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //            MessageBox.Show($"Successfully processed {processed} refunds!\n\nTotal Amount: ₱{totalAmount:N2}",
+        //                "Refund Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    // Reload data and close
-                    LoadPassengerData();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error processing bulk refund: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+        //            // Reload data and close
+        //            LoadPassengerData();
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show($"Error processing bulk refund: {ex.Message}", "Error",
+        //            MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //    }
+        //}
 
         private bool ProcessRefund(long refundID, string method, string notes)
         {

@@ -13,7 +13,7 @@ namespace FERRY_BOOKING.Dialogs
 {
     public partial class TicketForm : Form
     {
-        private readonly List<TicketData> _tickets; // Change type to TicketData
+        private readonly List<TicketData> _tickets;
         private readonly PrintDocument _pd;
         private readonly string _bookingRef;
 
@@ -53,15 +53,16 @@ namespace FERRY_BOOKING.Dialogs
 
             // NEW: notify when finished
             pd.EndPrint += (s, args) =>
-            // user cancelled – do nothing
+            {
+                // user cancelled – do nothing
+                
+                
                 SaveBookingToDatabase();
                 MessageBox.Show("All tickets have been printed successfully.",
                                "Print Complete",
                                MessageBoxButtons.OK,
                                MessageBoxIcon.Information);
-
-            
-             
+            };
 
             PrintDialog dlg = new PrintDialog { Document = pd };
             if (dlg.ShowDialog() == DialogResult.OK)
@@ -73,24 +74,24 @@ namespace FERRY_BOOKING.Dialogs
         private int _currentTicket = 0;   // field at top of TicketForm
 
         private void OnPrintPage(object sender, PrintPageEventArgs e)
-    {
-        // 8 cm wide, height = sum of all ticket controls
-        int width  = 806;                      // 8 cm in pixels @ 96 dpi
-        int height = flpTicket.Controls.Cast<Control>().Sum(c => c.Height);
-
-        Bitmap strip = new Bitmap(width, height);
-        Graphics g   = Graphics.FromImage(strip);
-
-        int y = 0;
-        foreach (Ticket uc in flpTicket.Controls)
         {
-            uc.DrawToBitmap(strip, new Rectangle(0, y, width, uc.Height));
-            y += uc.Height;
-        }
+            // 8 cm wide, height = sum of all ticket controls
+            int width  = 806;                      // 8 cm in pixels @ 96 dpi
+            int height = flpTicket.Controls.Cast<Control>().Sum(c => c.Height);
 
-        e.Graphics.DrawImage(strip, 0, 0);
-        e.HasMorePages = false;   // one continuous strip
-    }
+            Bitmap strip = new Bitmap(width, height);
+            Graphics g   = Graphics.FromImage(strip);
+
+            int y = 0;
+            foreach (Ticket uc in flpTicket.Controls)
+            {
+                uc.DrawToBitmap(strip, new Rectangle(0, y, width, uc.Height));
+                y += uc.Height;
+            }
+
+            e.Graphics.DrawImage(strip, 0, 0);
+            e.HasMorePages = false;   // one continuous strip
+        }
 
 
 
@@ -105,7 +106,7 @@ namespace FERRY_BOOKING.Dialogs
 
             foreach (var t in _tickets)
             {
-                // Convert Image to byte[] before passing to SavePassenger
+                // Convert Image to byte[] for discount ID before passing to SavePassenger
                 byte[] idImageBytes = null;
                 if (t.IDImage != null)
                 {
@@ -116,9 +117,10 @@ namespace FERRY_BOOKING.Dialogs
                     }
                 }
 
+                // Pass all required fields including ValidIDImage and ContactNumber
                 dal.SavePassenger(bookingID, t.Seat, t.Name, t.Age,
                                   t.Gender, t.Discount, t.Price,
-                                  idImageBytes);
+                                  idImageBytes, t.ValidIDImage, t.ContactNumber);
 
                 dal.InsertBookedSeat(t.TripID, t.FerryID, t.Seat);
             }
