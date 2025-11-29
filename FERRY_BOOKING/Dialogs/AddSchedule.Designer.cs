@@ -251,11 +251,11 @@
             dtpEndDate.Format = DateTimePickerFormat.Custom;
             dtpEndDate.Location = new Point(390, 56);
             dtpEndDate.Margin = new Padding(3, 4, 3, 4);
-            dtpEndDate.MinDate = new DateTime(2025, 11, 27, 0, 0, 0, 0);
+            dtpEndDate.MinDate = DateTime.Today.AddDays(1);
             dtpEndDate.Name = "dtpEndDate";
             dtpEndDate.Size = new Size(350, 30);
             dtpEndDate.TabIndex = 3;
-            dtpEndDate.Value = new DateTime(2025, 11, 27, 0, 0, 0, 0);
+            dtpEndDate.Value = DateTime.Today.AddDays(1);
             dtpEndDate.ValueChanged += dtpEndDate_ValueChanged;
             // 
             // label9
@@ -276,11 +276,11 @@
             dtpStartDate.Format = DateTimePickerFormat.Custom;
             dtpStartDate.Location = new Point(15, 56);
             dtpStartDate.Margin = new Padding(3, 4, 3, 4);
-            dtpStartDate.MinDate = new DateTime(2025, 11, 27, 0, 0, 0, 0);
+            dtpStartDate.MinDate = DateTime.Today.AddDays(1); 
             dtpStartDate.Name = "dtpStartDate";
             dtpStartDate.Size = new Size(350, 30);
             dtpStartDate.TabIndex = 1;
-            dtpStartDate.Value = new DateTime(2025, 11, 27, 0, 0, 0, 0);
+            dtpStartDate.Value = DateTime.Today.AddDays(1);
             dtpStartDate.ValueChanged += dtpStartDate_ValueChanged;
             // 
             // label8

@@ -505,6 +505,15 @@ namespace FERRY_BOOKING.Dialogs
                     MessageBox.Show("Please upload all required documents (CO, VR, SC, ID).", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
+                // --- CHECK FOR DUPLICATES HERE ---
+                DATABASE.FerryOwnerHelper FerryHelper = new DATABASE.FerryOwnerHelper();
+                bool isDuplicate = FerryHelper.IsFerryDuplicate(tbFerryCode.Text.Trim(), tbFerryName.Text.Trim(), this.OwnerID);
+
+                if (isDuplicate)
+                {
+                    MessageBox.Show("A ferry with this Code or Name already exists for your account.", "Duplicate Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return; // Stop the registration process
+                }
 
                 // --- GET FLOOR DATA (NO PRICE) ---
                 List<FloorLayout> floors = new List<FloorLayout>();
@@ -531,7 +540,7 @@ namespace FERRY_BOOKING.Dialogs
                     });
                 }
 
-                DATABASE.FerryOwnerHelper FerryHelper = new DATABASE.FerryOwnerHelper();
+               
 
                 // --- INSERT INTO DATABASE ---
                 bool success = FerryHelper.RegisterFerry(

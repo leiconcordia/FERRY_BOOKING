@@ -103,7 +103,7 @@
             dgvSchedule.RowHeadersWidth = 51;
             dataGridViewCellStyle3.BackColor = Color.White;
             dgvSchedule.RowsDefaultCellStyle = dataGridViewCellStyle3;
-            dgvSchedule.Size = new Size(1455, 353);
+            dgvSchedule.Size = new Size(1455, 374);
             dgvSchedule.TabIndex = 45;
             dgvSchedule.CellClick += dgvSchedule_CellClick;
             dgvSchedule.CellMouseEnter += dgvSchedule_CellMouseEnter;

@@ -36,7 +36,15 @@
             txtSearch = new TextBox();
             lblSearch = new Label();
             dgvManageBookings = new DataGridView();
+            panelDateFilter = new Panel();
+            btnClearFilter = new Button();
+            monthCalendar = new MonthCalendar();
+            rbFilterAll = new RadioButton();
+            rbFilterDay = new RadioButton();
+            rbFilterMonth = new RadioButton();
+            lblDateFilter = new Label();
             ((System.ComponentModel.ISupportInitialize)dgvManageBookings).BeginInit();
+            panelDateFilter.SuspendLayout();
             SuspendLayout();
             // 
             // label1
@@ -64,10 +72,10 @@
             // 
             txtSearch.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtSearch.Font = new Font("Segoe UI", 10F);
-            txtSearch.Location = new Point(20, 113);
+            txtSearch.Location = new Point(3, 108);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "Search by Booking Reference or Passenger Name...";
-            txtSearch.Size = new Size(1422, 30);
+            txtSearch.Size = new Size(1182, 30);
             txtSearch.TabIndex = 6;
             txtSearch.TextChanged += txtSearch_TextChanged;
             // 
@@ -77,7 +85,7 @@
             lblSearch.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblSearch.Location = new Point(20, 85);
             lblSearch.Name = "lblSearch";
-            lblSearch.Size = new Size(56, 20);
+            lblSearch.Size = new Size(55, 20);
             lblSearch.TabIndex = 7;
             lblSearch.Text = "Search";
             // 
@@ -116,15 +124,97 @@
             dataGridViewCellStyle3.BackColor = Color.White;
             dgvManageBookings.RowsDefaultCellStyle = dataGridViewCellStyle3;
             dgvManageBookings.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvManageBookings.Size = new Size(1422, 372);
+            dgvManageBookings.Size = new Size(1165, 372);
             dgvManageBookings.TabIndex = 8;
-
+            // 
+            // panelDateFilter
+            // 
+            panelDateFilter.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            panelDateFilter.BorderStyle = BorderStyle.FixedSingle;
+            panelDateFilter.Controls.Add(btnClearFilter);
+            panelDateFilter.Controls.Add(monthCalendar);
+            panelDateFilter.Controls.Add(rbFilterAll);
+            panelDateFilter.Controls.Add(rbFilterDay);
+            panelDateFilter.Controls.Add(rbFilterMonth);
+            panelDateFilter.Controls.Add(lblDateFilter);
+            panelDateFilter.Location = new Point(1191, 85);
+            panelDateFilter.Name = "panelDateFilter";
+            panelDateFilter.Size = new Size(268, 446);
+            panelDateFilter.TabIndex = 9;
+            // 
+            // btnClearFilter
+            // 
+            btnClearFilter.BackColor = Color.FromArgb(11, 94, 235);
+            btnClearFilter.FlatStyle = FlatStyle.Flat;
+            btnClearFilter.ForeColor = Color.White;
+            btnClearFilter.Location = new Point(36, 406);
+            btnClearFilter.Name = "btnClearFilter";
+            btnClearFilter.Size = new Size(210, 35);
+            btnClearFilter.TabIndex = 5;
+            btnClearFilter.Text = "Clear Filter";
+            btnClearFilter.UseVisualStyleBackColor = false;
+            btnClearFilter.Click += btnClearFilter_Click;
+            // 
+            // monthCalendar
+            // 
+            monthCalendar.Location = new Point(-1, 136);
+            monthCalendar.MaxSelectionCount = 1;
+            monthCalendar.Name = "monthCalendar";
+            monthCalendar.TabIndex = 0;
+            monthCalendar.DateChanged += monthCalendar_DateChanged;
+            // 
+            // rbFilterAll
+            // 
+            rbFilterAll.AutoSize = true;
+            rbFilterAll.Checked = true;
+            rbFilterAll.Location = new Point(10, 40);
+            rbFilterAll.Name = "rbFilterAll";
+            rbFilterAll.Size = new Size(113, 24);
+            rbFilterAll.TabIndex = 1;
+            rbFilterAll.TabStop = true;
+            rbFilterAll.Text = "All Bookings";
+            rbFilterAll.UseVisualStyleBackColor = true;
+            rbFilterAll.CheckedChanged += DateFilterMode_CheckedChanged;
+            // 
+            // rbFilterDay
+            // 
+            rbFilterDay.AutoSize = true;
+            rbFilterDay.Location = new Point(10, 70);
+            rbFilterDay.Name = "rbFilterDay";
+            rbFilterDay.Size = new Size(80, 24);
+            rbFilterDay.TabIndex = 2;
+            rbFilterDay.Text = "Per Day";
+            rbFilterDay.UseVisualStyleBackColor = true;
+            rbFilterDay.CheckedChanged += DateFilterMode_CheckedChanged;
+            // 
+            // rbFilterMonth
+            // 
+            rbFilterMonth.AutoSize = true;
+            rbFilterMonth.Location = new Point(10, 100);
+            rbFilterMonth.Name = "rbFilterMonth";
+            rbFilterMonth.Size = new Size(97, 24);
+            rbFilterMonth.TabIndex = 3;
+            rbFilterMonth.Text = "Per Month";
+            rbFilterMonth.UseVisualStyleBackColor = true;
+            rbFilterMonth.CheckedChanged += DateFilterMode_CheckedChanged;
+            // 
+            // lblDateFilter
+            // 
+            lblDateFilter.AutoSize = true;
+            lblDateFilter.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblDateFilter.ForeColor = Color.FromArgb(11, 94, 235);
+            lblDateFilter.Location = new Point(10, 10);
+            lblDateFilter.Name = "lblDateFilter";
+            lblDateFilter.Size = new Size(82, 20);
+            lblDateFilter.TabIndex = 4;
+            lblDateFilter.Text = "Date Filter";
             // 
             // ManageBookings
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ButtonHighlight;
+            Controls.Add(panelDateFilter);
             Controls.Add(dgvManageBookings);
             Controls.Add(lblSearch);
             Controls.Add(txtSearch);
@@ -133,6 +223,8 @@
             Name = "ManageBookings";
             Size = new Size(1462, 551);
             ((System.ComponentModel.ISupportInitialize)dgvManageBookings).EndInit();
+            panelDateFilter.ResumeLayout(false);
+            panelDateFilter.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -144,5 +236,12 @@
         private TextBox txtSearch;
         private Label lblSearch;
         private DataGridView dgvManageBookings;
+        private Panel panelDateFilter;
+        private MonthCalendar monthCalendar;
+        private RadioButton rbFilterAll;
+        private RadioButton rbFilterDay;
+        private RadioButton rbFilterMonth;
+        private Label lblDateFilter;
+        private Button btnClearFilter;
     }
 }

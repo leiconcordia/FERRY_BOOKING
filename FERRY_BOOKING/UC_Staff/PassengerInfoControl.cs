@@ -6,6 +6,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.IO; // Added for MemoryStream
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,15 +17,17 @@ namespace FERRY_BOOKING.UC_Staff
 {
     public partial class PassengerInfoControl : UserControl
     {
+        // Store the original base price so we can recalculate correctly
+        private decimal _basePrice;
 
         public string PassengerName => tbFullName.Text.Trim();
         public int PassengerAge => (int)nudAge.Value;
         public string PassengerGender => cmbGender.SelectedItem?.ToString();
         public string PassengerDiscount => cmbDiscount.SelectedItem?.ToString();
         public string ContactNumber => tbPhone.Text.Trim();
-        
-        public byte[] IDImage { get; private set; }   // Discount ID (optional if discount = None)
-        public byte[] ValidIDImage { get; private set; }   // Valid ID (required for all)
+
+        public byte[] IDImage { get; private set; }
+        public byte[] ValidIDImage { get; private set; }
 
         public Image IDImageBytes => IDImage == null ? null
                                   : Image.FromStream(new MemoryStream(IDImage));
@@ -36,71 +39,121 @@ namespace FERRY_BOOKING.UC_Staff
         public string SeatCode { get; set; }
 
         public event Action PriceChanged;
-        
+
         public PassengerInfoControl(string seatCode, decimal SeatPrice)
         {
             InitializeComponent();
             SeatCode = seatCode;
+            _basePrice = SeatPrice; // Save the original price
             Price = SeatPrice;
+
             string labelPrice = Price.ToString("C", new CultureInfo("fil-PH"));
             lblSeat.Text = $"Seat: {seatCode}";
+            lblPrice.Text = $"Price: {labelPrice}";
 
+            // Setup ComboBoxes
             cmbGender.Items.AddRange(new string[] { "Male", "Female", "Other" });
-            cmbDiscount.Items.AddRange(new string[] { "None", "Senior", "Student", "PWD" });
+            cmbGender.SelectedIndex = 0; // Default to Male or first option
 
-            btnUploadID.Visible = false; // hide at start
+            // Setup Age Defaults (No infants, min age 4)
+            nudAge.Minimum = 4;
+            nudAge.Maximum = 120;
+            nudAge.Value = 18; // Default to an adult age
+
+            // Setup Events
+            btnUploadID.Visible = false;
             lblFileName.Visible = false;
+
+            cmbDiscount.SelectedIndexChanged += CmbDiscount_SelectedIndexChanged;
+            nudAge.ValueChanged += NudAge_ValueChanged; // Listen for age changes
+
+            // Initialize Discount Options based on the default age (18)
+            UpdateDiscountOptions();
+        }
+
+        private void NudAge_ValueChanged(object sender, EventArgs e)
+        {
+            UpdateDiscountOptions();
+        }
+
+        private void UpdateDiscountOptions()
+        {
+            // Remember what was currently selected
+            string currentSelection = cmbDiscount.SelectedItem?.ToString();
+            int age = (int)nudAge.Value;
+
+            // Stop the event handler temporarily to prevent flickering/logic loops
+            cmbDiscount.SelectedIndexChanged -= CmbDiscount_SelectedIndexChanged;
+
+            cmbDiscount.Items.Clear();
+
+            // Always add default options
+            cmbDiscount.Items.Add("None");
+            cmbDiscount.Items.Add("PWD");
+
+            // Logic: Senior Citizen Act (RA 9994) usually defines Senior as 60+
+            if (age >= 60)
+            {
+                cmbDiscount.Items.Add("Senior");
+                // Note: We usually don't add "Student" for 60+ 
+            }
+            else
+            {
+                // If under 60, they can be a student
+                cmbDiscount.Items.Add("Student");
+            }
+
+            // Restore selection if it's still valid, otherwise default to "None"
+            if (currentSelection != null && cmbDiscount.Items.Contains(currentSelection))
+            {
+                cmbDiscount.SelectedItem = currentSelection;
+            }
+            else
+            {
+                cmbDiscount.SelectedItem = "None";
+            }
+
+            // Re-enable event handler
             cmbDiscount.SelectedIndexChanged += CmbDiscount_SelectedIndexChanged;
 
-            lblPrice.Text = $"Price: {labelPrice}";
+            // Trigger visual update (show/hide buttons) based on the new selection
+            UpdateUploadButtonVisibility();
         }
+
+        private void UpdateUploadButtonVisibility()
+        {
+            bool isDiscounted = cmbDiscount.SelectedItem != null && cmbDiscount.SelectedItem.ToString() != "None";
+            btnUploadID.Visible = isDiscounted;
+            lblFileName.Visible = isDiscounted;
+        }
+
         private void TbPhone_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // Allow Backspace and control keys
-            if (char.IsControl(e.KeyChar))
-                return;
-
-            // Block non-numeric keys
-            if (!char.IsDigit(e.KeyChar))
-            {
-                e.Handled = true;
-                return;
-            }
+            if (char.IsControl(e.KeyChar)) return;
+            if (!char.IsDigit(e.KeyChar)) { e.Handled = true; return; }
 
             string currentText = tbPhone.Text;
 
-            // Enforce "09" prefix
-            if (currentText.Length == 0 && e.KeyChar != '0')
-            {
-                e.Handled = true; // First digit must be 0
-                return;
-            }
-
-            if (currentText.Length == 1 && e.KeyChar != '9')
-            {
-                e.Handled = true; // Second digit must be 9
-                return;
-            }
+            // Enforce "09" prefix logic
+            if (currentText.Length == 0 && e.KeyChar != '0') { e.Handled = true; return; }
+            if (currentText.Length == 1 && e.KeyChar != '9') { e.Handled = true; return; }
         }
-
 
         private void TbPhone_TextChanged(object sender, EventArgs e)
         {
-            // Enforce max length strictly (in case of pasted text)
             if (tbPhone.Text.Length > 11)
             {
                 tbPhone.Text = tbPhone.Text.Substring(0, 11);
-                tbPhone.SelectionStart = tbPhone.Text.Length; // keep cursor at end
+                tbPhone.SelectionStart = tbPhone.Text.Length;
             }
         }
 
-
-
         private void CmbDiscount_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Show upload button only if discounted
-            btnUploadID.Visible = cmbDiscount.SelectedItem.ToString() != "None";
-            lblFileName.Visible = cmbDiscount.SelectedItem.ToString() != "None";    
+            UpdateUploadButtonVisibility();
+
+            // Recalculate price immediately when discount changes (to reset price if None is selected)
+            CalculatePrice();
         }
 
         private void btnUploadID_Click(object sender, EventArgs e)
@@ -116,8 +169,7 @@ namespace FERRY_BOOKING.UC_Staff
                     lblFileName.Text = $"✓ {Path.GetFileName(dlg.FileName)}";
                     btnUploadID.Text = "Change ID";
 
-                    // 20 % discount on any discount type
-                    ApplyDiscount();
+                    CalculatePrice();
                 }
             }
         }
@@ -138,67 +190,71 @@ namespace FERRY_BOOKING.UC_Staff
             }
         }
 
-        private void ApplyDiscount()
+        private void CalculatePrice()
         {
-            if (IDImage == null || IDImage.Length == 0) return;   // safety
+            // Reset to base price first
+            Price = _basePrice;
 
-            Price *= 0.80m;                     // 20 % off
+            string selectedDiscount = cmbDiscount.SelectedItem?.ToString();
+
+            // Only apply discount if "None" is NOT selected AND we have an ID uploaded
+            if (selectedDiscount != "None" && IDImage != null && IDImage.Length > 0)
+            {
+                Price = _basePrice * 0.80m; // 20% off
+            }
+
             lblPrice.Text = $"Price: {Price.ToString("C", new CultureInfo("fil-PH"))}";
-
             PriceChanged?.Invoke();
         }
 
-        /// <summary>
-        /// Validates that all required fields are filled.
-        /// Returns true if valid, false otherwise with error message.
-        /// </summary>
         public bool ValidateInput(out string errorMessage)
         {
             errorMessage = string.Empty;
 
-            // Check Full Name
             if (string.IsNullOrWhiteSpace(PassengerName))
             {
                 errorMessage = $"Seat {SeatCode}: Full name is required.";
                 return false;
             }
 
-            // Check Age (should be > 0, already handled by NumericUpDown minimum)
-            if (PassengerAge <= 0)
+            // Min age 4 validation check (extra safety)
+            if (PassengerAge < 4)
             {
-                errorMessage = $"Seat {SeatCode}: Age must be greater than 0.";
+                errorMessage = $"Seat {SeatCode}: Minimum age for a seat booking is 4.";
                 return false;
             }
 
-            // Check Gender
             if (string.IsNullOrEmpty(PassengerGender))
             {
                 errorMessage = $"Seat {SeatCode}: Gender is required.";
                 return false;
             }
 
-            // Check Contact Number
-            if (string.IsNullOrWhiteSpace(ContactNumber))
+            if (string.IsNullOrWhiteSpace(ContactNumber) || ContactNumber.Length != 11)
             {
-                errorMessage = $"Seat {SeatCode}: Contact number is required.";
+                errorMessage = $"Seat {SeatCode}: A valid 11-digit Contact number is required.";
                 return false;
             }
 
-            // Check Discount Type
             if (string.IsNullOrEmpty(PassengerDiscount))
             {
                 errorMessage = $"Seat {SeatCode}: Discount type is required.";
                 return false;
             }
 
-            // Check Discount ID if discount is not "None"
+            // Specific Logic: If they selected Senior but changed age to < 60 manually somehow
+            if (PassengerDiscount == "Senior" && PassengerAge < 60)
+            {
+                errorMessage = $"Seat {SeatCode}: Senior Citizen discount requires age 60 or above.";
+                return false;
+            }
+
             if (PassengerDiscount != "None" && (IDImage == null || IDImage.Length == 0))
             {
                 errorMessage = $"Seat {SeatCode}: Discount ID is required for {PassengerDiscount} discount.";
                 return false;
             }
 
-            // Check Valid ID (required for all passengers)
             if (ValidIDImage == null || ValidIDImage.Length == 0)
             {
                 errorMessage = $"Seat {SeatCode}: Valid ID is required.";

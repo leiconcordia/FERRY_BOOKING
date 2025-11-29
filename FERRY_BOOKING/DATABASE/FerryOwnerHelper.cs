@@ -10,6 +10,34 @@ namespace FERRY_BOOKING.DATABASE
     internal class FerryOwnerHelper
     {
         private readonly DatabaseHelper db = new DatabaseHelper();
+        public bool IsFerryDuplicate(string ferryCode, string ferryName, int ownerId)
+        {
+            using (SqlConnection conn = db.GetConnection())
+            {
+                // SQL Logic: 
+                // 1. Check if FerryCode exists (Globally, because your table says UNIQUE)
+                // 2. OR Check if FerryName exists (For this specific OwnerID)
+                string query = @"
+            SELECT COUNT(1) 
+            FROM Ferry 
+            WHERE FerryCode = @FerryCode 
+               OR (FerryName = @FerryName AND OwnerID = @OwnerID)";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@FerryCode", ferryCode);
+                    cmd.Parameters.AddWithValue("@FerryName", ferryName);
+                    cmd.Parameters.AddWithValue("@OwnerID", ownerId);
+
+                    conn.Open();
+                    int count = (int)cmd.ExecuteScalar();
+
+                    // If count is greater than 0, a duplicate exists
+                    return count > 0;
+                }
+            }
+        }
+
 
         public bool RegisterFerryOwner(string firstName, string lastName, string companyName, string email, string password)
         {
@@ -1514,264 +1542,314 @@ namespace FERRY_BOOKING.DATABASE
             }
         }
 
-        /// <summary>
-        /// Checks for time conflicts for a proposed schedule against existing active trips for the same ferry.
-        /// - Applies to dates between startDate and endDate
-        /// - Applies only on the selected operating days (daysOfWeekCsv uses names like "Monday,Tuesday")
-        /// - Enforces a 30-minute buffer: newDep >= existing.Arrival + 30 OR newArr <= existing.Departure - 30
-        /// - If Editing a schedule, pass excludeScheduleID to ignore own trips
-        /// Returns:
-        ///   HasConflict: true if any conflicting trips found
-        ///   SuggestedEarliestDeparture: the max(existing.Arrival + 30) among conflicts (as a TimeSpan) to help user snap
-        ///   Details: rows of TripDate, DepartureTime, ArrivalTime for the conflicting instances (top list)
-        /// </summary>
-        public (bool HasConflict, TimeSpan? SuggestedEarliestDeparture, DataTable Details) CheckScheduleConflicts(
-            int ferryID,
-            DateTime startDate,
-            DateTime endDate,
-            string daysOfWeekCsv,
-            TimeSpan proposedDeparture,
-            TimeSpan proposedArrival,
-            int? excludeScheduleID = null
-        )
-        {
-            // Summary: count + suggested earliest departure
-            string summarySql = @"
-WITH Conflicts AS (
-    SELECT 
-        t.TripDate,
-        t.DepartureTime,
-        t.ArrivalTime,
-        DATEADD(minute, 30, t.ArrivalTime) AS AllowedAfter
-    FROM Trip t
-    WHERE t.FerryID = @FerryID
-      AND t.TripStatus = 'Active'
-      AND t.TripDate BETWEEN @StartDate AND @EndDate
-      AND EXISTS (
-            SELECT 1 
-            FROM string_split(@DaysCsv, ',') s 
-            WHERE UPPER(LTRIM(RTRIM(s.value))) = UPPER(DATENAME(weekday, t.TripDate))
-      )
-      -- Overlap check with 30-minute buffer
-      AND NOT (
-            @Dep >= DATEADD(minute, 30, t.ArrivalTime) 
-            OR 
-            @Arr <= DATEADD(minute, -30, t.DepartureTime)
-      )
-      AND (
-            @ExcludeScheduleID IS NULL OR ISNULL(t.ScheduleID, 0) <> @ExcludeScheduleID
-      )
-)
-SELECT 
-    COUNT(*) AS ConflictCount,
-    CAST(MAX(AllowedAfter) AS time) AS SuggestedDeparture
-FROM Conflicts;
-";
 
-            SqlParameter[] prms =
-            {
-                new SqlParameter("@FerryID", ferryID),
-                new SqlParameter("@StartDate", startDate.Date),
-                new SqlParameter("@EndDate", endDate.Date),
-                new SqlParameter("@DaysCsv", daysOfWeekCsv ?? string.Empty),
-                new SqlParameter("@Dep", proposedDeparture),
-                new SqlParameter("@Arr", proposedArrival),
-                new SqlParameter("@ExcludeScheduleID", (object?)excludeScheduleID ?? DBNull.Value),
-            };
-
-            DataTable summary = db.ExecuteDataTable(summarySql, prms);
-            int conflictCount = 0;
-            TimeSpan? suggested = null;
-
-            if (summary.Rows.Count > 0)
-            {
-                conflictCount = summary.Rows[0]["ConflictCount"] != DBNull.Value
-                    ? Convert.ToInt32(summary.Rows[0]["ConflictCount"])
-                    : 0;
-
-                if (summary.Rows[0]["SuggestedDeparture"] != DBNull.Value)
-                    suggested = (TimeSpan)summary.Rows[0]["SuggestedDeparture"];
-            }
-
-            DataTable details = new DataTable();
-
-            if (conflictCount > 0)
-            {
-                string detailsSql = @"
-WITH Conflicts AS (
-    SELECT 
-        t.TripDate,
-        t.DepartureTime,
-        t.ArrivalTime,
-        DATEADD(minute, 30, t.ArrivalTime) AS AllowedAfter
-    FROM Trip t
-    WHERE t.FerryID = @FerryID
-      AND t.TripStatus = 'Active'
-      AND t.TripDate BETWEEN @StartDate AND @EndDate
-      AND EXISTS (
-            SELECT 1 
-            FROM string_split(@DaysCsv, ',') s 
-            WHERE UPPER(LTRIM(RTRIM(s.value))) = UPPER(DATENAME(weekday, t.TripDate))
-      )
-      AND NOT (
-            @Dep >= DATEADD(minute, 30, t.ArrivalTime) 
-            OR 
-            @Arr <= DATEADD(minute, -30, t.DepartureTime)
-      )
-      AND (
-            @ExcludeScheduleID IS NULL OR ISNULL(t.ScheduleID, 0) <> @ExcludeScheduleID
-      )
-)
-SELECT TOP 10 
-    TripDate, 
-    DepartureTime, 
-    ArrivalTime,
-    CAST(AllowedAfter AS time) AS EarliestAllowedAfter
-FROM Conflicts
-ORDER BY TripDate, DepartureTime;
-";
-                details = db.ExecuteDataTable(detailsSql, prms);
-            }
-
-            return (conflictCount > 0, suggested, details);
-        }
-
-        /// <summary>
-        /// Checks for conflicting trips for a given ferry, route, and date range with time overlap detection.
-        /// Returns detailed conflict information including specific conflicting trip instances.
-        /// - Checks trips on same ferry with same route
-        /// - Enforces time conflict: trips on the same day cannot overlap
-        /// - IMMEDIATE ABORT if same ferry + same route + same date + overlapping times
-        /// </summary>
-        public (bool HasConflict, string ConflictMessage, DataTable ConflictDetails) CheckTripConflicts(
+        public (bool hasConflict, string message, DataTable details) CheckTripConflicts(
             int ferryID,
             int routeID,
             DateTime startDate,
             DateTime endDate,
-            string daysOfWeekCsv,
-            TimeSpan proposedDeparture,
-            TimeSpan proposedArrival,
-            int? excludeScheduleID = null
-        )
+            string operatingDays,
+            DateTime newDeparture,
+            DateTime newArrival)
         {
-            try
+            // 1. Setup
+            bool hasConflict = false;
+            string message = "";
+            DataTable conflictTable = new DataTable();
+            conflictTable.Columns.Add("Ferry", typeof(string));
+            conflictTable.Columns.Add("ConflictType", typeof(string));
+            conflictTable.Columns.Add("Time", typeof(string));
+            conflictTable.Columns.Add("DateRange", typeof(string));
+
+            string myOrigin = "";
+            string myDestination = "";
+            TimeSpan myDep = newDeparture.TimeOfDay;
+            TimeSpan myArr = newArrival.TimeOfDay;
+            TimeSpan oneHour = TimeSpan.FromHours(1);
+
+            using (SqlConnection conn = db.GetConnection())
             {
-                using (SqlConnection conn = db.GetConnection())
+                conn.Open();
+
+                // ---------------------------------------------------------
+                // SECTION 0: GET MY ROUTE INFO
+                // ---------------------------------------------------------
+                using (SqlCommand cmd = new SqlCommand("SELECT Origin, Destination FROM Route WHERE RouteID = @rid", conn))
                 {
-                    conn.Open();
-
-                    // Query to find conflicting trips
-                    string conflictQuery = @"
-WITH Conflicts AS (
-    SELECT 
-        t.TripID,
-        t.TripDate,
-        t.DepartureTime,
-        t.ArrivalTime,
-        t.ScheduleID,
-        f.FerryName,
-        r.Origin + ' -> ' + r.Destination AS RouteName,
-        CASE 
-            -- Exact overlap or departure during existing trip
-            WHEN @ProposedDep < t.ArrivalTime AND @ProposedArr > t.DepartureTime THEN 'Time Overlap'
-            -- Proposed trip starts before existing ends
-            WHEN @ProposedDep >= t.DepartureTime AND @ProposedDep < t.ArrivalTime THEN 'Departure Conflict'
-            -- Proposed trip ends after existing starts
-            WHEN @ProposedArr > t.DepartureTime AND @ProposedArr <= t.ArrivalTime THEN 'Arrival Conflict'
-            -- Proposed trip encompasses existing trip
-            WHEN @ProposedDep <= t.DepartureTime AND @ProposedArr >= t.ArrivalTime THEN 'Complete Overlap'
-            ELSE 'Unknown Conflict'
-        END AS ConflictType
-    FROM Trip t
-    INNER JOIN Ferry f ON t.FerryID = f.FerryID
-    INNER JOIN Route r ON t.RouteID = r.RouteID
-    WHERE t.FerryID = @FerryID
-      AND t.RouteID = @RouteID
-      AND t.TripStatus = 'Active'
-      AND t.TripDate BETWEEN @StartDate AND @EndDate
-      AND EXISTS (
-            SELECT 1 
-            FROM string_split(@DaysCsv, ',') s 
-            WHERE UPPER(LTRIM(RTRIM(s.value))) = UPPER(DATENAME(weekday, t.TripDate))
-      )
-      -- Time conflict check: overlapping times on same day
-      AND NOT (
-            @ProposedArr <= t.DepartureTime OR @ProposedDep >= t.ArrivalTime
-      )
-      AND (@ExcludeScheduleID IS NULL OR ISNULL(t.ScheduleID, 0) <> @ExcludeScheduleID)
-)
-SELECT 
-    TripID,
-    CONVERT(VARCHAR(10), TripDate, 120) AS TripDate,
-    CONVERT(VARCHAR(8), DepartureTime, 108) AS DepartureTime,
-    CONVERT(VARCHAR(8), ArrivalTime, 108) AS ArrivalTime,
-    FerryName,
-    RouteName,
-    ConflictType,
-    DATENAME(weekday, TripDate) AS DayOfWeek
-FROM Conflicts
-ORDER BY TripDate, DepartureTime;";
-
-                    using (SqlCommand cmd = new SqlCommand(conflictQuery, conn))
+                    cmd.Parameters.AddWithValue("@rid", routeID);
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        // Explicitly set parameter types to avoid conversion issues
-                        cmd.Parameters.Add("@FerryID", SqlDbType.Int).Value = ferryID;
-                        cmd.Parameters.Add("@RouteID", SqlDbType.Int).Value = routeID;
-                        cmd.Parameters.Add("@StartDate", SqlDbType.Date).Value = startDate.Date;
-                        cmd.Parameters.Add("@EndDate", SqlDbType.Date).Value = endDate.Date;
-                        cmd.Parameters.Add("@DaysCsv", SqlDbType.NVarChar).Value = daysOfWeekCsv ?? string.Empty;
-                        cmd.Parameters.Add("@ProposedDep", SqlDbType.Time).Value = proposedDeparture;
-                        cmd.Parameters.Add("@ProposedArr", SqlDbType.Time).Value = proposedArrival;
-                        cmd.Parameters.Add("@ExcludeScheduleID", SqlDbType.Int).Value = (object)excludeScheduleID ?? DBNull.Value;
-
-                        DataTable conflictDetails = new DataTable();
-                        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                        if (rdr.Read())
                         {
-                            adapter.Fill(conflictDetails);
+                            myOrigin = rdr["Origin"].ToString();
+                            myDestination = rdr["Destination"].ToString();
                         }
+                    }
+                }
 
-                        if (conflictDetails.Rows.Count > 0)
+                // ---------------------------------------------------------
+                // SECTION -1: THE "GHOST SHIP" CHECK (Previous Location) 👻
+                // ---------------------------------------------------------
+                string historyQuery = @"
+            SELECT TOP 1 r.Destination, s.EndDate, s.ArrivalTime
+            FROM Schedule s
+            JOIN Route r ON s.RouteID = r.RouteID
+            WHERE s.FerryID = @FerryID
+            AND s.IsActive = 1
+            AND s.EndDate < @StartDate -- Strictly before our new start
+            ORDER BY s.EndDate DESC, s.ArrivalTime DESC";
+
+                using (SqlCommand cmd = new SqlCommand(historyQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@FerryID", ferryID);
+                    cmd.Parameters.AddWithValue("@StartDate", startDate.Date);
+
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        if (rdr.Read())
                         {
-                            // Build detailed conflict message
-                            StringBuilder conflictMsg = new StringBuilder();
-                            conflictMsg.AppendLine("⚠️ SCHEDULE CONFLICT DETECTED ⚠️");
-                            conflictMsg.AppendLine();
-                            conflictMsg.AppendLine($"Found {conflictDetails.Rows.Count} conflicting trip(s):");
-                            conflictMsg.AppendLine();
+                            string lastPort = rdr["Destination"].ToString();
+                            DateTime lastDate = Convert.ToDateTime(rdr["EndDate"]);
 
-                            int displayCount = Math.Min(5, conflictDetails.Rows.Count);
-                            for (int i = 0; i < displayCount; i++)
+                            // RULE: If the boat ended in CEBU, the new schedule MUST start in CEBU.
+                            if (lastPort != myOrigin)
                             {
-                                DataRow row = conflictDetails.Rows[i];
-                                conflictMsg.AppendLine($"• {row["TripDate"]} ({row["DayOfWeek"]})");
-                                conflictMsg.AppendLine($"  Existing: {row["DepartureTime"]} - {row["ArrivalTime"]}");
-                                conflictMsg.AppendLine($"  Conflict: {row["ConflictType"]}");
-                                conflictMsg.AppendLine();
+                                TimeSpan gap = startDate.Date - lastDate.Date;
+
+                                // If gap is less than 24 hours, we flag it.
+                                if (gap.TotalHours < 24)
+                                {
+                                    hasConflict = true;
+
+                                    // ✅ CALCULATE THE SAFE DATE (1 Day After)
+                                    DateTime safeDate = lastDate.AddDays(1);
+
+                                    message += $"⚠️ IMPOSSIBLE STARTING LOCATION!\n" +
+                                               $"This ferry's last known location is '{lastPort}' (ended on {lastDate:MMM dd, yyyy}).\n" +
+                                               $"It cannot start at '{myOrigin}' on {startDate:MMM dd} without travel time.\n\n" +
+                                               $"💡 SUGGESTION: Schedule this trip starting on or after {safeDate:MMMM dd, yyyy} to allow the ferry to travel to {myOrigin}.\n\n";
+
+                                    conflictTable.Rows.Add("THIS FERRY", "Teleportation", "Start of Sched", "Location Mismatch");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ---------------------------------------------------------
+                // SECTION 1: "LANE LOYALTY" CHECK (Exclusive Route Pair) 🔒
+                // ---------------------------------------------------------
+                string laneQuery = @"
+            SELECT DISTINCT r.Origin, r.Destination
+            FROM Schedule s
+            JOIN Route r ON s.RouteID = r.RouteID
+            WHERE s.FerryID = @FerryID
+            AND s.IsActive = 1
+            AND (s.StartDate <= @EndDate AND s.EndDate >= @StartDate)";
+
+                using (SqlCommand cmd = new SqlCommand(laneQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@FerryID", ferryID);
+                    cmd.Parameters.AddWithValue("@StartDate", startDate.Date);
+                    cmd.Parameters.AddWithValue("@EndDate", endDate.Date);
+
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            string existingOrigin = rdr["Origin"].ToString();
+                            string existingDest = rdr["Destination"].ToString();
+
+                            bool isSameLane =
+                                (existingOrigin == myOrigin && existingDest == myDestination) ||
+                                (existingOrigin == myDestination && existingDest == myOrigin);
+
+                            if (!isSameLane)
+                            {
+                                hasConflict = true;
+                                message += $"⚠️ ROUTE LOCK VIOLATION!\n" +
+                                           $"This ferry is exclusively assigned to the '{existingOrigin}-{existingDest}' lane for these dates.\n" +
+                                           $"You cannot schedule a trip to {myDestination} until the previous contract ends.\n\n";
+
+                                conflictTable.Rows.Add("THIS FERRY", "Lane Violation", "N/A", "Date Range Conflict");
+                            }
+                        }
+                    }
+                }
+
+                // ---------------------------------------------------------
+                // SECTION 2: "PHYSICS ENGINE" (Teleportation Check) 👻
+                // ---------------------------------------------------------
+                // We fetch ALL trips for this ferry on the overlapping days to check the sequence.
+
+                var dailyItinerary = new List<(TimeSpan Dep, TimeSpan Arr, string Org, string Dest, string Source)>();
+                dailyItinerary.Add((myDep, myArr, myOrigin, myDestination, "NEW TRIP"));
+
+                string physicsQuery = @"
+            SELECT s.DepartureTime, s.ArrivalTime, r.Origin, r.Destination, s.DaysOfWeek
+            FROM Schedule s
+            JOIN Route r ON s.RouteID = r.RouteID
+            WHERE s.FerryID = @FerryID
+            AND s.IsActive = 1
+            AND (s.StartDate <= @EndDate AND s.EndDate >= @StartDate)";
+
+                using (SqlCommand cmd = new SqlCommand(physicsQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@FerryID", ferryID);
+                    cmd.Parameters.AddWithValue("@StartDate", startDate.Date);
+                    cmd.Parameters.AddWithValue("@EndDate", endDate.Date);
+
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            string existingDays = rdr["DaysOfWeek"].ToString();
+                            if (!AreDaysOverlapping(operatingDays, existingDays)) continue;
+
+                            dailyItinerary.Add((
+                                (TimeSpan)rdr["DepartureTime"],
+                                (TimeSpan)rdr["ArrivalTime"],
+                                rdr["Origin"].ToString(),
+                                rdr["Destination"].ToString(),
+                                "EXISTING"
+                            ));
+                        }
+                    }
+                }
+
+                // Sort by Time 🕒
+                dailyItinerary = dailyItinerary.OrderBy(x => x.Dep).ToList();
+
+                for (int i = 0; i < dailyItinerary.Count - 1; i++)
+                {
+                    var currentTrip = dailyItinerary[i];
+                    var nextTrip = dailyItinerary[i + 1];
+
+                    // 1. Time Overlap Check
+                    if (currentTrip.Arr > nextTrip.Dep)
+                    {
+                        if (currentTrip.Source == "NEW TRIP" || nextTrip.Source == "NEW TRIP")
+                        {
+                            hasConflict = true;
+                            message += $"⚠️ TIME OVERLAP!\n" +
+                                       $"Trip ({currentTrip.Org}-{currentTrip.Dest}) ends at {currentTrip.Arr:hh\\:mm},\n" +
+                                       $"but the next trip starts at {nextTrip.Dep:hh\\:mm}.\n\n";
+                            conflictTable.Rows.Add("THIS FERRY", "Time Overlap", currentTrip.Arr.ToString(), "N/A");
+                        }
+                    }
+                    // 2. Teleportation Check (Location Mismatch) 🛑
+                    else if (currentTrip.Dest != nextTrip.Org)
+                    {
+                        if (currentTrip.Source == "NEW TRIP" || nextTrip.Source == "NEW TRIP")
+                        {
+                            hasConflict = true;
+
+                            // 💡 THE UPGRADE: Dynamic Suggestion for Same-Day conflicts
+                            string suggestion = "";
+
+                            // If the gap is tight (less than 2 hours), suggest next day
+                            double gapHours = (nextTrip.Dep - currentTrip.Arr).TotalHours;
+
+                            if (gapHours < 4) // Assuming it takes >4 hours to move empty
+                            {
+                                suggestion = $"💡 SUGGESTION: The ferry finishes in {currentTrip.Dest} at {currentTrip.Arr:hh\\:mm}.\n" +
+                                             $"It cannot reach {nextTrip.Org} by {nextTrip.Dep:hh\\:mm}.\n" +
+                                             $"Please schedule this trip on the NEXT DAY to allow travel time.";
+                            }
+                            else
+                            {
+                                suggestion = $"💡 SUGGESTION: You need a 'Deadhead' (empty) trip to move the ferry from {currentTrip.Dest} to {nextTrip.Org} between {currentTrip.Arr:hh\\:mm} and {nextTrip.Dep:hh\\:mm}.";
                             }
 
-                            if (conflictDetails.Rows.Count > 5)
-                            {
-                                conflictMsg.AppendLine($"... and {conflictDetails.Rows.Count - 5} more conflict(s)");
-                                conflictMsg.AppendLine();
-                            }
+                            message += $"⚠️ IMPOSSIBLE LOCATION (SAME DAY)!\n" +
+                                       $"Ferry arrives in {currentTrip.Dest} at {currentTrip.Arr:hh\\:mm}.\n" +
+                                       $"But acts like it starts from {nextTrip.Org} at {nextTrip.Dep:hh\\:mm}.\n\n" +
+                                       $"{suggestion}\n\n";
 
-                            conflictMsg.AppendLine("❌ Cannot create schedule due to time conflicts.");
-                            conflictMsg.AppendLine("Please adjust departure/arrival times or operating days.");
-
-                            return (true, conflictMsg.ToString(), conflictDetails);
+                            conflictTable.Rows.Add("THIS FERRY", "Teleportation", nextTrip.Dep.ToString(), "Location Mismatch");
                         }
+                    }
+                }
 
-                        return (false, "No conflicts detected.", conflictDetails);
+                // ---------------------------------------------------------
+                // SECTION 3: PORT CONGESTION (The 1-Hour Rule) 🚦
+                // ---------------------------------------------------------
+                string portQuery = @"
+            SELECT f.FerryName, r.Origin, r.Destination, s.DepartureTime, s.ArrivalTime, s.DaysOfWeek 
+            FROM Schedule s
+            JOIN Route r ON s.RouteID = r.RouteID
+            JOIN Ferry f ON s.FerryID = f.FerryID
+            WHERE s.IsActive = 1
+            AND s.FerryID != @FerryID 
+            AND (r.Origin = @Origin OR r.Destination = @Dest)
+            AND (s.StartDate <= @EndDate AND s.EndDate >= @StartDate)";
+
+                using (SqlCommand cmd = new SqlCommand(portQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@FerryID", ferryID);
+                    cmd.Parameters.AddWithValue("@Origin", myOrigin);
+                    cmd.Parameters.AddWithValue("@Dest", myDestination);
+                    cmd.Parameters.AddWithValue("@StartDate", startDate.Date);
+                    cmd.Parameters.AddWithValue("@EndDate", endDate.Date);
+
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            string existingDays = rdr["DaysOfWeek"].ToString();
+                            if (!AreDaysOverlapping(operatingDays, existingDays)) continue;
+
+                            TimeSpan otherDep = (TimeSpan)rdr["DepartureTime"];
+                            TimeSpan otherArr = (TimeSpan)rdr["ArrivalTime"];
+                            string otherFerry = rdr["FerryName"].ToString();
+
+                            if (rdr["Origin"].ToString() == myOrigin)
+                            {
+                                if (Math.Abs((myDep - otherDep).TotalMinutes) < 60)
+                                {
+                                    hasConflict = true;
+                                    message += $"⚠️ PORT CONGESTION ({myOrigin}): {otherFerry} departs at {otherDep:hh\\:mm}.\n";
+                                    conflictTable.Rows.Add(otherFerry, "Traffic", otherDep.ToString(), "N/A");
+                                }
+                            }
+                            if (rdr["Destination"].ToString() == myDestination)
+                            {
+                                if (Math.Abs((myArr - otherArr).TotalMinutes) < 60)
+                                {
+                                    hasConflict = true;
+                                    message += $"⚠️ PORT CONGESTION ({myDestination}): {otherFerry} arrives at {otherArr:hh\\:mm}.\n";
+                                    conflictTable.Rows.Add(otherFerry, "Traffic", otherArr.ToString(), "N/A");
+                                }
+                            }
+                        }
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                return (false, $"Error checking conflicts: {ex.Message}", new DataTable());
-            }
+
+            if (!hasConflict) message = "Schedule is Valid! ✅";
+
+            return (hasConflict, message, conflictTable);
+        }
+
+
+
+        // Helper to compare "Monday, Wednesday" vs "Wednesday, Friday"
+        private bool AreDaysOverlapping(string myDays, string otherDays)
+        {
+            var mySet = new HashSet<string>(myDays.Split(','));
+            var otherSet = new HashSet<string>(otherDays.Split(','));
+
+            // Returns true if they share ANY day
+            return mySet.Overlaps(otherSet);
         }
     }
-    public class ValidationResult
+
+
+
+
+/// </summary>
+
+public class ValidationResult
     {
         public bool CanProceed { get; set; }
         public string Message { get; set; }

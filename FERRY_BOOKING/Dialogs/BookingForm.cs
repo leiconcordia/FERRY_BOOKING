@@ -28,6 +28,8 @@ namespace FERRY_BOOKING.Dialogs
         private string _destination;
         private string _tripDate;
 
+        // Store current floor number
+        private int _currentFloorNumber;
 
         private DATABASE.StaffHelper db = new DATABASE.StaffHelper();
 
@@ -52,6 +54,7 @@ namespace FERRY_BOOKING.Dialogs
                 int rows = Convert.ToInt32(dt.Rows[0]["Rows"]);
                 int cols = Convert.ToInt32(dt.Rows[0]["Columns"]);
 
+                _currentFloorNumber = floorNumber;
                 GenerateSeatPlan(floorNumber, rows, cols);
 
                 decimal seatPrice = db.GetTripFloorPrice(this.TripID, floorNumber);
@@ -59,7 +62,8 @@ namespace FERRY_BOOKING.Dialogs
                 // show price to user or store it
                 lblPrice.Text = seatPrice.ToString("C", new System.Globalization.CultureInfo("fil-PH"));
 
-
+                // Update available seats label and numeric up/down
+                UpdateAvailableSeatsDisplay(floorNumber);
 
                 // ✅ Highlight the first floor button
                 if (firstFloorButton != null)
@@ -114,6 +118,36 @@ namespace FERRY_BOOKING.Dialogs
         }
 
 
+        private void UpdateAvailableSeatsDisplay(int floorNumber)
+        {
+            // Calculate truly available seats (total - booked only, ignore selected)
+            int totalSeats = tlpSeats.Controls.OfType<Button>().Count();
+            int bookedSeats = tlpSeats.Controls.OfType<Button>().Count(btn => !btn.Enabled);
+            int availableSeats = totalSeats - bookedSeats;
+
+            // Update label - this never changes when seats are selected
+            lblSeatsAvailable.Text = $"Seats Available: {availableSeats}";
+
+            // Update NumericUpDown maximum value
+            if (availableSeats > 0)
+            {
+                nudSelectSeats.Maximum = availableSeats;
+                nudSelectSeats.Minimum = 1;
+
+                // Set value to 1 if current value exceeds new maximum
+                if (nudSelectSeats.Value > availableSeats)
+                {
+                    nudSelectSeats.Value = availableSeats;
+                }
+            }
+            else
+            {
+                // No seats available
+                nudSelectSeats.Maximum = 1;
+                nudSelectSeats.Minimum = 0;
+                nudSelectSeats.Value = 0;
+            }
+        }
 
 
         private void GenerateSeatPlan(int floorNumber, int rows, int cols)
@@ -206,6 +240,8 @@ namespace FERRY_BOOKING.Dialogs
                                 UpdateTotalPrice();
                             }
 
+                            // Note: We don't call UpdateAvailableSeatsDisplay here anymore
+                            // because the label should remain constant
                             return;
                         }
 
@@ -221,6 +257,7 @@ namespace FERRY_BOOKING.Dialogs
                         flpPassengerInfo.Controls.Add(passengerForm);
                         passengerForm.PriceChanged += (() => UpdateTotalPrice());
                         UpdateTotalPrice();
+                        // Note: We don't call UpdateAvailableSeatsDisplay here anymore
 
                         PassengerPanel.Visible = true;
                     };
@@ -287,6 +324,9 @@ namespace FERRY_BOOKING.Dialogs
 
                     UpdateTotalPrice();
 
+                    // Update current floor
+                    _currentFloorNumber = flrNum;
+
                     // Load the seat plan for the selected floor
                     GenerateSeatPlan(flrNum, flrRows, flrCols);
 
@@ -295,6 +335,9 @@ namespace FERRY_BOOKING.Dialogs
 
                     // show price to user or store it
                     lblPrice.Text = seatPrice.ToString("C", new System.Globalization.CultureInfo("fil-PH"));
+
+                    // Update available seats display
+                    UpdateAvailableSeatsDisplay(flrNum);
 
                 };
 
@@ -306,6 +349,52 @@ namespace FERRY_BOOKING.Dialogs
             }
         }
 
+
+        private void SelectFirstNSeats(int count)
+        {
+            // Get all available seats (not booked, not already selected)
+            var availableSeats = tlpSeats.Controls.OfType<Button>()
+                .Where(btn => btn.Enabled && btn.BackColor != Color.LightGreen)
+                .Take(count)
+                .ToList();
+
+            // Check if we have enough seats
+            if (availableSeats.Count < count)
+            {
+                MessageBox.Show($"Only {availableSeats.Count} seat(s) available to select.",
+                               "Insufficient Seats",
+                               MessageBoxButtons.OK,
+                               MessageBoxIcon.Information);
+            }
+
+            decimal seatPrice = db.GetTripFloorPrice(this.TripID, _currentFloorNumber);
+
+            // Ensure dictionary contains floor entry
+            if (!selectedSeatsByFloor.ContainsKey(_currentFloorNumber))
+                selectedSeatsByFloor[_currentFloorNumber] = new HashSet<string>();
+
+            foreach (Button seat in availableSeats)
+            {
+                string seatCode = seat.Tag.ToString();
+
+                // Select the seat visually
+                seat.BackColor = Color.LightGreen;
+                selectedSeatsByFloor[_currentFloorNumber].Add(seatCode);
+
+                // Add passenger form
+                PassengerInfoControl passengerForm = new PassengerInfoControl(seatCode, seatPrice)
+                {
+                    SeatCode = seatCode
+                };
+
+                flpPassengerInfo.Controls.Add(passengerForm);
+                passengerForm.PriceChanged += (() => UpdateTotalPrice());
+            }
+
+            UpdateTotalPrice();
+            // Note: We don't update the available seats label here anymore
+            PassengerPanel.Visible = true;
+        }
 
 
         private string GenerateBookingRef()
@@ -388,6 +477,27 @@ namespace FERRY_BOOKING.Dialogs
         {
             this.Close();
         }
+
+        private void nudSelectSeats_ValueChanged(object sender, EventArgs e)
+        {
+            // Just for validation or future use
+        }
+
+        private void btnSelectSeats_Click(object sender, EventArgs e)
+        {
+            int seatCount = (int)nudSelectSeats.Value;
+
+            if (seatCount <= 0)
+            {
+                MessageBox.Show("Please enter a valid number of seats to select.",
+                               "Invalid Input",
+                               MessageBoxButtons.OK,
+                               MessageBoxIcon.Warning);
+                return;
+            }
+
+            SelectFirstNSeats(seatCount);
+        }
     }
 
     public class TicketData
@@ -415,5 +525,5 @@ namespace FERRY_BOOKING.Dialogs
         public string ContactNumber { get; set; }  // New: Required Contact Number
         public decimal Price { get; set; }
     }
-    
+
 }

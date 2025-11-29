@@ -38,6 +38,11 @@
             label2 = new Label();
             label1 = new Label();
             SeatPanel = new Panel();
+            btnSelectSeats = new Button();
+            nudSelectSeats = new NumericUpDown();
+            label9 = new Label();
+            lblSeatsAvailable = new Label();
+            lblPrice = new Label();
             label = new Label();
             tlpSeats = new TableLayoutPanel();
             label6 = new Label();
@@ -50,9 +55,9 @@
             btnGenerateTicket = new Button();
             label7 = new Label();
             flpPassengerInfo = new FlowLayoutPanel();
-            lblPrice = new Label();
             panel1.SuspendLayout();
             SeatPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudSelectSeats).BeginInit();
             PassengerPanel.SuspendLayout();
             SuspendLayout();
             // 
@@ -163,6 +168,10 @@
             // SeatPanel
             // 
             SeatPanel.BackColor = SystemColors.ButtonHighlight;
+            SeatPanel.Controls.Add(btnSelectSeats);
+            SeatPanel.Controls.Add(nudSelectSeats);
+            SeatPanel.Controls.Add(label9);
+            SeatPanel.Controls.Add(lblSeatsAvailable);
             SeatPanel.Controls.Add(lblPrice);
             SeatPanel.Controls.Add(label);
             SeatPanel.Controls.Add(tlpSeats);
@@ -174,10 +183,61 @@
             SeatPanel.Size = new Size(537, 583);
             SeatPanel.TabIndex = 1;
             // 
+            // btnSelectSeats
+            // 
+            btnSelectSeats.BackColor = Color.FromArgb(30, 64, 175);
+            btnSelectSeats.ForeColor = SystemColors.ButtonHighlight;
+            btnSelectSeats.Location = new Point(393, 146);
+            btnSelectSeats.Name = "btnSelectSeats";
+            btnSelectSeats.Size = new Size(119, 32);
+            btnSelectSeats.TabIndex = 17;
+            btnSelectSeats.Text = "Select Seats";
+            btnSelectSeats.UseVisualStyleBackColor = false;
+            btnSelectSeats.Click += btnSelectSeats_Click;
+            // 
+            // nudSelectSeats
+            // 
+            nudSelectSeats.Location = new Point(288, 149);
+            nudSelectSeats.Maximum = new decimal(new int[] { 50, 0, 0, 0 });
+            nudSelectSeats.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            nudSelectSeats.Name = "nudSelectSeats";
+            nudSelectSeats.Size = new Size(99, 27);
+            nudSelectSeats.TabIndex = 16;
+            nudSelectSeats.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            nudSelectSeats.ValueChanged += nudSelectSeats_ValueChanged;
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(223, 151);
+            label9.Name = "label9";
+            label9.Size = new Size(59, 20);
+            label9.TabIndex = 15;
+            label9.Text = "Select: ";
+            // 
+            // lblSeatsAvailable
+            // 
+            lblSeatsAvailable.AutoSize = true;
+            lblSeatsAvailable.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblSeatsAvailable.Location = new Point(288, 7);
+            lblSeatsAvailable.Name = "lblSeatsAvailable";
+            lblSeatsAvailable.Size = new Size(153, 23);
+            lblSeatsAvailable.TabIndex = 14;
+            lblSeatsAvailable.Text = "Seats Available: 0";
+            // 
+            // lblPrice
+            // 
+            lblPrice.AutoSize = true;
+            lblPrice.Location = new Point(60, 151);
+            lblPrice.Name = "lblPrice";
+            lblPrice.Size = new Size(17, 20);
+            lblPrice.TabIndex = 13;
+            lblPrice.Text = "0";
+            // 
             // label
             // 
             label.AutoSize = true;
-            label.Location = new Point(19, 161);
+            label.Location = new Point(19, 151);
             label.Name = "label";
             label.Size = new Size(48, 20);
             label.TabIndex = 12;
@@ -304,15 +364,6 @@
             flpPassengerInfo.TabIndex = 10;
             flpPassengerInfo.WrapContents = false;
             // 
-            // lblPrice
-            // 
-            lblPrice.AutoSize = true;
-            lblPrice.Location = new Point(60, 161);
-            lblPrice.Name = "lblPrice";
-            lblPrice.Size = new Size(17, 20);
-            lblPrice.TabIndex = 13;
-            lblPrice.Text = "0";
-            // 
             // BookingForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -327,6 +378,7 @@
             panel1.PerformLayout();
             SeatPanel.ResumeLayout(false);
             SeatPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudSelectSeats).EndInit();
             PassengerPanel.ResumeLayout(false);
             PassengerPanel.PerformLayout();
             ResumeLayout(false);
@@ -357,5 +409,9 @@
         private Label label8;
         private Label label;
         private Label lblPrice;
+        private Label lblSeatsAvailable;
+        private NumericUpDown nudSelectSeats;
+        private Label label9;
+        private Button btnSelectSeats;
     }
 }

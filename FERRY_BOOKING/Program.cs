@@ -15,9 +15,9 @@ namespace FERRY_BOOKING
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
 
-          //Application.Run(new StaffLoginForm());
-         // Application.Run(new StaffForm());
-        Application.Run(new OwnerForm(1, "supercat@gmail.com", "Lei", "Gwapo", "supercat"));
+              //Application.Run(new StaffLoginForm());
+              //Application.Run(new StaffForm());
+               Application.Run(new OwnerForm(1, "supercat@gmail.com", "Lei", "Gwapo", "supercat"));
         }
     }
 }

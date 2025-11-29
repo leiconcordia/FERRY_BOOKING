@@ -31,6 +31,7 @@ namespace FERRY_BOOKING.UC_Staff
                     SELECT 
                         b.BookingID,
                         b.BookingRef AS [Booking Ref],
+                        t.TripDate,
                         FORMAT(t.TripDate, 'MMM dd, yyyy') AS [Travel Date],
                         STRING_AGG(bp.FullName, ', ') AS Passengers,
                         COUNT(DISTINCT bp.PassengerID) AS Seats,
@@ -44,6 +45,7 @@ namespace FERRY_BOOKING.UC_Staff
                         END AS Status,
                         u.CompanyName + ' - ' + f.FerryName AS [Ferry],
                         r.Origin + ' → ' + r.Destination AS Route,
+                        b.BookingDate,
                         FORMAT(b.BookingDate, 'MMM dd, yyyy hh:mm tt') AS [Booking Date]
                     FROM Booking b
                     INNER JOIN Trip t ON b.TripID = t.TripID
@@ -90,6 +92,12 @@ namespace FERRY_BOOKING.UC_Staff
 
             if (dgvManageBookings.Columns.Contains("Booking Date"))
                 dgvManageBookings.Columns["Booking Date"].Visible = false;
+
+            if (dgvManageBookings.Columns.Contains("TripDate"))
+                dgvManageBookings.Columns["TripDate"].Visible = false;
+
+            if (dgvManageBookings.Columns.Contains("BookingDate"))
+                dgvManageBookings.Columns["BookingDate"].Visible = false;
 
             // Auto size columns
             dgvManageBookings.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
@@ -139,7 +147,6 @@ namespace FERRY_BOOKING.UC_Staff
 
             dgvManageBookings.CellClick -= dgvManageBookings_CellClick;
             dgvManageBookings.CellClick += dgvManageBookings_CellClick;
-
         }
 
         private void DgvManageBookings_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
@@ -203,25 +210,89 @@ namespace FERRY_BOOKING.UC_Staff
             FilterBookings();
         }
 
+        private void DateFilterMode_CheckedChanged(object sender, EventArgs e)
+        {
+            FilterBookings();
+        }
+
+        private void monthCalendar_DateChanged(object sender, DateRangeEventArgs e)
+        {
+            FilterBookings();
+        }
+
+        private void btnClearFilter_Click(object sender, EventArgs e)
+        {
+            // 1. Reset the UI controls
+            // (Note: To prevent double-triggering if you have events on these controls, 
+            // you might want to temporarily detach events, but for now, this order is fine).
+            rbFilterAll.Checked = true;
+            monthCalendar.SetDate(DateTime.Today);
+            txtSearch.Clear();
+
+            // 2. Clear the actual filter on the data view immediately
+            if (allBookingsData != null)
+            {
+                allBookingsData.DefaultView.RowFilter = string.Empty;
+            }
+
+            // 3. Re-apply the logic (which will now see empty filters)
+            FilterBookings();
+        }
+
         private void FilterBookings()
         {
             if (allBookingsData == null) return;
 
             string searchText = txtSearch.Text.Trim().ToLower();
+            DataView dv = allBookingsData.DefaultView;
+            List<string> filters = new List<string>();
 
-            if (string.IsNullOrEmpty(searchText))
+            // ... (Your existing Search Filter logic here) ...
+            if (!string.IsNullOrEmpty(searchText))
             {
-                dgvManageBookings.DataSource = allBookingsData;
-                LoadAllBookings();
+                filters.Add(string.Format(
+                    "([Booking Ref] LIKE '%{0}%' OR Passengers LIKE '%{0}%')",
+                    searchText.Replace("'", "''")));
+            }
+
+            // ... (Your existing Date Filter logic here) ...
+            // IMPORTANT: Ensure rbFilterAll is ignored or handled implicitly by not adding to 'filters'
+            if (rbFilterDay.Checked)
+            {
+                DateTime selectedDate = monthCalendar.SelectionStart.Date;
+                filters.Add(string.Format(
+                    "TripDate >= #{0}# AND TripDate < #{1}#",
+                    selectedDate.ToString("MM/dd/yyyy"),
+                    selectedDate.AddDays(1).ToString("MM/dd/yyyy")));
+            }
+            else if (rbFilterMonth.Checked)
+            {
+                DateTime selectedDate = monthCalendar.SelectionStart;
+                DateTime firstDay = new DateTime(selectedDate.Year, selectedDate.Month, 1);
+                DateTime lastDay = firstDay.AddMonths(1);
+
+                filters.Add(string.Format(
+                    "TripDate >= #{0}# AND TripDate < #{1}#",
+                    firstDay.ToString("MM/dd/yyyy"),
+                    lastDay.ToString("MM/dd/yyyy")));
+            }
+
+            // --- CRITICAL CHANGE BELOW ---
+
+            if (filters.Count > 0)
+            {
+                // Apply the combined filters
+                dv.RowFilter = string.Join(" AND ", filters);
             }
             else
             {
-                DataView dv = allBookingsData.DefaultView;
-                dv.RowFilter = string.Format(
-                    "[Booking Ref] LIKE '%{0}%' OR Passengers LIKE '%{0}%'",
-                    searchText.Replace("'", "''"));
-                dgvManageBookings.DataSource = dv.ToTable();
+                // EXPLICITLY clear the filter if the list is empty
+                dv.RowFilter = string.Empty;
             }
+
+            // Always bind the DataView (dv), not the raw table. 
+            // This keeps the behavior consistent.
+            dgvManageBookings.DataSource = dv;
 
             ConfigureDataGridView();
         }

@@ -98,6 +98,11 @@ namespace FERRY_BOOKING.Forms
                 MessageBox.Show("Please enter both Username and Password.", "Missing Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            if (!IsValidEmail(username))
+            {
+                MessageBox.Show("Please enter a valid email address.", "Invalid Format", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             string role = helper.ValidateLoginWithRole(username, password);
 

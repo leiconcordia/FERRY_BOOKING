@@ -19,6 +19,8 @@ namespace FERRY_BOOKING.Dialogs
     {
         private int OwnerID;
         private int? EditingScheduleID = null; // null => create mode, otherwise edit mode
+        private bool hasUserTouchedDates = false; // Track if user has interacted with date pickers
+        private bool hasUserTouchedDepartureTime = false; // Track if user has interacted with departure time
 
         public AddSchedule(int OwnerID)
         {
@@ -27,6 +29,7 @@ namespace FERRY_BOOKING.Dialogs
 
             LoadFerriesDropdown();
             InitializeDayButtons();
+            DisableAllControlsExceptFerry(); // Step 1: Only ferry selection enabled
         }
 
         // New constructor to open the dialog in Edit mode and populate fields
@@ -44,6 +47,11 @@ namespace FERRY_BOOKING.Dialogs
 
         private void LoadScheduleForEdit(int scheduleID)
         {
+            // Enable all controls for edit mode
+            EnableAllControls();
+            hasUserTouchedDates = true;
+            hasUserTouchedDepartureTime = true;
+
             try
             {
                 DATABASE.DatabaseHelper db = new DATABASE.DatabaseHelper();
@@ -95,6 +103,7 @@ namespace FERRY_BOOKING.Dialogs
                 // Fill date/time and status
                 dtpDepartureTime.Value = DateTime.Today.Add(departure);
                 dtpArrivalTime.Value = DateTime.Today.Add(arrival);
+                dtpArrivalTime.Enabled = false; // Keep arrival time readonly
                 dtpStartDate.Value = startDate;
                 dtpEndDate.Value = endDate;
                 cbStatus.SelectedItem = isActive ? "Active" : "Inactive";
@@ -150,6 +159,55 @@ namespace FERRY_BOOKING.Dialogs
             }
         }
 
+        private void DisableAllControlsExceptFerry()
+        {
+            // Disable route selection until ferry is selected
+            cbRoute.Enabled = false;
+
+            // Disable dates until route is selected
+            dtpStartDate.Enabled = false;
+            dtpEndDate.Enabled = false;
+
+            // Disable times until route is selected
+            dtpDepartureTime.Enabled = false;
+            dtpArrivalTime.Enabled = false;
+
+            // Disable status until route is selected
+            cbStatus.Enabled = false;
+
+            // Disable day buttons
+            DisableAllDayButtons();
+            btnSelectAll.Enabled = false;
+
+       
+
+            // Disable save button
+            btnAddSchedule.Enabled = false;
+        }
+
+        private void EnableAllControls()
+        {
+            cbRoute.Enabled = true;
+            dtpStartDate.Enabled = true;
+            dtpEndDate.Enabled = true;
+            dtpDepartureTime.Enabled = true;
+            cbStatus.Enabled = true;
+            btnSelectAll.Enabled = true;
+            
+            btnAddSchedule.Enabled = true;
+        }
+
+        private void DisableAllDayButtons()
+        {
+            Button[] dayButtons = { btnMon, btnTue, btnWed, btnThu, btnFri, btnSat, btnSun };
+            foreach (Button btn in dayButtons)
+            {
+                btn.Enabled = false;
+                btn.BackColor = Color.DarkGray;
+                btn.FlatAppearance.BorderColor = Color.DarkGray;
+            }
+        }
+
         private void LoadFerriesDropdown()
         {
             DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
@@ -169,100 +227,13 @@ namespace FERRY_BOOKING.Dialogs
             }
         }
 
-        private void LoadScheduleDetails(int scheduleID)
-        {
-            DATABASE.FerryOwnerHelper helper = new DATABASE.FerryOwnerHelper();
-
-            try
-            {
-                // 1. Load schedule basic info
-                DataRow schedule = helper.GetScheduleById(scheduleID);
-
-                if (schedule == null)
-                {
-                    MessageBox.Show("Schedule not found!");
-                    this.Close();
-                    return;
-                }
-
-                // Use DataRow["ColumnName"] instead of properties
-                cbFerry.SelectedValue = Convert.ToInt32(schedule["FerryID"]);
-                cbRoute.SelectedValue = Convert.ToInt32(schedule["RouteID"]);
-
-                // Schedule times stored as TimeSpan
-                TimeSpan departureTime = (TimeSpan)schedule["DepartureTime"];
-                TimeSpan arrivalTime = (TimeSpan)schedule["ArrivalTime"];
-                dtpDepartureTime.Value = DateTime.Today.Add(departureTime);
-                dtpArrivalTime.Value = DateTime.Today.Add(arrivalTime);
-
-                // Status
-                cbStatus.SelectedItem = Convert.ToBoolean(schedule["IsActive"]) ? "Active" : "Inactive";
-
-                // 2. Load operating days
-                string operatingDays = schedule["DaysOfWeek"].ToString(); // e.g., "Mon,Wed,Fri"
-                SetSelectedDays(operatingDays);
-
-                // 3. Load floor prices
-                LoadFloors(Convert.ToInt32(schedule["FerryID"]));
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading schedule details: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
-        }
-        //private void ValidateDepartureTime()
-        //{
-        //    if (cbFerry.SelectedIndex == -1)
-        //    {
-               
-        //        return;
-        //    }
-
-        //    // Safely get ferry ID
-        //    int ferryID = Convert.ToInt32(((DataRowView)cbFerry.SelectedItem)["FerryID"]);
-        //    string ferryName = ((DataRowView)cbFerry.SelectedItem)["FerryName"].ToString();
-
-        //    // Route
-        //    if (cbRoute.SelectedIndex == -1)
-        //    {
-                
-        //        return;
-        //    }
-        //    int routeID = Convert.ToInt32(((DataRowView)cbRoute.SelectedItem)["RouteID"]);
-        //    string routeName = ((DataRowView)cbRoute.SelectedItem)["Route"].ToString();
-
-        //    // Get schedule start/end dates from DateTimePickers
-        //    DateTime startDate = dtpStartDate.Value.Date;
-        //    DateTime endDate = dtpEndDate.Value.Date;
-
-        //    // Store original trip duration
-        //    TimeSpan originalDuration = dtpArrivalTime.Value - dtpDepartureTime.Value;
-
-        //    FerryOwnerHelper db = new FerryOwnerHelper();
-        //    TimeSpan earliest = db.GetEarliestAvailableDeparture(ferryID, routeID, startDate, endDate);
-
-        //    if (earliest != TimeSpan.Zero && dtpDepartureTime.Value.TimeOfDay < earliest)
-        //    {
-        //        MessageBox.Show(
-        //            $"This ferry already has trips scheduled.\n" +
-        //            $"Earliest possible departure is {earliest:hh\\:mm}."
-        //        );
-
-        //        // Automatically set the departure to earliest allowed
-        //        dtpDepartureTime.Value = dtpDepartureTime.Value.Date + earliest;
-
-        //        // Adjust arrival to maintain original duration
-        //        dtpArrivalTime.Value = dtpDepartureTime.Value + originalDuration;
-        //    }
-        //}
-
-
-
-
         private void cbFerry_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cbFerry.SelectedItem == null) return;
+            if (cbFerry.SelectedItem == null)
+            {
+                DisableAllControlsExceptFerry();
+                return;
+            }
 
             DataRowView drv = cbFerry.SelectedItem as DataRowView;
             if (drv == null) return;
@@ -272,19 +243,50 @@ namespace FERRY_BOOKING.Dialogs
             // Load routes & floors
             LoadRoutesForFerry(ferryID);
             LoadFloors(ferryID);
+
+            // Enable route selection (Step 2)
+            cbRoute.Enabled = true;
+
+            
         }
 
+        
 
         private void cbRoute_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cbRoute.SelectedItem == null) return;
+            if (cbRoute.SelectedItem == null)
+            {
+                // Keep route and above enabled, but disable everything else
+                dtpStartDate.Enabled = false;
+                dtpEndDate.Enabled = false;
+                dtpDepartureTime.Enabled = false;
+                dtpArrivalTime.Enabled = false;
+                cbStatus.Enabled = false;
+                DisableAllDayButtons();
+                btnSelectAll.Enabled = false;
+                btnAddSchedule.Enabled = false;
+                return;
+            }
 
             DataRowView drv = cbRoute.SelectedItem as DataRowView;
             if (drv == null) return;
 
             int routeID = Convert.ToInt32(drv["RouteID"]);
 
+            // Enable remaining controls (Step 3)
+            dtpStartDate.Enabled = true;
+            dtpEndDate.Enabled = true;
+            dtpDepartureTime.Enabled = true;
+            cbStatus.Enabled = true;
+            btnAddSchedule.Enabled = true;
+
+            // Update day buttons based on current date range
+            if (hasUserTouchedDates)
+            {
+                UpdateDayButtonsForDateRange(dtpStartDate.Value.Date, dtpEndDate.Value.Date);
+            }
         }
+
         private void LoadRoutesForFerry(int ferryID)
         {
             if (ferryID <= 0) return;
@@ -304,13 +306,6 @@ namespace FERRY_BOOKING.Dialogs
             cbRoute.ValueMember = "RouteID";
             cbRoute.SelectedIndex = -1; // no route selected initially
         }
-
-
-
-
-
-
-
 
         private void LoadFloors(int ferryID)
         {
@@ -362,9 +357,11 @@ namespace FERRY_BOOKING.Dialogs
             }
         }
 
-
         private void dtpDepartureTime_ValueChanged(object sender, EventArgs e)
         {
+            // Mark that user has touched the departure time
+            hasUserTouchedDepartureTime = true;
+
             if (cbRoute.SelectedItem == null) return;
 
             DataRowView drv = cbRoute.SelectedItem as DataRowView;
@@ -390,16 +387,19 @@ namespace FERRY_BOOKING.Dialogs
                 return;
             }
 
+            // Auto-calculate arrival time and make it readonly
             dtpArrivalTime.Value = dtpDepartureTime.Value.Add(duration);
             dtpArrivalTime.Enabled = false;
         }
 
-
         private void dtpStartDate_ValueChanged(object sender, EventArgs e)
         {
+            // Mark that user has touched the dates
+            hasUserTouchedDates = true;
+
             if (dtpStartDate.Value > dtpEndDate.Value)
             {
-                MessageBox.Show("Start date cannot be after end date.");
+                MessageBox.Show("Start date cannot be after end date.", "Invalid Date", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             UpdateDayButtonsForDateRange(dtpStartDate.Value.Date, dtpEndDate.Value.Date);
@@ -407,23 +407,20 @@ namespace FERRY_BOOKING.Dialogs
 
         private void dtpEndDate_ValueChanged(object sender, EventArgs e)
         {
+            // Mark that user has touched the dates
+            hasUserTouchedDates = true;
+
             // Ensure end date >= start date
             if (dtpEndDate.Value < dtpStartDate.Value)
             {
-                MessageBox.Show("End date cannot be before start date.");
+                MessageBox.Show("End date cannot be before start date.", "Invalid Date", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 dtpEndDate.Value = dtpStartDate.Value;
                 return;
             }
 
             UpdateDayButtonsForDateRange(dtpStartDate.Value.Date, dtpEndDate.Value.Date);
+            
         }
-
-
-
-
-
-
-
 
         private void UpdateDayButtonsForDateRange(DateTime startDate, DateTime endDate)
         {
@@ -434,15 +431,15 @@ namespace FERRY_BOOKING.Dialogs
 
             // Map buttons to DayOfWeek
             Dictionary<Button, DayOfWeek> buttonDays = new Dictionary<Button, DayOfWeek>()
-    {
-        { btnMon, DayOfWeek.Monday },
-        { btnTue, DayOfWeek.Tuesday },
-        { btnWed, DayOfWeek.Wednesday },
-        { btnThu, DayOfWeek.Thursday },
-        { btnFri, DayOfWeek.Friday },
-        { btnSat, DayOfWeek.Saturday },
-        { btnSun, DayOfWeek.Sunday }
-    };
+            {
+                { btnMon, DayOfWeek.Monday },
+                { btnTue, DayOfWeek.Tuesday },
+                { btnWed, DayOfWeek.Wednesday },
+                { btnThu, DayOfWeek.Thursday },
+                { btnFri, DayOfWeek.Friday },
+                { btnSat, DayOfWeek.Saturday },
+                { btnSun, DayOfWeek.Sunday }
+            };
 
             foreach (var kvp in buttonDays)
             {
@@ -474,19 +471,12 @@ namespace FERRY_BOOKING.Dialogs
                 }
             }
 
+            // Enable Select All button only if at least one day is enabled
+            btnSelectAll.Enabled = dayButtons.Any(btn => btn.Enabled);
+
             // Update Select All button state
             UpdateSelectAllButtonText();
         }
-
-
-
-
-
-
-
-
-
-
 
         private void btnMon_Click(object sender, EventArgs e)
         {
@@ -549,7 +539,6 @@ namespace FERRY_BOOKING.Dialogs
             btnSelectAll.Text = anyUnselected ? "Clear All" : "Select All";
         }
 
-
         // Helper method to toggle individual button selection
         private void ToggleButtonSelection(Button button)
         {
@@ -574,8 +563,17 @@ namespace FERRY_BOOKING.Dialogs
         private void UpdateSelectAllButtonText()
         {
             Button[] allDayButtons = { btnMon, btnTue, btnWed, btnThu, btnFri, btnSat, btnSun };
-            bool allSelected = allDayButtons.All(btn => btn.BackColor == Color.White);
+            
+            // Only check enabled buttons
+            var enabledButtons = allDayButtons.Where(btn => btn.Enabled).ToArray();
+            
+            if (enabledButtons.Length == 0)
+            {
+                btnSelectAll.Text = "Select All";
+                return;
+            }
 
+            bool allSelected = enabledButtons.All(btn => btn.BackColor == Color.White);
             btnSelectAll.Text = allSelected ? "Clear All" : "Select All";
         }
 
@@ -595,7 +593,6 @@ namespace FERRY_BOOKING.Dialogs
 
             return string.Join(",", selectedDays);
         }
-
 
         // Method to set selected days from string
         public void SetSelectedDays(string daysString)
@@ -626,16 +623,17 @@ namespace FERRY_BOOKING.Dialogs
             UpdateSelectAllButtonText();
         }
 
-
-
         // Reset all buttons to unselected
         private void ResetAllDayButtons()
         {
             Button[] dayButtons = { btnMon, btnTue, btnWed, btnThu, btnFri, btnSat, btnSun };
             foreach (Button btn in dayButtons)
             {
-                btn.BackColor = Color.LightGray;
-                btn.FlatAppearance.BorderColor = Color.Gray;
+                if (btn.Enabled)
+                {
+                    btn.BackColor = Color.LightGray;
+                    btn.FlatAppearance.BorderColor = Color.Gray;
+                }
             }
         }
 
@@ -647,15 +645,17 @@ namespace FERRY_BOOKING.Dialogs
 
             foreach (Button btn in dayButtons)
             {
-                btn.BackColor = Color.LightGray;
+                btn.BackColor = Color.DarkGray;
                 btn.ForeColor = Color.Black;
                 btn.FlatStyle = FlatStyle.Flat;
                 btn.FlatAppearance.BorderSize = 1;
-                btn.FlatAppearance.BorderColor = Color.Gray;
+                btn.FlatAppearance.BorderColor = Color.DarkGray;
+                btn.Enabled = false;
             }
 
             // Set Select All button
             btnSelectAll.Text = "Select All";
+            btnSelectAll.Enabled = false;
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
@@ -716,45 +716,24 @@ namespace FERRY_BOOKING.Dialogs
             // ================================
             DATABASE.FerryOwnerHelper db = new DATABASE.FerryOwnerHelper();
 
-            var (hasConflict, conflictMessage, conflictDetails) = db.CheckTripConflicts(
+            var check = db.CheckTripConflicts(
                 ferryID,
                 routeID,
                 startDate,
                 endDate,
                 operatingDays,
-                departure.TimeOfDay,
-                arrival.TimeOfDay,
-                EditingScheduleID // Exclude current schedule if editing
+                departure,
+                arrival
             );
 
-            if (hasConflict)
+            if (check.hasConflict)
             {
-                // Show conflict dialog with details
-                MessageBox.Show(
-                    conflictMessage,
-                    "⚠️ Schedule Conflict",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
-                );
+                MessageBox.Show(check.message, "🚫 Port Schedule Conflict", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
-                // Optional: Show detailed conflict grid
-                if (conflictDetails.Rows.Count > 0)
-                {
-                    DialogResult showDetails = MessageBox.Show(
-                        "Would you like to view detailed conflict information?",
-                        "View Conflicts",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question
-                    );
+                // Optional: Show the grid of who is blocking you
+                // DataGridViewConflict.DataSource = check.details; 
 
-                    if (showDetails == DialogResult.Yes)
-                    {
-                        ShowConflictDetailsDialog(conflictDetails);
-                    }
-                }
-
-                // ABORT - Do not proceed with schedule creation
-                return;
+                return; // Stop right here! Don't save.
             }
 
             // ================================

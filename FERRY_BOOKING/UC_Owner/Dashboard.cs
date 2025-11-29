@@ -97,7 +97,7 @@ namespace FERRY_BOOKING.UC_Ferry
                         row["Route"],
                         schedule,
                         row["FloorBreakdown"],
-                        Properties.Resources.eye
+                        Properties.Resources.research
                     );
                 }
 
